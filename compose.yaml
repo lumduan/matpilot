@@ -28,8 +28,9 @@ services:
       - '${MATPILOT_BIND:-127.0.0.1}:${MATPILOT_DEV_PORT:-3300}:3000'
     volumes:
       - .:/app
+      # pnpm keeps its package store inside this volume (node_modules/.pnpm-store), on the same
+      # filesystem as node_modules, so packages are hard-linked rather than copied.
       - node_modules:/app/node_modules
-      - pnpm-store:/home/node/.local/share/pnpm/store
 
   preview:
     build:
@@ -42,4 +43,3 @@ services:
 
 volumes:
   node_modules:
-  pnpm-store:

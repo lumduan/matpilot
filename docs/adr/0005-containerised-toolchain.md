@@ -21,7 +21,7 @@ installed Node.js.
    installed on the host.
 2. **`compose.yaml` is the developer entry point.** The `dev` service runs the dev server, and
    `docker compose run --rm dev pnpm <script>` runs any project script against the bind-mounted
-   source. `node_modules` and the pnpm store live in Docker volumes.
+   source. `node_modules` lives in a Docker volume, with pnpm's package store inside it.
 3. **`docker build --target export`** runs the whole CI pipeline (lint, typecheck, test, build) in
    the container and outputs `out/`. The `preview` target serves that output with unprivileged
    nginx, the way a static host would.

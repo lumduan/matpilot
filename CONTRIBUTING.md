@@ -38,9 +38,9 @@ docker compose run --rm dev pnpm <script>   # run any script below inside the co
 docker compose up --build preview           # production static build, http://localhost:3301
 ```
 
-- The source tree is bind-mounted, so edits on the host reload the dev server. `node_modules` and
-  the pnpm store live in Docker volumes, and the container syncs them with the lockfile before
-  every command.
+- The source tree is bind-mounted, so edits on the host reload the dev server. `node_modules`
+  lives in a Docker volume, with pnpm's package store inside it, and the container syncs it with
+  the lockfile before every command.
 - Containers run as the `node` user (uid 1000), so files they write (`.next/`, `out/`) belong to
   uid 1000 on the host.
 - Ports bind to `127.0.0.1`. Change them with `MATPILOT_DEV_PORT` and `MATPILOT_PREVIEW_PORT`, and
