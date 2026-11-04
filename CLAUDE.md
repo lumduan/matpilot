@@ -23,6 +23,12 @@ docker compose up dev                        # dev server, http://localhost:3300
 docker build --target export --output type=local,dest=out .   # full CI pipeline, then out/
 ```
 
+**Docker networks:** every network in `compose.yaml` pins exactly one `/24` subnet (the default
+network uses `10.210.120.0/24`, overridable with `MATPILOT_SUBNET`). Never add a network without a
+pinned subnet, never use `192.168.0.0/16` or `172.16.0.0/12`, and never `docker network create`
+without `--subnet`. Docker's automatic allocation once handed this project a range that contained a
+home network and cut those devices off from the host. CI enforces the rule.
+
 Run all of `lint`, `typecheck`, `test`, and `build` before calling a change done. Node.js 26.13.0
 (`Dockerfile`, `.nvmrc`) and pnpm 12.16.1 (`Dockerfile`, `packageManager`) must stay in agreement;
 CI checks this.

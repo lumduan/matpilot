@@ -84,6 +84,20 @@ jobs:
       - name: Validate compose.yaml
         run: docker compose config --quiet
 
+      - name: Check that every compose network pins one /24 outside Docker's default pools
+        run: |
+          status=0
+          while IFS=$'\t' read -r name subnets; do
+            count="$(wc -w <<< "$subnets")"
+            if [ "$count" -ne 1 ] || [[ "$subnets" != */24 ]] \
+              || [[ "$subnets" == 192.168.* ]] || [[ "$subnets" =~ ^172\.(1[6-9]|2[0-9]|3[01])\. ]]; then
+              echo "::error file=compose.yaml::network '${name}' must pin exactly one /24 subnet outside 192.168.0.0/16 and 172.16.0.0/12 (found: '${subnets}')"
+              status=1
+            fi
+          done < <(docker compose config --format json \
+            | jq -r '.networks | to_entries[] | [.key, ([.value.ipam.config[]?.subnet] | join(" "))] | @tsv')
+          exit "$status"
+
       - name: Lint, typecheck, test and build in the container
         run: |
           docker build --target export --output type=local,dest=out .

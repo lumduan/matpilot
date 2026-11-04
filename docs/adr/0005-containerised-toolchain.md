@@ -42,6 +42,11 @@ installed Node.js.
 - On Linux, Docker creates the `node_modules/` volume mount point inside the checkout as an empty,
   root-owned directory. It is harmless for Docker use and ignored by git, but a native install must
   remove it first (`rmdir node_modules`, no `sudo` needed).
+- The compose network pins one `/24` subnet (`10.210.120.0/24`, overridable with `MATPILOT_SUBNET`).
+  Docker's automatic allocation cannot see LAN segments behind the router: on the maintainer's
+  server it handed this project `192.168.96.0/20`, which contains a home network, and devices on
+  that network lost all access to the host until the network was removed (2026-11-04). CI rejects a
+  compose network without exactly one pinned `/24` outside Docker's default pools.
 - Docker is a development and verification tool only. The app itself is still static files with no
   server ([ADR 0002](0002-static-export-no-server-features.md)); production hosting configuration is
   out of scope for this repository.
