@@ -48,6 +48,12 @@ docker compose up --build preview           # production static build, http://lo
   remove it with `rmdir node_modules`; no `sudo` is needed.
 - Ports bind to `127.0.0.1`. Change them with `MATPILOT_DEV_PORT` and `MATPILOT_PREVIEW_PORT`, and
   the bind address with `MATPILOT_BIND`, in a `.env` file next to `compose.yaml`.
+- The compose network uses a pinned subnet, `10.210.120.0/24`, instead of Docker's automatic
+  allocation. Docker cannot see LAN segments behind your router and may hand one of them (for
+  example a `192.168.x` home network) to the bridge, which cuts devices on that segment off from
+  the host. If `10.210.120.0/24` is in use on your network, set `MATPILOT_SUBNET` in `.env` to
+  another single `/24` that overlaps no host route (`ip route`) or Docker network. CI rejects a
+  compose network without exactly one pinned `/24` outside `192.168.0.0/16` and `172.16.0.0/12`.
 - When you change the Node.js or pnpm version, change `Dockerfile`, `.nvmrc`, and
   `packageManager` together. CI fails if they disagree.
 

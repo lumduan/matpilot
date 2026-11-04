@@ -44,3 +44,14 @@ services:
 
 volumes:
   node_modules:
+
+# The project network has a pinned /24 subnet. Docker's automatic allocation can hand out a range
+# that overlaps a LAN segment behind the router (for example 192.168.96.0/20, which contains common
+# home subnets). The host then routes its replies to clients on that segment into the bridge, and
+# those clients cannot reach the host at all. Override with MATPILOT_SUBNET in .env if this range is
+# used on your network; keep it a single /24 that overlaps no host route or other Docker network.
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: '${MATPILOT_SUBNET:-10.210.120.0/24}'
