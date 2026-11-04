@@ -1,0 +1,15 @@
+{
+  "compiler": "mpy-cross-v6",
+  "outputs": {
+    "classes.mpy": "c578f36086785dc3f90718d741f1b72722deb4f25b821e47760230f7e01dd79a",
+    "control_flow.mpy": "a4206b777fc796417ede4f77499577302b83c2de39f9a5c70a813520e62496d0",
+    "data_types.mpy": "3893bae6357816c76ba5e570f5d18e66cedb55de8c72988625d515680eed846b",
+    "hello.mpy": "5d260342def1e187b7d0b00339d13519ce649a31c8132498eb24621cd59cd292",
+    "hello.multi-mpy.bin": "cb01f21b38dfe1ec41489449a7a6b327f811694598e616d2e970d29c06abf992",
+    "hub_program.mpy": "f83e2d0c3195a8c8d83546faa7412315c8787b8182a0c817852ab71d71119903",
+    "multitask.mpy": "75453044b0ecdfc234dc6e1f4a8566733da82653af4109f0f07b4cbcee69f82e",
+    "syntax_error.err": "777e02b512e3f495ef976abbffafe27c9ed1345bcdaad2130e1d8c93b4045f66"
+  },
+  "pybricksdev": "2.3.2",
+  "version": "1.1.2"
+}

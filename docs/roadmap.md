@@ -11,7 +11,7 @@ cannot be finished before the milestones that point to it.
 flowchart TD
     M0["0 · Bootstrap: compatibility check and hub probe<br/>ACTIVE — code done, 1 of 7 supported rows verified on hardware"]
     M1["1 · Pybricks protocol documentation<br/>DONE"]
-    M2["2 · mpy-cross in the browser<br/>adopt Pybricks build, golden tests<br/>READY"]
+    M2["2 · mpy-cross in the browser<br/>adopt Pybricks build, golden tests<br/>ACTIVE — goldens pass"]
     M3["3 · BLE transport and Program and Monitor page<br/>upload, start, stop, stdout, plotter<br/>BLOCKED — needs 2"]
     M4["4 · Blockly code generation<br/>with enforced safety rules<br/>BLOCKED — needs 3"]
     M5["5 · Xbox test panel<br/>with live telemetry<br/>BLOCKED — needs 3"]
@@ -38,9 +38,9 @@ flowchart TD
     classDef blocked  fill:#f0f0f0,stroke:#888,color:#555
     classDef goal     fill:#ede0fb,stroke:#8a5cd8,color:#4d2e8f
 
-    class M0 active
+    class M0,M2 active
     class M1 done
-    class M2,M7 ready
+    class M7 ready
     class M3,M4,M5,M6 blocked
     class GOAL goal
 ```
@@ -49,7 +49,7 @@ flowchart TD
 | -------------------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **0 · Bootstrap**                | 🟡 ACTIVE  | Static Next.js app, Docker toolchain, CI, docs, ADRs, compatibility check, read-only hub probe, hardware test page                                                                                    | Hardware verification of the other 6 supported rows (Chrome on macOS verified 2026-11-04; [checklist](compatibility.md#how-to-verify-a-row-on-hardware)) |
 | **1 · Pybricks protocol docs**   | ✅ DONE    | [`docs/protocol/pybricks-ble.md`](protocol/pybricks-ble.md): capabilities, commands, events, program format and upload sequence, every statement cited to an upstream commit                          | —                                                                                                                                                        |
-| **2 · mpy-cross in the browser** | 🔵 READY   | Adopt Pybricks' `@pybricks/mpy-cross-v6` WebAssembly build ([ADR 0006](adr/0006-adopt-pybricks-mpy-cross.md)); golden tests prove byte-for-byte identical output to `pybricksdev` for the same source | None                                                                                                                                                     |
+| **2 · mpy-cross in the browser** | 🟡 ACTIVE  | Adopt Pybricks' `@pybricks/mpy-cross-v6` WebAssembly build ([ADR 0006](adr/0006-adopt-pybricks-mpy-cross.md)); golden tests prove byte-for-byte identical output to `pybricksdev` for the same source | Golden tests pass (6 programs + the packed format, byte-for-byte); loading the WebAssembly file from this site is verified with 3's page                 |
 | **3 · BLE transport**            | ⬜ BLOCKED | Upload a compiled program, start and stop it, stream stdout, in `src/lib/ble/`; Program and Monitor page with text monitor and plotter                                                                | Needs 2 (the payload it uploads); 1 is done                                                                                                              |
 | **4 · Blockly code generation**  | ⬜ BLOCKED | Blockly editor that generates Pybricks MicroPython and enforces the hub code rules (`try`/`finally` motor stop, `OSError` handling, config block, no hardcoded ports)                                 | Needs 3: the safety rules must be verified on a hub (for example, Stop really stops the motors)                                                          |
 | **5 · Xbox test panel**          | ⬜ BLOCKED | Ships a hub program that reads an Xbox controller (hub-direct, [ADR 0003](adr/0003-hub-direct-gamepad.md)) and shows its live telemetry in the browser                                                | Needs 3 (upload and stdout). Independent of 4                                                                                                            |
