@@ -55,3 +55,39 @@ jobs:
             echo "::error file=next.config.ts::out/index.html was not produced by the static export"
             exit 1
           fi
+
+  docker:
+    name: Docker toolchain (ADR 0005)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check that Dockerfile, .nvmrc and packageManager agree
+        run: |
+          node_version="$(tr -d '[:space:]' < .nvmrc)"
+          pnpm_version="$(sed -n 's/.*"packageManager": *"pnpm@\([^"]*\)".*/\1/p' package.json)"
+          status=0
+          if ! grep -q "^FROM node:${node_version}-" Dockerfile; then
+            echo "::error file=Dockerfile::Node.js base image does not match .nvmrc (${node_version})"
+            status=1
+          fi
+          if ! grep -q "^ARG PNPM_VERSION=${pnpm_version}$" Dockerfile; then
+            echo "::error file=Dockerfile::PNPM_VERSION does not match packageManager (${pnpm_version})"
+            status=1
+          fi
+          exit "$status"
+
+      - name: Validate compose.yaml
+        run: docker compose config --quiet
+
+      - name: Lint, typecheck, test and build in the container
+        run: |
+          docker build --target export --output type=local,dest=out .
+          if [ ! -f out/index.html ]; then
+            echo "::error file=Dockerfile::out/index.html was not produced by the container build"
+            exit 1
+          fi

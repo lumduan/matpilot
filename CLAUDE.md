@@ -10,17 +10,22 @@ requirement). Read [docs/architecture.md](docs/architecture.md) and the ADRs in
 
 ## Commands
 
+The toolchain runs in Docker ([ADR 0005](docs/adr/0005-containerised-toolchain.md)). Do not
+install Node.js or pnpm on the host. Run scripts through the `dev` service:
+
 ```sh
-pnpm install --frozen-lockfile
-pnpm lint        # ESLint with zero warnings, plus Prettier check
-pnpm typecheck   # next typegen && tsc --noEmit
-pnpm test        # Vitest
-pnpm build       # static export to out/, then scripts/verify-export.mjs
-pnpm format      # Prettier write
+docker compose run --rm dev pnpm lint        # ESLint with zero warnings, plus Prettier check
+docker compose run --rm dev pnpm typecheck   # next typegen && tsc --noEmit
+docker compose run --rm dev pnpm test        # Vitest
+docker compose run --rm dev pnpm build       # static export to out/, then scripts/verify-export.mjs
+docker compose run --rm dev pnpm format      # Prettier write
+docker compose up dev                        # dev server, http://localhost:3300
+docker build --target export --output type=local,dest=out .   # full CI pipeline, then out/
 ```
 
 Run all of `lint`, `typecheck`, `test`, and `build` before calling a change done. Node.js 26.13.0
-(`.nvmrc`), pnpm 12.16.1 (`packageManager`).
+(`Dockerfile`, `.nvmrc`) and pnpm 12.16.1 (`Dockerfile`, `packageManager`) must stay in agreement;
+CI checks this.
 
 ## Hard constraints
 

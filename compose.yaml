@@ -1,0 +1,45 @@
+# MatPilot development environment (docs/adr/0005-containerised-toolchain.md).
+# Node.js and pnpm run only inside containers; nothing is installed on the host.
+#
+#   docker compose up dev                  # dev server, http://localhost:3300
+#   docker compose run --rm dev pnpm test  # any project script (lint, typecheck, test, build, ...)
+#   docker compose up --build preview      # production static build, http://localhost:3301
+#
+# Ports bind to 127.0.0.1 by default. Web Bluetooth needs HTTPS or localhost, so another device
+# must reach the app through an HTTPS hostname. To let a reverse proxy or tunnel on the LAN
+# reach it, set MATPILOT_BIND (for example MATPILOT_BIND=192.168.1.13) in .env.
+
+name: matpilot
+
+services:
+  dev:
+    build:
+      context: .
+      target: toolchain
+    image: matpilot-toolchain:local
+    # The node user (uid 1000) owns files written to the bind mount, such as .next/ and out/.
+    user: node
+    working_dir: /app
+    entrypoint: ['/app/docker/entrypoint.sh']
+    command: ['pnpm', 'dev', '--hostname', '0.0.0.0', '--port', '3000']
+    environment:
+      NEXT_TELEMETRY_DISABLED: '1'
+    ports:
+      - '${MATPILOT_BIND:-127.0.0.1}:${MATPILOT_DEV_PORT:-3300}:3000'
+    volumes:
+      - .:/app
+      # pnpm keeps its package store inside this volume (node_modules/.pnpm-store), on the same
+      # filesystem as node_modules, so packages are hard-linked rather than copied.
+      - node_modules:/app/node_modules
+
+  preview:
+    build:
+      context: .
+      target: preview
+    image: matpilot-preview:local
+    ports:
+      - '${MATPILOT_BIND:-127.0.0.1}:${MATPILOT_PREVIEW_PORT:-3301}:8080'
+    restart: 'no'
+
+volumes:
+  node_modules:

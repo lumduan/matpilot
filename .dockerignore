@@ -1,0 +1,15 @@
+# Keep the build context small and free of host-built artefacts.
+.git/
+node_modules/
+.next/
+out/
+coverage/
+next-env.d.ts
+*.tsbuildinfo
+*.log
+.env
+.env*.local
+.DS_Store
+.idea/
+.vscode/
+.claude/
