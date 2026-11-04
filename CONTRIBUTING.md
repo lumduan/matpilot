@@ -93,6 +93,16 @@ objects for BLE code. Never call a real device from a unit test.
 Hardware results go in [docs/compatibility.md](docs/compatibility.md), in the "Verified on hardware"
 column, with date, browser, OS, and firmware version.
 
+### Golden files for the compiler
+
+`src/lib/pybricks/__golden__/mpy-cross-v6/` holds programs compiled by pybricksdev's compiler, and
+`compiler.golden.test.ts` requires the browser compiler to produce the same bytes. After adding a
+program there, or changing compiler versions, regenerate them with:
+
+```sh
+scripts/golden/generate-mpy-cross-v6.sh   # throwaway Python container; nothing is installed on the host
+```
+
 ## Commit messages
 
 Use [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/):

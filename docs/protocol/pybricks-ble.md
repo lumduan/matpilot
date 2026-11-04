@@ -128,8 +128,16 @@ The uploaded program is a concatenation of modules. For each module:
   `MPY_VERSION 6` and `MPY_SUB_VERSION 3`
   ([pybricks/micropython py/persistentcode.h#L37-L38][mpy-version]).
 - pybricksdev compiles ABI v6 with the `mpy_cross_v6` compiler
-  ([DEV compile.py#L75][dev-mpycross]). MatPilot uses the same compiler built for the browser
-  (`@pybricks/mpy-cross-v6`; see the roadmap, milestone 2).
+  ([DEV compile.py#L75][dev-mpycross]). MatPilot uses Pybricks' browser build of it,
+  `@pybricks/mpy-cross-v6` ([ADR 0006](../adr/0006-adopt-pybricks-mpy-cross.md)).
+  - Its output is byte-for-byte identical to pybricksdev's compiler (PyPI `mpy-cross-v6` 1.1.2)
+    on a corpus of programs: `src/lib/pybricks/compiler.golden.test.ts`.
+  - The packer in `src/lib/pybricks/mpy.ts` matches pybricksdev's own packed output.
+  - Both compilers write the header `4d 06 00 1f`: version 6, bytecode, sub-version 0, 31-bit
+    small ints.
+  - The firmware checks the sub-version only for native code
+    ([pybricks/micropython py/persistentcode.c#L465-L473][mpy-check]), so this header loads on
+    v4.0.1.
 
 ## 6. Upload, start, stop (the sequence)
 
@@ -194,6 +202,7 @@ firmware baseline moves. Re-cite every link at the new commit; do not mix versio
 [fw-main]: https://github.com/pybricks/pybricks-micropython/blob/4104553405decb0384bcfb030fbfcb4b5a9854cc/bricks/_common/micropython.c#L228-L244
 [mpy-version]: https://github.com/pybricks/micropython/blob/13580b6ad057173f62e8b2363e01d6851bcc6699/py/persistentcode.h#L37-L38
 [dev-mpycross]: https://github.com/pybricks/pybricksdev/blob/65210a23f53cc62a4b32c0599eac398aeea0c282/pybricksdev/compile.py#L75
+[mpy-check]: https://github.com/pybricks/micropython/blob/13580b6ad057173f62e8b2363e01d6851bcc6699/py/persistentcode.c#L465-L473
 [dev-download]: https://github.com/pybricks/pybricksdev/blob/65210a23f53cc62a4b32c0599eac398aeea0c282/pybricksdev/connections/pybricks.py#L442-L535
 [dev-stdin]: https://github.com/pybricks/pybricksdev/blob/65210a23f53cc62a4b32c0599eac398aeea0c282/pybricksdev/connections/pybricks.py#L378-L412
 [fw-xbox]: https://github.com/pybricks/pybricks-micropython/blob/4104553405decb0384bcfb030fbfcb4b5a9854cc/pybricks/iodevices/pb_module_iodevices.c#L92

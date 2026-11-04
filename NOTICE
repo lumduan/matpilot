@@ -32,12 +32,86 @@ What MatPilot ports, and from where:
         (SPDX-License-Identifier: MIT; Copyright (c) 2019-2024 The Pybricks Authors)
       lib/pbio/include/pbio/protocol.h
 
+  src/lib/pybricks/mpy.ts
+    The multi-file .mpy upload format (size, NUL-terminated name, data) as the
+    firmware reads it, from:
+      bricks/_common/micropython.c
+        (SPDX-License-Identifier: MIT; Copyright (c) 2018-2023 The Pybricks Authors)
+
 The upstream LICENSE states that its MIT license applies only to files carrying
 the "SPDX-License-Identifier: MIT" header. Every file listed above carries it.
 
 MIT License
 
 Copyright (c) 2018-2026 The Pybricks Authors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+==============================================================================
+pybricksdev
+https://github.com/pybricks/pybricksdev
+Copyright (c) 2018-2025 The Pybricks Authors
+License: MIT
+Source revision used: tag v2.3.2, commit 65210a23f53cc62a4b32c0599eac398aeea0c282
+==============================================================================
+
+What MatPilot ports, and from where:
+
+  src/lib/pybricks/mpy.ts
+    The way pybricksdev packs compiled modules for upload, from:
+      pybricksdev/compile.py
+        (SPDX-License-Identifier: MIT; Copyright (c) 2019-2025 The Pybricks Authors)
+
+pybricksdev is also used, unmodified and only at development time, to generate
+the golden test files in src/lib/pybricks/__golden__/ (scripts/golden/).
+
+==============================================================================
+MicroPython (as fork pybricks/micropython)
+https://github.com/pybricks/micropython
+Copyright (c) 2013-2020 Damien P. George
+License: MIT
+Source revision used: commit 13580b6ad057173f62e8b2363e01d6851bcc6699
+==============================================================================
+
+What MatPilot ports, and from where:
+
+  src/lib/pybricks/mpy.ts
+    The .mpy header layout and the checks the firmware applies to it, from:
+      py/persistentcode.c, py/persistentcode.h
+        (The MIT License (MIT); Copyright (c) 2013-2020 Damien P. George)
+
+==============================================================================
+@pybricks/mpy-cross-v6 (npm package, redistributed unmodified)
+https://www.npmjs.com/package/@pybricks/mpy-cross-v6
+Source: https://github.com/pybricks/pybricks-micropython (directory npm/mpy-cross)
+Version used: 2.0.0
+License: MIT (full text below, as shipped in the package)
+==============================================================================
+
+MatPilot uses this package to compile MicroPython in the browser
+(docs/adr/0006-adopt-pybricks-mpy-cross.md). It contains MicroPython's
+mpy-cross compiled to WebAssembly.
+
+MIT License
+
+Copyright (c) 2020-2022 The Pybricks Authors
+Copyright (c) 2013-2022 Damien P. George
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

@@ -15,3 +15,5 @@
 
 # Generated file: collapse in GitHub diffs.
 pnpm-lock.yaml linguist-generated=true
+*.mpy binary
+*.bin binary
