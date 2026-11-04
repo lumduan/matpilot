@@ -17,6 +17,9 @@ What works today:
   not if they cannot.
 - **Read-only hub probe:** connects to a SPIKE Prime hub running Pybricks firmware and reads its
   name, firmware revision, and protocol version. It writes nothing to the hub.
+- **Hardware test page** (`/hardware-test`): walks a tester through the hardware checks with a real
+  hub, records the results in the browser, and produces a report for the
+  [compatibility table](docs/compatibility.md).
 
 Block programming, program upload, gamepad control, offline use, and mat profiles are planned. See
 the [roadmap](docs/roadmap.md).

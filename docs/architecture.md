@@ -75,10 +75,11 @@ telemetry, but it is never in the control loop.
 
 | Component           | Location                      | Notes                                                              |
 | ------------------- | ----------------------------- | ------------------------------------------------------------------ |
-| UI shell            | `src/app/`, `src/components/` | One static page; React client components                           |
+| UI shell            | `src/app/`, `src/components/` | Static pages `/` and `/hardware-test`; React client components     |
 | React bindings      | `src/hooks/`                  | The only place React touches `src/lib/`                            |
 | Compatibility check | `src/lib/compat/`             | Pure evaluation plus a collector for browser globals               |
 | Hub probe           | `src/lib/ble/`                | Framework-agnostic state machine; read-only by its types           |
+| Hardware test       | `src/lib/hwtest/`             | Session recorder, step logic, and plain-text report; no new BLE    |
 | Pybricks constants  | `src/lib/pybricks/`           | UUIDs and version parsing, each cited to an upstream commit        |
 | Export guard        | `scripts/verify-export.mjs`   | Fails the build without `out/index.html` or with third-party loads |
 
