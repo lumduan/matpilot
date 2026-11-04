@@ -4,7 +4,9 @@ import {
   MAX_UNCAUGHT_SAMPLES,
   applyEvent,
   createSession,
+  currentStepId,
   deriveSteps,
+  liveHint,
   restartSession,
   summarize,
   testMode,
@@ -183,5 +185,58 @@ describe('hardware test session', () => {
     expect(restarted.log).toEqual([]);
     expect(restarted.startedAt).toBe('2026-11-11T00:00:00.000Z');
     expect(summarize(restarted).passed).toBe(1);
+  });
+});
+
+describe('live guidance', () => {
+  const connectedFirst = play([
+    { type: 'compat', compat: { ready: true, failedChecks: [] } },
+    probe({ status: 'requesting' }),
+    probe({ status: 'connecting', deviceName: 'Pybricks Hub' }),
+    probe({ status: 'connected', hub: HUB }),
+  ]);
+
+  it('points to the first open step when no hub is connected', () => {
+    expect(currentStepId(deriveSteps(connectedFirst), 'idle')).toBe('cancel');
+    expect(liveHint('cancel', 'idle')).toBeNull();
+  });
+
+  it('points to step 5 while connected, because step 2 needs the picker', () => {
+    expect(currentStepId(deriveSteps(connectedFirst), 'connected')).toBe('hub-off');
+    expect(liveHint('hub-off', 'connected')).toBe(
+      'Connected. Now turn the hub off with its button.',
+    );
+  });
+
+  it('asks for Disconnect before step 2 once step 5 has passed while connected', () => {
+    const afterLoss = play(
+      [
+        probe({ status: 'disconnected', deviceName: 'Pybricks Hub', reason: 'connection-lost' }),
+        probe({ status: 'requesting' }),
+        probe({ status: 'connected', hub: HUB }),
+      ],
+      connectedFirst,
+    );
+    expect(currentStepId(deriveSteps(afterLoss), 'connected')).toBe('cancel');
+    expect(liveHint('cancel', 'connected')).toContain('Click Disconnect first');
+  });
+
+  it('tells the tester not to choose the hub in step 2', () => {
+    expect(step(createSession(T0), 'cancel').detail).toContain('do not choose the hub');
+  });
+
+  it('logs repeated identical compatibility results only once', () => {
+    const compat: SessionEvent = { type: 'compat', compat: { ready: true, failedChecks: [] } };
+    const once = play([compat]);
+    expect(applyEvent(once, compat, T0)).toBe(once);
+    const changed = applyEvent(
+      once,
+      { type: 'compat', compat: { ready: false, failedChecks: ['Secure context'] } },
+      T0,
+    );
+    expect(changed.log.map((entry) => entry.text)).toEqual([
+      'Compatibility checks passed',
+      'Compatibility checks failed: Secure context',
+    ]);
   });
 });
