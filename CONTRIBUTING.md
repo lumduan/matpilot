@@ -1,0 +1,107 @@
+# Contributing to MatPilot
+
+Thank you for helping. MatPilot is pre-alpha, so expect things to move. Please read
+[docs/architecture.md](docs/architecture.md) and the [ADRs](docs/adr/) before larger changes.
+
+## Ground rules
+
+1. **English only.** All code, comments, identifiers, documentation, commit messages, issues, and
+   pull requests are written in English.
+2. **Cite Pybricks or test it on hardware.** Any claim about Pybricks behaviour (BLE protocol, UUIDs,
+   commands, firmware strings, MicroPython APIs, timing) must either:
+   - cite the upstream source with a permalink that contains a commit hash, for example
+     `https://github.com/pybricks/pybricks-micropython/blob/<commit>/lib/pbio/include/pbio/protocol.h#L24`;
+     or
+   - be verified on hardware, stating the hub, firmware version, browser, OS, and date.
+
+   Do not rely on memory, blog posts, or third-party tutorials. If the upstream source is missing or
+   ambiguous, say so in the pull request instead of guessing.
+
+3. **Browser-only and static.** No backend, API routes, Route Handlers, Server Actions, middleware,
+   or anything else that needs a server at runtime ([ADR 0001](docs/adr/0001-browser-only-web-bluetooth.md),
+   [ADR 0002](docs/adr/0002-static-export-no-server-features.md)).
+4. **No third-party requests at runtime.** No CDN scripts, remote fonts, analytics, or telemetry.
+   Self-host every asset.
+5. **Keep BLE and protocol code framework-agnostic.** Web Bluetooth and Pybricks protocol logic
+   lives in `src/lib/` as plain TypeScript. React code calls it through `src/hooks/`. ESLint
+   enforces both directions.
+6. **Millimetres** for every spatial unit ([ADR 0004](docs/adr/0004-millimetre-units.md)).
+
+## Setup
+
+You need Node.js 26.13.0 (see `.nvmrc`) and pnpm 12.16.1 (see `packageManager` in `package.json`).
+
+```sh
+nvm install
+npm install --global pnpm@12.16.1
+pnpm install
+pnpm dev
+```
+
+Web Bluetooth needs a secure context. `pnpm dev` serves `http://localhost:3000`, which counts as
+secure. To test from a phone or another computer, use an HTTPS address.
+
+Next.js collects anonymous CLI telemetry by default. This affects only your machine, not the app.
+To opt out: `pnpm exec next telemetry disable`, or set `NEXT_TELEMETRY_DISABLED=1` (CI does this).
+
+## Scripts
+
+| Script           | What it does                                                                |
+| ---------------- | --------------------------------------------------------------------------- |
+| `pnpm dev`       | Development server with hot reload                                          |
+| `pnpm build`     | Static export to `out/`, then `scripts/verify-export.mjs` checks the output |
+| `pnpm lint`      | ESLint (zero warnings allowed) and a Prettier format check                  |
+| `pnpm typecheck` | Generates Next.js route types, then runs `tsc --noEmit` (strict mode)       |
+| `pnpm test`      | Vitest unit tests                                                           |
+| `pnpm format`    | Formats every file with Prettier                                            |
+
+Before opening a pull request, run the same steps as CI:
+
+```sh
+pnpm install --frozen-lockfile && pnpm lint && pnpm typecheck && pnpm test && pnpm build
+```
+
+## Tests
+
+Put pure logic (parsing, decoding, classification, state machines) behind functions in `src/lib/`
+and unit-test it with Vitest next to the source (`*.test.ts`). Tests run in Node.js: mock browser
+globals such as `navigator` explicitly (`vi.stubGlobal`, or pass a fake object), and use fake GATT
+objects for BLE code. Never call a real device from a unit test.
+
+Hardware results go in [docs/compatibility.md](docs/compatibility.md), in the "Verified on hardware"
+column, with date, browser, OS, and firmware version.
+
+## Commit messages
+
+Use [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/):
+
+```
+<type>(<optional scope>): <summary in the imperative, lower case, no final period>
+
+<optional body: what and why>
+```
+
+Types: `feat`, `fix`, `docs`, `test`, `refactor`, `perf`, `build`, `ci`, `chore`, `style`, `revert`.
+Mark breaking changes with `!` after the type or a `BREAKING CHANGE:` footer.
+
+Examples:
+
+```
+feat(ble): read the hub capabilities characteristic
+fix(compat): treat a missing getAvailability() as a failed check
+docs(adr): record the decision to keep units in millimetres
+```
+
+## Dependencies
+
+Versions in `package.json` are pinned exactly. Upgrade deliberately, one tool at a time, and keep the
+lockfile committed. Note two intentional holds:
+
+- **TypeScript 6.x, not 7.x.** TypeScript 7 does not ship the JavaScript compiler API that
+  `typescript-eslint` needs (its peer range is `<6.1.0`).
+- **ESLint 9.x, not 10.x.** Several plugins that `eslint-config-next` depends on do not declare
+  ESLint 10 support yet.
+
+## License
+
+By contributing, you agree that your contributions are licensed under the [MIT License](LICENSE).

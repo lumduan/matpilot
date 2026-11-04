@@ -1,0 +1,58 @@
+MatPilot
+Copyright (c) 2026 Sarat Sonsuk
+Licensed under the MIT License. See LICENSE.
+
+This product includes constants and formats ported from the third-party
+software listed below.
+
+==============================================================================
+pybricks-micropython
+https://github.com/pybricks/pybricks-micropython
+Copyright (c) 2018-2026 The Pybricks Authors
+License: MIT (full text below)
+Source revision used: tag v4.0.1, commit 4104553405decb0384bcfb030fbfcb4b5a9854cc
+==============================================================================
+
+What MatPilot ports, and from where:
+
+  src/lib/pybricks/uuids.ts, src/lib/pybricks/uuids.test.ts
+    Bluetooth UUIDs of the Pybricks BLE protocol and the advertised service
+    UUID bytes, from:
+      lib/pbio/src/protocol/pybricks.c
+        (SPDX-License-Identifier: MIT; Copyright (c) 2021-2022 The Pybricks Authors)
+      lib/pbio/include/pbio/protocol.h
+        (SPDX-License-Identifier: MIT; Copyright (c) 2021-2023 The Pybricks Authors)
+      lib/pbio/drv/bluetooth/bluetooth_btstack.c
+        (SPDX-License-Identifier: MIT; Copyright (c) 2020-2026 The Pybricks Authors)
+
+  src/lib/pybricks/revision.ts, src/lib/pybricks/baseline.ts
+    The formats of the firmware version string and the protocol version
+    string, and the protocol version reported by firmware v4.0.1, from:
+      lib/pbio/include/pbio/version.h
+        (SPDX-License-Identifier: MIT; Copyright (c) 2019-2024 The Pybricks Authors)
+      lib/pbio/include/pbio/protocol.h
+
+The upstream LICENSE states that its MIT license applies only to files carrying
+the "SPDX-License-Identifier: MIT" header. Every file listed above carries it.
+
+MIT License
+
+Copyright (c) 2018-2026 The Pybricks Authors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

@@ -1,0 +1,59 @@
+import type { Metadata, Viewport } from 'next';
+import type { ReactNode } from 'react';
+import { SiteFooter } from '@/components/SiteFooter';
+import { PROJECT_NAME, PROJECT_STATUS } from '@/lib/project';
+import './globals.css';
+
+export const metadata: Metadata = {
+  title: PROJECT_NAME,
+  description:
+    'Browser-only block-based programming and control for LEGO SPIKE Prime hubs running Pybricks firmware.',
+  applicationName: PROJECT_NAME,
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  colorScheme: 'light dark',
+};
+
+/**
+ * Production builds carry a Content Security Policy that only allows this page's own origin.
+ * It enforces the "no runtime requests to third-party origins" rule in the browser itself.
+ * 'unsafe-inline' is required for scripts because a static export inlines Next.js bootstrap
+ * scripts and cannot use per-request nonces. Skipped in development, where Next.js needs eval
+ * and a WebSocket for hot reloading.
+ */
+const CONTENT_SECURITY_POLICY = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline'",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data:",
+  "font-src 'self'",
+  "connect-src 'self'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'none'",
+].join('; ');
+
+export default function RootLayout({ children }: { children: ReactNode }) {
+  return (
+    <html lang="en">
+      <head>
+        {process.env.NODE_ENV === 'production' && (
+          <meta httpEquiv="Content-Security-Policy" content={CONTENT_SECURITY_POLICY} />
+        )}
+      </head>
+      <body>
+        <header className="site-header">
+          <div className="container site-header-inner">
+            <span className="wordmark">{PROJECT_NAME}</span>
+            <span className="status-pill">{PROJECT_STATUS}</span>
+          </div>
+        </header>
+        {children}
+        <SiteFooter />
+      </body>
+    </html>
+  );
+}
