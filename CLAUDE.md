@@ -58,6 +58,10 @@ where the claim is made. The primary sources are:
   and `lib/pbio/src/protocol/`)
 - https://github.com/pybricks/pybricksdev (reference tooling)
 
+The protocol subset MatPilot uses is already documented, with citations, in
+[docs/protocol/pybricks-ble.md](docs/protocol/pybricks-ble.md). Extend that page (same commits, or
+re-cite everything) before code uses another command, event, or flag.
+
 A claim verified on hardware instead must say so, with hub, firmware version, browser, OS, and date.
 If the upstream source cannot be found or is ambiguous, **stop and report what is missing**. Do not
 guess, and do not rely on memory, blogs, or third-party tutorials. Ported constants also need an

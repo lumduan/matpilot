@@ -15,7 +15,7 @@ flowchart TD
         COMPAT["Compatibility check<br/>implemented"]
         BLOCKLY["Blockly editor<br/>planned"]
         CODEGEN["Python code generation<br/>with enforced safety rules<br/>planned"]
-        MPY["mpy-cross compiled to WebAssembly<br/>planned"]
+        MPY["mpy-cross, Pybricks WebAssembly build<br/>planned"]
         PROTO["Pybricks BLE protocol client<br/>read-only probe implemented<br/>upload, start, stop, stdout planned"]
         WEBBT["Web Bluetooth API<br/>provided by the browser"]
     end
@@ -58,11 +58,12 @@ Hub-direct gamepad path (planned)
    the hub code rules in [CLAUDE.md](../CLAUDE.md) (main loop in `try`/`finally` that stops every
    motor, `OSError` handling around controller reads, one config block for tuning constants, no
    hardcoded ports inside logic).
-3. **mpy-cross (WebAssembly):** the MicroPython cross-compiler, built to WebAssembly, turns the source
+3. **mpy-cross (WebAssembly):** the MicroPython cross-compiler, in Pybricks' published WebAssembly
+   build ([ADR 0006](adr/0006-adopt-pybricks-mpy-cross.md)), turns the source
    into `.mpy` bytecode in the browser. Its output must match `pybricksdev` byte for byte (golden
    tests).
 4. **Pybricks BLE protocol client:** uploads the program, starts and stops it, and streams stdout.
-   The protocol will be documented from upstream source first.
+   The protocol is documented, with citations, in [protocol/pybricks-ble.md](protocol/pybricks-ble.md).
 
 ### Hub-direct gamepad path (planned)
 
