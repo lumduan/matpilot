@@ -52,28 +52,28 @@ platform: [docs/compatibility.md](docs/compatibility.md).
 
 ## Quick start
 
-You need Node.js **26.13.0** (pinned in [`.nvmrc`](.nvmrc)) and pnpm **12.16.1** (pinned in the
-`packageManager` field of [`package.json`](package.json)).
+The project toolchain is Node.js **26.13.0** and pnpm **12.16.1**, and it runs in Docker, so you
+only need Docker with Compose ([ADR 0005](docs/adr/0005-containerised-toolchain.md)).
 
 ```sh
-nvm install                   # installs and selects the Node.js version in .nvmrc
-npm install --global pnpm@12.16.1
-pnpm install
-pnpm dev                      # development server on http://localhost:3000
-pnpm build                    # static site in out/
+docker compose up dev                     # development server on http://localhost:3300
+docker compose run --rm dev pnpm test     # any project script: lint, typecheck, test, build, format
+docker compose up --build preview         # production static build on http://localhost:3301
 ```
 
-`pnpm build` produces a static export in `out/`. Serve that folder with any static file server,
-over HTTPS or on `localhost`. For example:
+To get the static site as files, build the `export` target. It runs lint, typecheck, tests, and
+the build inside the container, then writes `out/` on the host:
 
 ```sh
-python3 -m http.server 8080 --directory out   # then open http://localhost:8080
+docker build --target export --output type=local,dest=out .
 ```
 
-`next start` is not used: there is no Node.js server at runtime.
+Serve `out/` with any static file server, over HTTPS or on `localhost`. `next start` is not used:
+there is no Node.js server at runtime.
 
-Other scripts: `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm format`. See
-[CONTRIBUTING.md](CONTRIBUTING.md).
+Without Docker, use the versions pinned in [`.nvmrc`](.nvmrc) and the `packageManager` field of
+[`package.json`](package.json): `nvm install`, `npm install --global pnpm@12.16.1`, `pnpm install`,
+then `pnpm dev` (port 3000) or `pnpm build`. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Documentation
 

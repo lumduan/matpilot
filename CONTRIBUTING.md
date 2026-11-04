@@ -29,17 +29,30 @@ Thank you for helping. MatPilot is pre-alpha, so expect things to move. Please r
 
 ## Setup
 
-You need Node.js 26.13.0 (see `.nvmrc`) and pnpm 12.16.1 (see `packageManager` in `package.json`).
+The toolchain (Node.js 26.13.0, pnpm 12.16.1) runs in Docker
+([ADR 0005](docs/adr/0005-containerised-toolchain.md)). You need Docker with Compose, nothing else.
 
 ```sh
-nvm install
-npm install --global pnpm@12.16.1
-pnpm install
-pnpm dev
+docker compose up dev                       # dev server with hot reload, http://localhost:3300
+docker compose run --rm dev pnpm <script>   # run any script below inside the container
+docker compose up --build preview           # production static build, http://localhost:3301
 ```
 
-Web Bluetooth needs a secure context. `pnpm dev` serves `http://localhost:3000`, which counts as
-secure. To test from a phone or another computer, use an HTTPS address.
+- The source tree is bind-mounted, so edits on the host reload the dev server. `node_modules` and
+  the pnpm store live in Docker volumes, and the container syncs them with the lockfile before
+  every command.
+- Containers run as the `node` user (uid 1000), so files they write (`.next/`, `out/`) belong to
+  uid 1000 on the host.
+- Ports bind to `127.0.0.1`. Change them with `MATPILOT_DEV_PORT` and `MATPILOT_PREVIEW_PORT`, and
+  the bind address with `MATPILOT_BIND`, in a `.env` file next to `compose.yaml`.
+- When you change the Node.js or pnpm version, change `Dockerfile`, `.nvmrc`, and
+  `packageManager` together. CI fails if they disagree.
+
+Without Docker: `nvm install` (reads `.nvmrc`), `npm install --global pnpm@12.16.1`,
+`pnpm install`, `pnpm dev`.
+
+Web Bluetooth needs a secure context. `http://localhost` counts as secure. To test from a phone or
+another computer, put the app behind an HTTPS address.
 
 Next.js collects anonymous CLI telemetry by default. This affects only your machine, not the app.
 To opt out: `pnpm exec next telemetry disable`, or set `NEXT_TELEMETRY_DISABLED=1` (CI does this).
