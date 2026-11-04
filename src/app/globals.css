@@ -337,6 +337,14 @@ code {
   color: var(--muted);
 }
 
+.step .step-hint {
+  margin: 0 0 0.4rem;
+  padding: 0.35rem 0.6rem;
+  border-left: 3px solid var(--accent);
+  color: var(--text);
+  font-weight: 600;
+}
+
 .report-text {
   display: block;
   box-sizing: border-box;

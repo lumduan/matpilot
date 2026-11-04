@@ -79,8 +79,10 @@ For a **supported** row:
 
 1. Open the app over HTTPS (or `localhost`). Every compatibility check shows **Pass** (the browser
    check shows **Info**), and "Connect to hub" is enabled.
-2. With the hub on, click "Connect to hub", then click "Cancel" in the browser's device picker. The
-   app shows the neutral **No hub selected** state.
+2. With the hub on, click "Connect to hub". When the browser's device picker opens, do not choose
+   the hub: click "Cancel". The app shows the neutral **No hub selected** state. (If a hub is
+   already connected, the page first points to step 5; do step 2 after that, starting with
+   "Disconnect".)
 3. Click "Connect to hub" again. The browser's device picker lists only Pybricks hubs. (The page
    cannot see the picker, so the tester answers this one.)
 4. Select the hub. The app shows its name, firmware revision string, and protocol version string.

@@ -5,9 +5,11 @@ import { useHardwareTest } from '@/hooks/useHardwareTest';
 import { SUPPORT_STATEMENT } from '@/lib/compat';
 import {
   compatibilityCell,
+  currentStepId,
   deriveSteps,
   describeBrowser,
   describeOs,
+  liveHint,
   summarize,
   type StepResult,
   type StepStatus,
@@ -45,7 +47,7 @@ export function HardwareTestApp() {
   const ready = session.compat?.ready === true;
   const busy = probeState.status === 'requesting';
   const linked = probeState.status === 'connecting' || probeState.status === 'connected';
-  const currentStep = steps.find((step) => step.status !== 'pass')?.id;
+  const currentStep = currentStepId(steps, probeState.status);
 
   const onCopy = () => {
     void test.copyReport().then((copied) => setCopyState(copied ? 'copied' : 'failed'));
@@ -111,6 +113,7 @@ export function HardwareTestApp() {
               key={step.id}
               step={step}
               current={step.id === currentStep}
+              hint={step.id === currentStep ? liveHint(step.id, probeState.status) : null}
               onAnswer={test.answerPicker}
             />
           ))}
@@ -184,10 +187,12 @@ export function HardwareTestApp() {
 function StepItem({
   step,
   current,
+  hint,
   onAnswer,
 }: {
   step: StepResult;
   current: boolean;
+  hint: string | null;
   onAnswer: (answer: 'yes' | 'no') => void;
 }) {
   return (
@@ -203,6 +208,11 @@ function StepItem({
           {step.number}. {step.title}
         </h3>
         <p>{step.detail}</p>
+        {hint && (
+          <p className="step-hint" data-testid="step-hint">
+            {hint}
+          </p>
+        )}
         {step.id === 'picker' && step.status !== 'waiting' && (
           <div className="button-row">
             <button type="button" className="button" onClick={() => onAnswer('yes')}>

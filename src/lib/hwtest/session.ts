@@ -126,6 +126,8 @@ function reduce(
     case 'environment':
       return { changes: { environment: event.environment } };
     case 'compat':
+      // A re-run with the same outcome (a reload, "Run checks again") changes nothing.
+      if (sameCompat(session.compat, event.compat)) return null;
       return {
         changes: { compat: event.compat },
         log: event.compat.ready
@@ -206,6 +208,15 @@ function reduceDisconnect(
     case 'user':
       return { changes: {}, log: 'Disconnected by the tester (Disconnect button)' };
   }
+}
+
+function sameCompat(a: CompatSummary | null, b: CompatSummary): boolean {
+  return (
+    a !== null &&
+    a.ready === b.ready &&
+    a.failedChecks.length === b.failedChecks.length &&
+    a.failedChecks.every((title, index) => title === b.failedChecks[index])
+  );
 }
 
 function countUncaught(counts: UncaughtCounts, kind: UncaughtKind): UncaughtCounts {
@@ -323,7 +334,8 @@ function cancelStep(session: HardwareTestSession): StepResult {
     : {
         ...base,
         status: 'waiting',
-        detail: 'Click Connect to hub, then click Cancel in the browser’s device picker.',
+        detail:
+          'Click Connect to hub. When the browser’s list of devices opens, do not choose the hub: click Cancel.',
       };
 }
 
@@ -411,6 +423,44 @@ function hubOffStep(session: HardwareTestSession): StepResult {
         status: 'fail',
         detail: `The app showed “Hub disconnected”, but ${exceptions} uncaught exception${exceptions === 1 ? ' was' : 's were'} recorded during the test.`,
       };
+}
+
+// ---------------------------------------------------------------------------------------------
+// Live guidance: which step to do now, given the hub probe's current status
+// ---------------------------------------------------------------------------------------------
+
+export type ProbeStatus = HubProbeState['status'];
+
+function isLinked(status: ProbeStatus): boolean {
+  return status === 'connecting' || status === 'connected';
+}
+
+/**
+ * The step the tester should do next. Usually the first step that has not passed; but while a hub
+ * is connected, step 2 (which needs the picker) cannot be done, so step 5 (turn the hub off) comes
+ * first.
+ */
+export function currentStepId(
+  steps: readonly StepResult[],
+  probeStatus: ProbeStatus,
+): StepId | undefined {
+  const open = steps.filter((step) => step.status !== 'pass');
+  if (isLinked(probeStatus)) {
+    const hubOff = open.find((step) => step.id === 'hub-off');
+    if (hubOff) return hubOff.id;
+  }
+  return open[0]?.id;
+}
+
+/** Extra instruction for a step that depends on the live connection, or `null`. */
+export function liveHint(stepId: StepId, probeStatus: ProbeStatus): string | null {
+  if (stepId === 'cancel' && isLinked(probeStatus)) {
+    return 'You are connected to the hub right now. Click Disconnect first, then do this step.';
+  }
+  if (stepId === 'hub-off' && probeStatus === 'connected') {
+    return 'Connected. Now turn the hub off with its button.';
+  }
+  return null;
 }
 
 export interface TestSummary {
