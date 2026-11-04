@@ -58,7 +58,8 @@ function hubLabel(name: string | null): string {
   return name ? `“${name}”` : 'the hub';
 }
 
-function ProbeStatus({ state }: { state: HubProbeState }) {
+/** Human-readable hub probe state. Also used by the hardware test page. */
+export function ProbeStatus({ state }: { state: HubProbeState }) {
   switch (state.status) {
     case 'idle':
       return (

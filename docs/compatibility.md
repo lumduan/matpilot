@@ -66,21 +66,37 @@ that browser and platform, with a real SPIKE Prime hub running Pybricks firmware
 browser version, OS version, and firmware version in the cell, for example
 `Verified 2026-11-10 (Chrome 142, macOS 26.1, Pybricks 4.0.1)`.
 
+The easiest way is the **hardware test page**, `/hardware-test` (for example
+`http://localhost:3300/hardware-test`, or the same path on any HTTPS address that serves the app).
+It walks through the steps below in this order, works out every result except step 3 by itself,
+counts uncaught exceptions and Content Security Policy violations, and produces a plain-text report
+that ends with the cell text. Results stay in that browser (local storage) until you click
+**Start over**; nothing is sent anywhere. The report includes the hub's name, so remove it before
+posting a report publicly. Its logic lives in `src/lib/hwtest/session.ts`: change the steps there
+and here together.
+
 For a **supported** row:
 
 1. Open the app over HTTPS (or `localhost`). Every compatibility check shows **Pass** (the browser
    check shows **Info**), and "Connect to hub" is enabled.
-2. With the hub on, click "Connect to hub". The browser's device picker lists only Pybricks hubs.
-3. Select the hub. The app shows its name, firmware revision string, and protocol version string.
-4. Connect again and click "Cancel" in the picker. The app shows the neutral **No hub selected**
-   state.
-5. While connected, turn the hub off. The app shows **Hub disconnected**, and the browser console
-   shows no uncaught exception.
+2. With the hub on, click "Connect to hub", then click "Cancel" in the browser's device picker. The
+   app shows the neutral **No hub selected** state.
+3. Click "Connect to hub" again. The browser's device picker lists only Pybricks hubs. (The page
+   cannot see the picker, so the tester answers this one.)
+4. Select the hub. The app shows its name, firmware revision string, and protocol version string.
+5. While connected, turn the hub off with its button (do not click "Disconnect"). The app shows
+   **Hub disconnected**, and no uncaught exception occurs.
 
 For an **unsupported** row: open the app. The unsupported-browser message appears, naming the
 supported browsers and platforms, and "Connect to hub" is disabled.
 
+A non-zero count of Content Security Policy violations in the report means something outside the
+app added a script or style to the page, typically a proxy or CDN (for example Cloudflare Web
+Analytics or Rocket Loader). Turn that feature off for the app's hostname: MatPilot loads nothing
+from other origins.
+
 ## Keeping this file current
 
 The supported and unsupported lists also live in `README.md` (copied matrix) and
-`src/lib/compat/support.ts` (the message shown in the app). Change all three together.
+`src/lib/compat/support.ts` (the message shown in the app). Change all three together. The
+hardware test steps above also live in `src/lib/hwtest/session.ts`.

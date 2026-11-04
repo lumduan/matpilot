@@ -46,7 +46,7 @@ flowchart TD
 
 | Milestone                       | Status     | What it is                                                                                                                                                            | Blocker                                                                                                              |
 | ------------------------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| **0 · Bootstrap**               | 🟡 ACTIVE  | Static Next.js app, Docker toolchain, CI, docs, ADRs, compatibility check, read-only hub probe                                                                        | Hardware verification in Chrome/Edge with a real hub ([checklist](compatibility.md#how-to-verify-a-row-on-hardware)) |
+| **0 · Bootstrap**               | 🟡 ACTIVE  | Static Next.js app, Docker toolchain, CI, docs, ADRs, compatibility check, read-only hub probe, hardware test page                                                    | Hardware verification in Chrome/Edge with a real hub ([checklist](compatibility.md#how-to-verify-a-row-on-hardware)) |
 | **1 · Pybricks protocol docs**  | 🔵 READY   | Document the Pybricks BLE protocol MatPilot needs (commands, events, program download, stdout), every statement cited to an upstream commit                           | None                                                                                                                 |
 | **2 · mpy-cross WebAssembly**   | 🔵 READY   | Build MicroPython's `mpy-cross` to WebAssembly; golden tests prove byte-for-byte identical output to `pybricksdev` for the same source                                | None                                                                                                                 |
 | **3 · BLE transport**           | ⬜ BLOCKED | Upload a compiled program, start it, stop it, and stream its stdout, in `src/lib/ble/`                                                                                | Needs **both** 1 (protocol details) **and** 2 (the payload it uploads)                                               |
@@ -67,8 +67,10 @@ everything that runs code on the hub waits for both the protocol documentation (
 ### 0 · Bootstrap (this release)
 
 Repository, CI, documentation, ADRs, and the first feature: a compatibility check and a read-only
-hub probe that reads the device name, firmware revision, and protocol version. Remaining: verify the
-acceptance checks on hardware and record the results in [compatibility.md](compatibility.md).
+hub probe that reads the device name, firmware revision, and protocol version. A hardware test page
+(`/hardware-test`) guides the hardware checks and produces a report. Remaining: run it with a real
+hub on the supported browsers and platforms, and record the results in
+[compatibility.md](compatibility.md).
 
 ### 1 · Pybricks protocol documentation
 

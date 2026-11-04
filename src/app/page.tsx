@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { MatPilotApp } from '@/components/MatPilotApp';
 
 export default function HomePage() {
@@ -13,6 +14,10 @@ export default function HomePage() {
         <p className="muted">
           This early build checks whether your browser can talk to a hub and reads basic information
           from one. Block programming comes later.
+        </p>
+        <p className="muted">
+          Testing with a real hub? The <Link href="/hardware-test">hardware test</Link> walks
+          through each check and produces a report for the compatibility table.
         </p>
       </section>
 

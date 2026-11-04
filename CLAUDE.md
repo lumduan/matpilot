@@ -70,6 +70,8 @@ entry in [NOTICE](NOTICE).
   - `src/lib/ble/`: Bluetooth transport and the hub probe
   - `src/lib/pybricks/`: UUIDs (single source of truth: `uuids.ts`), version parsing, baselines
   - `src/lib/compat/`: browser compatibility checks
+  - `src/lib/hwtest/`: the hardware test page's session, steps, and report (the steps mirror
+    docs/compatibility.md; it reuses the read-only hub probe and adds no Bluetooth code)
 - `src/hooks/`: the only React code that creates or calls `src/lib/` objects with side effects
   (the hub probe, the compatibility check). Components may import types and pure helpers.
 - `src/components/`, `src/app/`: UI only. They must not touch `navigator.bluetooth` (ESLint
