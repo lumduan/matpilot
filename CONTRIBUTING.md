@@ -102,6 +102,13 @@ lockfile committed. Note two intentional holds:
 - **ESLint 9.x, not 10.x.** Several plugins that `eslint-config-next` depends on do not declare
   ESLint 10 support yet.
 
+pnpm 12 rejects packages published less than 24 hours ago (`minimumReleaseAge`). Prefer waiting a
+day before adopting a new release. If a fresh release is genuinely needed, list each affected
+package **with its exact version** under `minimumReleaseAgeExclude` in `pnpm-workspace.yaml`,
+together with the date after which the entry can be removed. A warm local pnpm store can hide this
+check, so test with an empty store (`pnpm install --frozen-lockfile --store-dir <empty dir>`)
+before pushing.
+
 ## License
 
 By contributing, you agree that your contributions are licensed under the [MIT License](LICENSE).
