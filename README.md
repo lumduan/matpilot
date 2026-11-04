@@ -33,20 +33,20 @@ Web Bluetooth is available only in Chromium-based browsers, so MatPilot supports
 Microsoft Edge on Windows, macOS, ChromeOS, and Android. Details and the reason for each unsupported
 platform: [docs/compatibility.md](docs/compatibility.md).
 
-| Browser                                                    | Platform          | Status        | Verified on hardware |
-| ---------------------------------------------------------- | ----------------- | ------------- | -------------------- |
-| Google Chrome                                              | Windows 10 and 11 | Supported     | Not yet verified     |
-| Microsoft Edge                                             | Windows 10 and 11 | Supported     | Not yet verified     |
-| Google Chrome                                              | macOS             | Supported     | Not yet verified     |
-| Microsoft Edge                                             | macOS             | Supported     | Not yet verified     |
-| Google Chrome                                              | ChromeOS          | Supported     | Not yet verified     |
-| Google Chrome                                              | Android           | Supported     | Not yet verified     |
-| Microsoft Edge                                             | Android           | Supported     | Not yet verified     |
-| Firefox                                                    | All platforms     | Not supported | Not yet verified     |
-| Safari                                                     | macOS             | Not supported | Not yet verified     |
-| Any browser (Safari, Chrome, Edge, Firefox, ...)           | iOS and iPadOS    | Not supported | Not yet verified     |
-| Google Chrome, Microsoft Edge                              | Linux             | Not supported | Not yet verified     |
-| Other Chromium-based browsers (Brave, Opera, Vivaldi, ...) | Any               | Untested      | Not yet verified     |
+| Browser                                                    | Platform          | Status        | Verified on hardware                                           |
+| ---------------------------------------------------------- | ----------------- | ------------- | -------------------------------------------------------------- |
+| Google Chrome                                              | Windows 10 and 11 | Supported     | Not yet verified                                               |
+| Microsoft Edge                                             | Windows 10 and 11 | Supported     | Not yet verified                                               |
+| Google Chrome                                              | macOS             | Supported     | Verified 2026-11-04 (Chrome 156, macOS 27.0.1, Pybricks 4.0.1) |
+| Microsoft Edge                                             | macOS             | Supported     | Not yet verified                                               |
+| Google Chrome                                              | ChromeOS          | Supported     | Not yet verified                                               |
+| Google Chrome                                              | Android           | Supported     | Not yet verified                                               |
+| Microsoft Edge                                             | Android           | Supported     | Not yet verified                                               |
+| Firefox                                                    | All platforms     | Not supported | Not yet verified                                               |
+| Safari                                                     | macOS             | Not supported | Not yet verified                                               |
+| Any browser (Safari, Chrome, Edge, Firefox, ...)           | iOS and iPadOS    | Not supported | Not yet verified                                               |
+| Google Chrome, Microsoft Edge                              | Linux             | Not supported | Not yet verified                                               |
+| Other Chromium-based browsers (Brave, Opera, Vivaldi, ...) | Any               | Untested      | Not yet verified                                               |
 
 > [!IMPORTANT]
 > Web Bluetooth only works in a **secure context**: the page must be served over **HTTPS**, or from

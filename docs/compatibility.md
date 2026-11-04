@@ -11,23 +11,25 @@ support policy and its hardware test record.
 
 ## Support matrix
 
-| Browser                                                    | Platform          | Status        | Verified on hardware |
-| ---------------------------------------------------------- | ----------------- | ------------- | -------------------- |
-| Google Chrome                                              | Windows 10 and 11 | Supported     | Not yet verified     |
-| Microsoft Edge                                             | Windows 10 and 11 | Supported     | Not yet verified     |
-| Google Chrome                                              | macOS             | Supported     | Not yet verified     |
-| Microsoft Edge                                             | macOS             | Supported     | Not yet verified     |
-| Google Chrome                                              | ChromeOS          | Supported     | Not yet verified     |
-| Google Chrome                                              | Android           | Supported     | Not yet verified     |
-| Microsoft Edge                                             | Android           | Supported     | Not yet verified     |
-| Firefox                                                    | All platforms     | Not supported | Not yet verified     |
-| Safari                                                     | macOS             | Not supported | Not yet verified     |
-| Any browser (Safari, Chrome, Edge, Firefox, ...)           | iOS and iPadOS    | Not supported | Not yet verified     |
-| Google Chrome, Microsoft Edge                              | Linux             | Not supported | Not yet verified     |
-| Other Chromium-based browsers (Brave, Opera, Vivaldi, ...) | Any               | Untested      | Not yet verified     |
+| Browser                                                    | Platform          | Status        | Verified on hardware                                           |
+| ---------------------------------------------------------- | ----------------- | ------------- | -------------------------------------------------------------- |
+| Google Chrome                                              | Windows 10 and 11 | Supported     | Not yet verified                                               |
+| Microsoft Edge                                             | Windows 10 and 11 | Supported     | Not yet verified                                               |
+| Google Chrome                                              | macOS             | Supported     | Verified 2026-11-04 (Chrome 156, macOS 27.0.1, Pybricks 4.0.1) |
+| Microsoft Edge                                             | macOS             | Supported     | Not yet verified                                               |
+| Google Chrome                                              | ChromeOS          | Supported     | Not yet verified                                               |
+| Google Chrome                                              | Android           | Supported     | Not yet verified                                               |
+| Microsoft Edge                                             | Android           | Supported     | Not yet verified                                               |
+| Firefox                                                    | All platforms     | Not supported | Not yet verified                                               |
+| Safari                                                     | macOS             | Not supported | Not yet verified                                               |
+| Any browser (Safari, Chrome, Edge, Firefox, ...)           | iOS and iPadOS    | Not supported | Not yet verified                                               |
+| Google Chrome, Microsoft Edge                              | Linux             | Not supported | Not yet verified                                               |
+| Other Chromium-based browsers (Brave, Opera, Vivaldi, ...) | Any               | Untested      | Not yet verified                                               |
 
 **Hub and firmware:** LEGO SPIKE Prime running Pybricks firmware v4.0.1 is the tested baseline (not
-a hard requirement). Status: **not yet verified on hardware.**
+a hard requirement). Status: **verified on hardware for one row** (Google Chrome on macOS,
+2026-11-04); the other rows are not yet verified. Each run is listed under
+[Hardware test record](#hardware-test-record).
 
 On Windows, Chrome's Web Bluetooth needs Windows 10 version 1703 (Creators Update) or later
 ([Web Bluetooth CG implementation status][impl-status]).
@@ -96,6 +98,25 @@ A non-zero count of Content Security Policy violations in the report means somet
 app added a script or style to the page, typically a proxy or CDN (for example Cloudflare Web
 Analytics or Rocket Loader). Turn that feature off for the app's hostname: MatPilot loads nothing
 from other origins.
+
+## Hardware test record
+
+One line per run that verified a row. Hub names are left out on purpose (the hardware test report
+includes them, but they are personal).
+
+| Date       | Browser    | OS           | Hub         | Firmware | Protocol | Result              |
+| ---------- | ---------- | ------------ | ----------- | -------- | -------- | ------------------- |
+| 2026-11-04 | Chrome 156 | macOS 27.0.1 | SPIKE Prime | 4.0.1    | 1.5.0    | 5 of 5 steps passed |
+
+Notes on the 2026-11-04 run, made with `/hardware-test` over an HTTPS tunnel:
+
+- **Uncaught exceptions: none.** The first attempt surfaced two hosting and page issues, both
+  fixed before the passing run:
+  - The tunnel's CDN (Cloudflare Web Analytics) injected a script that the app's Content Security
+    Policy blocked. That feature was turned off for the site.
+  - The page pointed at step 2 while a hub was connected. Fixed in pull request #6.
+- **Hub name:** the hub reported its name cut to 15 characters. That is the firmware's limit,
+  documented with citations on `HubInfo.name` in `src/lib/ble/hub-probe.ts`.
 
 ## Keeping this file current
 
