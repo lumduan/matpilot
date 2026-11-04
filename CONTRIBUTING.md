@@ -42,7 +42,10 @@ docker compose up --build preview           # production static build, http://lo
   lives in a Docker volume, with pnpm's package store inside it, and the container syncs it with
   the lockfile before every command.
 - Containers run as the `node` user (uid 1000), so files they write (`.next/`, `out/`) belong to
-  uid 1000 on the host.
+  uid 1000 on the host. One exception: on Linux, Docker creates the `node_modules/` mount point in
+  your checkout as an **empty directory owned by root**. It stays empty because the real
+  `node_modules` lives in the volume, and git ignores it. Before a native (non-Docker) install,
+  remove it with `rmdir node_modules`; no `sudo` is needed.
 - Ports bind to `127.0.0.1`. Change them with `MATPILOT_DEV_PORT` and `MATPILOT_PREVIEW_PORT`, and
   the bind address with `MATPILOT_BIND`, in a `.env` file next to `compose.yaml`.
 - When you change the Node.js or pnpm version, change `Dockerfile`, `.nvmrc`, and

@@ -18,6 +18,7 @@ services:
       target: toolchain
     image: matpilot-toolchain:local
     # The node user (uid 1000) owns files written to the bind mount, such as .next/ and out/.
+    # Exception: Docker itself creates the empty node_modules/ mount point on the host as root.
     user: node
     working_dir: /app
     entrypoint: ['/app/docker/entrypoint.sh']
