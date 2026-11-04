@@ -26,7 +26,9 @@ export const viewport: Viewport = {
  */
 const CONTENT_SECURITY_POLICY = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline'",
+  // 'wasm-unsafe-eval' lets the page compile WebAssembly (the mpy-cross compiler, ADR 0006). It
+  // does not allow JavaScript eval().
+  "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data:",
   "font-src 'self'",

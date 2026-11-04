@@ -118,6 +118,39 @@ Notes on the 2026-11-04 run, made with `/hardware-test` over an HTTPS tunnel:
 - **Hub name:** the hub reported its name cut to 15 characters. That is the firmware's limit,
   documented with citations on `HubInfo.name` in `src/lib/ble/hub-probe.ts`.
 
+## Program and Monitor checks (milestone 3)
+
+These checks use the **Program & Monitor** page (`/program`) over HTTPS, with the bench layout:
+
+| Port | Device            |
+| ---- | ----------------- |
+| A    | L-motor           |
+| B    | L-motor           |
+| C    | M-motor           |
+| D    | Color Sensor      |
+| E    | Ultrasonic Sensor |
+| F    | Force Sensor      |
+
+Use no robot: the motors lie loose on the desk.
+
+1. Connect. The page shows the hub name and firmware.
+2. **Hello monitor** example: Run. The monitor shows `count: 0` to `count: 19` and then "Program
+   stopped.", and the plotter draws `count`.
+3. **Plot a motor angle (port A)**: Run, then turn motor A by hand. The angle moves in the plotter.
+   Press **Stop**: the program stops and motor A is released.
+4. **Spin a motor for 3 seconds (port A)**: Run. Motor A turns for about 3 s and stops by itself.
+   The plotter shows angle and speed.
+5. **Plot distance (port E)**: Run, and move a hand towards the sensor. The distance (mm) falls.
+6. **Colour reflection and force (ports D, F)**: Run, then cover the colour sensor and press the
+   force sensor. Both lines react.
+7. Edit a program to contain a syntax error and Run. The page shows the error and its line, and
+   nothing is sent to the hub.
+8. While a program runs, click **Disconnect**. The program stops before the link closes.
+9. While a program runs, turn Bluetooth off on the computer, or move out of range. The monitor
+   says that the program keeps running on the hub. The hub's centre button stops it.
+
+Record the results in the hardware test record above, with the date, browser, OS and firmware.
+
 ## Keeping this file current
 
 The supported and unsupported lists also live in `README.md` (copied matrix) and

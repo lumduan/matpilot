@@ -15,8 +15,8 @@ flowchart TD
         COMPAT["Compatibility check<br/>implemented"]
         BLOCKLY["Blockly editor<br/>planned"]
         CODEGEN["Python code generation<br/>with enforced safety rules<br/>planned"]
-        MPY["mpy-cross, Pybricks WebAssembly build<br/>planned"]
-        PROTO["Pybricks BLE protocol client<br/>read-only probe implemented<br/>upload, start, stop, stdout planned"]
+        MPY["mpy-cross, Pybricks WebAssembly build<br/>implemented"]
+        PROTO["Pybricks BLE protocol client<br/>upload, start, stop, stdout implemented"]
         WEBBT["Web Bluetooth API<br/>provided by the browser"]
     end
 
@@ -40,9 +40,9 @@ The same layers as text, top to bottom:
 Browser (static files, no server)
   Blockly editor ............................ planned
     -> Python code generation ............... planned
-      -> mpy-cross (WebAssembly) ............ planned
-        -> Pybricks BLE protocol client ..... read-only probe implemented;
-           (src/lib/ble, src/lib/pybricks)    upload/start/stop/stdout planned
+      -> mpy-cross (WebAssembly) ............ implemented (ADR 0006)
+        -> Pybricks BLE protocol client ..... implemented: probe (read-only) and
+           (src/lib/ble, src/lib/pybricks)    connection (upload/start/stop/stdout)
           -> Web Bluetooth (browser API)
             -> LEGO SPIKE Prime hub (Pybricks firmware)
 
@@ -74,15 +74,18 @@ telemetry, but it is never in the control loop.
 
 ## What exists today
 
-| Component           | Location                      | Notes                                                              |
-| ------------------- | ----------------------------- | ------------------------------------------------------------------ |
-| UI shell            | `src/app/`, `src/components/` | Static pages `/` and `/hardware-test`; React client components     |
-| React bindings      | `src/hooks/`                  | The only place React touches `src/lib/`                            |
-| Compatibility check | `src/lib/compat/`             | Pure evaluation plus a collector for browser globals               |
-| Hub probe           | `src/lib/ble/`                | Framework-agnostic state machine; read-only by its types           |
-| Hardware test       | `src/lib/hwtest/`             | Session recorder, step logic, and plain-text report; no new BLE    |
-| Pybricks constants  | `src/lib/pybricks/`           | UUIDs and version parsing, each cited to an upstream commit        |
-| Export guard        | `scripts/verify-export.mjs`   | Fails the build without `out/index.html` or with third-party loads |
+| Component           | Location                                 | Notes                                                                                                          |
+| ------------------- | ---------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| UI shell            | `src/app/`, `src/components/`            | Static pages `/` and `/hardware-test`; React client components                                                 |
+| React bindings      | `src/hooks/`                             | The only place React touches `src/lib/`                                                                        |
+| Compatibility check | `src/lib/compat/`                        | Pure evaluation plus a collector for browser globals                                                           |
+| Hub probe           | `src/lib/ble/`                           | Framework-agnostic state machine; read-only by its types                                                       |
+| Hardware test       | `src/lib/hwtest/`                        | Session recorder, step logic, and plain-text report; no new BLE                                                |
+| Hub connection      | `src/lib/ble/hub-connection.ts`          | Upload, start, stop, stdin, stdout; the only module that writes ([ADR 0007](adr/0007-ble-transport-writes.md)) |
+| Compiler            | `src/lib/pybricks/compiler.ts`, `mpy.ts` | Pybricks' mpy-cross WebAssembly build, self-hosted ([ADR 0006](adr/0006-adopt-pybricks-mpy-cross.md))          |
+| Monitor and plotter | `src/lib/monitor/`                       | Stream decoding, bounded log, Arduino-style plot parsing                                                       |
+| Pybricks constants  | `src/lib/pybricks/`                      | UUIDs and version parsing, each cited to an upstream commit                                                    |
+| Export guard        | `scripts/verify-export.mjs`              | Fails the build without `out/index.html` or with third-party loads                                             |
 
 ### Hub probe flow
 
@@ -114,3 +117,5 @@ does not compile.
 | UI does not call Web Bluetooth directly | ESLint `no-restricted-properties` on `navigator.bluetooth` in `src/app`, `src/components`, `src/hooks`                       |
 | `src/lib/` stays framework-agnostic     | ESLint `no-restricted-imports` bans React and Next.js in `src/lib/`                                                          |
 | Hub probe is read-only                  | GATT types expose only `readValue()`; unit tests assert no writes                                                            |
+| One module writes to the hub            | `HubConnection` only; unit tests check write order, chunk size, one write in flight, and STOP before disconnect              |
+| WebAssembly only from this site         | CSP `script-src` adds `'wasm-unsafe-eval'` (no JS eval); `verify-export.mjs` requires `out/vendor/mpy-cross-v6.wasm`         |

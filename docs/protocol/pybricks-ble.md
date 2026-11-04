@@ -156,6 +156,13 @@ write **with response**.
 7. stop at any time: STOP_USER_PROGRAM
 ```
 
+**What stops a program.** The firmware stops a running program only on the STOP command, the stop
+button, or shutdown ([FW lib/pbio/sys/program_stop.c#L73-L88][fw-stop]). On SPIKE Prime the stop
+button is the centre button ([FW lib/pbio/platform/prime_hub/pbsysconfig.h#L12][fw-stop-button]),
+and a program can change or disable it ([FW program_stop.c#L46-L53][fw-stop-set]). **Losing the
+Bluetooth connection does not stop the program.** MatPilot's write design follows from this
+([ADR 0007](../adr/0007-ble-transport-writes.md)).
+
 Stdin is written as WRITE_STDIN chunks of at most `max_write_size - 1` bytes
 ([DEV connections/pybricks.py#L378-L412][dev-stdin]).
 
@@ -208,3 +215,6 @@ firmware baseline moves. Re-cite every link at the new commit; do not mix versio
 [fw-xbox]: https://github.com/pybricks/pybricks-micropython/blob/4104553405decb0384bcfb030fbfcb4b5a9854cc/pybricks/iodevices/pb_module_iodevices.c#L92
 [fw-xbox-prime]: https://github.com/pybricks/pybricks-micropython/blob/4104553405decb0384bcfb030fbfcb4b5a9854cc/bricks/primehub/mpconfigport.h#L41
 [fw-appdata]: https://github.com/pybricks/pybricks-micropython/blob/4104553405decb0384bcfb030fbfcb4b5a9854cc/pybricks/tools/pb_module_tools.c#L305
+[fw-stop]: https://github.com/pybricks/pybricks-micropython/blob/4104553405decb0384bcfb030fbfcb4b5a9854cc/lib/pbio/sys/program_stop.c#L73-L88
+[fw-stop-button]: https://github.com/pybricks/pybricks-micropython/blob/4104553405decb0384bcfb030fbfcb4b5a9854cc/lib/pbio/platform/prime_hub/pbsysconfig.h#L12
+[fw-stop-set]: https://github.com/pybricks/pybricks-micropython/blob/4104553405decb0384bcfb030fbfcb4b5a9854cc/lib/pbio/sys/program_stop.c#L46-L53
