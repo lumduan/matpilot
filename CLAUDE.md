@@ -74,6 +74,8 @@ entry in [NOTICE](NOTICE).
   - `src/lib/ble/`: Bluetooth transport and the hub probe
   - `src/lib/pybricks/`: UUIDs (single source of truth: `uuids.ts`), version parsing, baselines
   - `src/lib/compat/`: browser compatibility checks
+  - `src/lib/monitor/`: stdout line splitting, the monitor log, and the plotter's parser and scale
+  - `src/lib/program/`: example programs for the Program and Monitor page (each cited)
   - `src/lib/hwtest/`: the hardware test page's session, steps, and report (the steps mirror
     docs/compatibility.md; it reuses the read-only hub probe and adds no Bluetooth code)
 - `src/hooks/`: the only React code that creates or calls `src/lib/` objects with side effects
@@ -82,8 +84,10 @@ entry in [NOTICE](NOTICE).
   enforces this).
 - Pure logic goes behind functions with Vitest unit tests next to the source (`*.test.ts`). Mock
   `navigator` and GATT objects; never use real devices in unit tests.
-- The hub probe is **read-only**. Do not add GATT writes or `startNotifications()` to it. Writing to
-  the hub belongs to the BLE transport milestone and needs its own design.
+- The hub probe is **read-only**. Do not add GATT writes or `startNotifications()` to it. Only
+  `src/lib/ble/hub-connection.ts` writes to the hub, following
+  [ADR 0007](docs/adr/0007-ble-transport-writes.md): writes run one at a time, and every exit path
+  sends STOP first. Extend the protocol page before using another command.
 
 ## Hub code rules (MicroPython programs under `hub/`)
 

@@ -12,6 +12,7 @@ export type ProbeErrorKind =
   | 'blocked'
   | 'connect-failed'
   | 'read-failed'
+  | 'unsupported-firmware'
   | 'unexpected';
 
 export interface ProbeError {
@@ -26,7 +27,19 @@ export type RequestDeviceOutcome =
   { readonly kind: 'cancelled' } | { readonly kind: 'error'; readonly error: ProbeError };
 
 /** Which GATT step was running when an error happened. */
-export type GattStage = 'connect' | 'read-firmware-revision' | 'read-software-revision';
+export type GattStage =
+  | 'connect'
+  | 'read-firmware-revision'
+  | 'read-software-revision'
+  | 'read-capabilities'
+  | 'start-notifications';
+
+const STAGE_SUBJECT: Record<Exclude<GattStage, 'connect'>, string> = {
+  'read-firmware-revision': 'firmware revision',
+  'read-software-revision': 'protocol version',
+  'read-capabilities': 'Pybricks hub capabilities',
+  'start-notifications': 'Pybricks event notifications',
+};
 
 export function errorName(error: unknown): string | null {
   if (typeof error === 'object' && error !== null && 'name' in error) {
@@ -124,7 +137,7 @@ export function describeGattError(error: unknown, stage: GattStage): ProbeError 
       detail,
     };
   }
-  const what = stage === 'read-firmware-revision' ? 'firmware revision' : 'protocol version';
+  const what = STAGE_SUBJECT[stage];
   return {
     kind: 'read-failed',
     title: 'Could not read hub information',
@@ -133,5 +146,15 @@ export function describeGattError(error: unknown, stage: GattStage): ProbeError 
         ? `The hub does not expose its ${what} in the Device Information service. It may not be running Pybricks firmware.`
         : `Connected, but reading the ${what} failed. Try connecting again.`,
     detail,
+  };
+}
+
+/** The hub runs Pybricks, but a version or feature MatPilot needs to run programs is missing. */
+export function unsupportedFirmwareError(reason: string): ProbeError {
+  return {
+    kind: 'unsupported-firmware',
+    title: 'This hub cannot run MatPilot programs',
+    message: `${reason} Update the hub to Pybricks firmware v4.0.1 or newer.`,
+    detail: null,
   };
 }

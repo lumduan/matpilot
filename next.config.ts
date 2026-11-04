@@ -17,6 +17,15 @@ const nextConfig: NextConfig = {
     unoptimized: true,
   },
   reactStrictMode: true,
+  turbopack: {
+    // The mpy-cross WebAssembly loader (ADR 0006) names Node.js built-ins on a code path that only
+    // runs under Node.js. Resolve them to an empty module in browser bundles; see the shim.
+    resolveAlias: {
+      fs: { browser: './src/shims/empty-node-module.ts' },
+      path: { browser: './src/shims/empty-node-module.ts' },
+      crypto: { browser: './src/shims/empty-node-module.ts' },
+    },
+  },
 };
 
 export default nextConfig;

@@ -19,6 +19,10 @@ export default function HomePage() {
           Testing with a real hub? The <Link href="/hardware-test">hardware test</Link> walks
           through each check and produces a report for the compatibility table.
         </p>
+        <p>
+          <Link href="/program">Program &amp; Monitor</Link>: write MicroPython, run it on your hub,
+          and watch its output as text and as a live plot.
+        </p>
       </section>
 
       <noscript>

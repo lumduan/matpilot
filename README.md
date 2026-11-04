@@ -17,6 +17,9 @@ What works today:
   not if they cannot.
 - **Read-only hub probe:** connects to a SPIKE Prime hub running Pybricks firmware and reads its
   name, firmware revision, and protocol version. It writes nothing to the hub.
+- **Program & Monitor** (`/program`): write MicroPython, run it on the hub, and watch its output as
+  text (like Arduino's Serial Monitor) and as a live graph (like its Serial Plotter). The program is
+  compiled in the browser.
 - **Hardware test page** (`/hardware-test`): walks a tester through the hardware checks with a real
   hub, records the results in the browser, and produces a report for the
   [compatibility table](docs/compatibility.md).

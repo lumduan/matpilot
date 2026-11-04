@@ -38,6 +38,16 @@ What MatPilot ports, and from where:
       bricks/_common/micropython.c
         (SPDX-License-Identifier: MIT; Copyright (c) 2018-2023 The Pybricks Authors)
 
+  src/lib/pybricks/protocol.ts, src/lib/ble/hub-connection.ts
+    Command and event codes, status and feature flags, the capabilities and
+    status report layouts, and command handling, from:
+      lib/pbio/include/pbio/protocol.h
+      lib/pbio/src/protocol/pybricks.c
+      lib/pbio/sys/command.c
+        (SPDX-License-Identifier: MIT; Copyright (c) 2022-2023 The Pybricks Authors)
+      lib/pbio/sys/program_stop.c
+        (SPDX-License-Identifier: MIT; Copyright (c) 2018-2023 The Pybricks Authors)
+
 The upstream LICENSE states that its MIT license applies only to files carrying
 the "SPDX-License-Identifier: MIT" header. Every file listed above carries it.
 
@@ -77,6 +87,11 @@ What MatPilot ports, and from where:
     The way pybricksdev packs compiled modules for upload, from:
       pybricksdev/compile.py
         (SPDX-License-Identifier: MIT; Copyright (c) 2019-2025 The Pybricks Authors)
+
+  src/lib/pybricks/protocol.ts
+    The upload, start, stop, and stdin write sequence, from:
+      pybricksdev/connections/pybricks.py
+        (SPDX-License-Identifier: MIT; Copyright (c) 2021-2023 The Pybricks Authors)
 
 pybricksdev is also used, unmodified and only at development time, to generate
 the golden test files in src/lib/pybricks/__golden__/ (scripts/golden/).
