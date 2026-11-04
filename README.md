@@ -82,6 +82,8 @@ then `pnpm dev` (port 3000) or `pnpm build`. See [CONTRIBUTING.md](CONTRIBUTING.
 
 - [docs/architecture.md](docs/architecture.md): layers, data flow, and what is implemented
 - [docs/compatibility.md](docs/compatibility.md): browser and platform support matrix
+- [docs/protocol/pybricks-ble.md](docs/protocol/pybricks-ble.md): the Pybricks BLE protocol MatPilot
+  uses, cited to upstream source
 - [docs/roadmap.md](docs/roadmap.md): planned milestones
 - [docs/adr/](docs/adr/): architecture decision records
 - [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md), [CLAUDE.md](CLAUDE.md) (for AI
