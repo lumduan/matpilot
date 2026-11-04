@@ -39,6 +39,9 @@ installed Node.js.
   `package.json`); CI catches a partial change.
 - Containers run as uid 1000. On a host whose user has another uid, files written to the bind mount
   belong to uid 1000.
+- On Linux, Docker creates the `node_modules/` volume mount point inside the checkout as an empty,
+  root-owned directory. It is harmless for Docker use and ignored by git, but a native install must
+  remove it first (`rmdir node_modules`, no `sudo` needed).
 - Docker is a development and verification tool only. The app itself is still static files with no
   server ([ADR 0002](0002-static-export-no-server-features.md)); production hosting configuration is
   out of scope for this repository.
