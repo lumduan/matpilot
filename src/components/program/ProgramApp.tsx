@@ -1,75 +1,16 @@
 'use client';
 
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { HubCard } from '@/components/hub/HubCard';
+import { MonitorPanel } from '@/components/hub/MonitorPanel';
+import { PlotterCard } from '@/components/hub/PlotterCard';
+import { programSummary } from '@/components/hub/status';
+import { useMounted } from '@/hooks/useMounted';
 import { useProgramRunner } from '@/hooks/useProgramRunner';
-import type { ConnectionSnapshot } from '@/lib/ble/hub-connection';
-import { formatClock, type LogLine } from '@/lib/monitor/log';
 import {
   EXAMPLE_PROGRAMS,
   describeExampleSelection,
   type ExampleProgram,
 } from '@/lib/program/examples';
-import { PlotterView } from './PlotterView';
-
-const noopSubscribe = () => () => {};
-
-/** False during the server render and hydration, true afterwards. */
-function useMounted(): boolean {
-  return useSyncExternalStore(
-    noopSubscribe,
-    () => true,
-    () => false,
-  );
-}
-
-function linkSummary(snapshot: ConnectionSnapshot): string {
-  const { link } = snapshot;
-  switch (link.status) {
-    case 'idle':
-      return 'Not connected.';
-    case 'requesting':
-      return 'Choose your hub in the browser’s device picker.';
-    case 'no-device-selected':
-      return 'No hub selected.';
-    case 'connecting':
-      return `Connecting to ${link.deviceName ?? 'the hub'}…`;
-    case 'ready':
-      return `Connected to ${link.hub.name ?? 'the hub'} · Pybricks ${link.hub.firmwareRevision}`;
-    case 'disconnected':
-      return link.reason === 'lost' ? 'Connection lost.' : 'Disconnected.';
-    case 'error':
-      return `${link.error.title}. ${link.error.message}`;
-  }
-}
-
-function programSummary(snapshot: ConnectionSnapshot, compiling: boolean): string | null {
-  if (compiling) return 'Compiling…';
-  const { program } = snapshot;
-  switch (program.phase) {
-    case 'uploading':
-      return `Sending to the hub… ${Math.round((program.sent / Math.max(1, program.total)) * 100)}%`;
-    case 'starting':
-      return 'Starting…';
-    case 'running':
-      return 'Running.';
-    case 'stopping':
-      return 'Stopping…';
-    case 'idle':
-      return null;
-  }
-}
-
-function downloadText(fileName: string, text: string): void {
-  const url = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' }));
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = fileName;
-  link.style.display = 'none';
-  document.body.append(link);
-  link.click();
-  link.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 10_000);
-}
 
 /** Client-side root of /program. */
 export function ProgramApp() {
@@ -77,45 +18,16 @@ export function ProgramApp() {
   const runner = useProgramRunner();
   const { connection, monitor } = runner;
   const ready = connection.link.status === 'ready';
-  const busyLink =
-    connection.link.status === 'requesting' || connection.link.status === 'connecting';
   const running = connection.flags.programRunning || connection.program.phase !== 'idle';
   const status = programSummary(connection, runner.compiling);
 
   return (
     <>
-      <section className="card" aria-labelledby="hub-heading">
-        <div className="card-header">
-          <h2 id="hub-heading">Hub</h2>
-          {ready || connection.link.status === 'connecting' ? (
-            <button type="button" className="button" onClick={runner.disconnect}>
-              Disconnect
-            </button>
-          ) : (
-            <button
-              type="button"
-              className="button button-primary"
-              onClick={runner.connect}
-              disabled={busyLink}
-            >
-              Connect to hub
-            </button>
-          )}
-        </div>
-        <p
-          className={connection.link.status === 'error' ? 'notice notice-error' : 'muted'}
-          data-testid="link-status"
-          data-status={connection.link.status}
-          aria-live="polite"
-        >
-          {linkSummary(connection)}
-        </p>
-        {connection.flags.batteryLow && (
-          <p className="notice notice-warn" role="status">
-            <strong>Battery low.</strong> Charge the hub soon; motors may behave differently.
-          </p>
-        )}
-      </section>
+      <HubCard
+        connection={connection}
+        onConnect={runner.connect}
+        onDisconnect={runner.disconnect}
+      />
 
       <section className="card" aria-labelledby="program-heading">
         <div className="card-header">
@@ -179,25 +91,12 @@ export function ProgramApp() {
         exportText={runner.exportText}
       />
 
-      <section className="card" aria-labelledby="plot-heading">
-        <div className="card-header">
-          <h2 id="plot-heading">Plotter</h2>
-          <div className="button-row">
-            <button
-              type="button"
-              className="button"
-              onClick={() => runner.setPlotPaused(!monitor.plotPaused)}
-              aria-pressed={monitor.plotPaused}
-            >
-              {monitor.plotPaused ? 'Resume' : 'Pause'}
-            </button>
-            <button type="button" className="button" onClick={runner.clearPlot}>
-              Clear
-            </button>
-          </div>
-        </div>
-        <PlotterView series={monitor.series} />
-      </section>
+      <PlotterCard
+        series={monitor.series}
+        paused={monitor.plotPaused}
+        onPausedChange={runner.setPlotPaused}
+        onClear={runner.clearPlot}
+      />
     </>
   );
 }
@@ -301,134 +200,5 @@ function CodeEditor({
         rows={Math.min(24, Math.max(10, lineCount + 1))}
       />
     </div>
-  );
-}
-
-function MonitorPanel({
-  lines,
-  partial,
-  dropped,
-  canSend,
-  onSend,
-  onClear,
-  exportText,
-}: {
-  lines: readonly LogLine[];
-  partial: string;
-  dropped: number;
-  canSend: boolean;
-  onSend: (text: string) => void;
-  onClear: () => void;
-  exportText: (withTimes: boolean) => string;
-}) {
-  const [autoScroll, setAutoScroll] = useState(true);
-  const [showTimes, setShowTimes] = useState(true);
-  const [input, setInput] = useState('');
-  const [copied, setCopied] = useState<'idle' | 'ok' | 'failed'>('idle');
-  const outputRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const element = outputRef.current;
-    if (autoScroll && element) element.scrollTop = element.scrollHeight;
-  }, [lines, partial, autoScroll]);
-
-  const copy = () => {
-    const text = exportText(showTimes);
-    void (navigator.clipboard?.writeText(text) ?? Promise.reject(new Error('no clipboard'))).then(
-      () => setCopied('ok'),
-      () => setCopied('failed'),
-    );
-  };
-
-  return (
-    <section className="card" aria-labelledby="monitor-heading">
-      <div className="card-header">
-        <h2 id="monitor-heading">Monitor</h2>
-        <div className="button-row">
-          <label className="check-label">
-            <input
-              type="checkbox"
-              checked={autoScroll}
-              onChange={(e) => setAutoScroll(e.target.checked)}
-            />{' '}
-            Auto-scroll
-          </label>
-          <label className="check-label">
-            <input
-              type="checkbox"
-              checked={showTimes}
-              onChange={(e) => setShowTimes(e.target.checked)}
-            />{' '}
-            Timestamps
-          </label>
-          <button type="button" className="button" onClick={copy}>
-            Copy
-          </button>
-          <button
-            type="button"
-            className="button"
-            onClick={() => downloadText('matpilot-monitor.txt', exportText(showTimes))}
-          >
-            Save .txt
-          </button>
-          <button type="button" className="button" onClick={onClear}>
-            Clear
-          </button>
-        </div>
-      </div>
-      {copied === 'failed' && (
-        <p className="notice notice-warn" role="status">
-          This browser would not copy automatically. Use Save .txt instead.
-        </p>
-      )}
-      <div
-        className="monitor-output"
-        ref={outputRef}
-        role="log"
-        aria-label="Program output"
-        data-testid="monitor"
-      >
-        {dropped > 0 && (
-          <div className="monitor-line monitor-info"># {dropped} older lines removed</div>
-        )}
-        {lines.length === 0 && partial === '' ? (
-          <div className="monitor-line monitor-info"># Output from print() appears here.</div>
-        ) : null}
-        {lines.map((line) => (
-          <div key={line.id} className={`monitor-line monitor-${line.kind}`}>
-            {showTimes && <span className="monitor-time">{formatClock(line.time)}</span>}
-            {line.kind === 'in' && '> '}
-            {line.text}
-          </div>
-        ))}
-        {partial !== '' && (
-          <div className="monitor-line monitor-out monitor-partial">{partial}</div>
-        )}
-      </div>
-      <form
-        className="monitor-input"
-        onSubmit={(event) => {
-          event.preventDefault();
-          if (!canSend || input === '') return;
-          onSend(input);
-          setInput('');
-        }}
-      >
-        <input
-          type="text"
-          className="text-input"
-          value={input}
-          onChange={(event) => setInput(event.target.value)}
-          placeholder={
-            canSend ? 'Send a line to the program’s stdin' : 'Run a program to send input'
-          }
-          disabled={!canSend}
-          aria-label="Input for the running program"
-        />
-        <button type="submit" className="button" disabled={!canSend || input === ''}>
-          Send
-        </button>
-      </form>
-    </section>
   );
 }
