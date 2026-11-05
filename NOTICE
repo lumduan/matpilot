@@ -145,3 +145,22 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+==============================================================================
+Blockly (npm package blockly, redistributed unmodified)
+https://github.com/RaspberryPiFoundation/blockly
+Copyright Google LLC (as stated in its source files)
+Version used: 13.4.0
+License: Apache License, Version 2.0
+  https://www.apache.org/licenses/LICENSE-2.0
+  The full text ships in the package as node_modules/blockly/LICENSE
+  (sha256 cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30).
+  The package contains no NOTICE file.
+==============================================================================
+
+MatPilot uses Blockly for the block editor on /blocks
+(docs/adr/0008-block-editor.md). Its JavaScript is bundled into the site, and
+its media (images and cursors, from node_modules/blockly/media/) are copied to
+/vendor/blockly-media/ by scripts/vendor-assets.mjs. MatPilot's blocks, their
+Python, the toolbox and the themes are MatPilot's own code
+(src/lib/blocks/); no Blockly source is modified.

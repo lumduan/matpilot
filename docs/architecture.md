@@ -13,8 +13,8 @@ flowchart TD
     subgraph BROWSER["Browser: static files from any host, no server"]
         UI["Next.js UI shell<br/>implemented"]
         COMPAT["Compatibility check<br/>implemented"]
-        BLOCKLY["Blockly editor<br/>planned"]
-        CODEGEN["Python code generation<br/>with enforced safety rules<br/>planned"]
+        BLOCKLY["Blockly editor<br/>implemented: first block set"]
+        CODEGEN["Python code generation<br/>with enforced safety rules<br/>implemented"]
         MPY["mpy-cross, Pybricks WebAssembly build<br/>implemented"]
         PROTO["Pybricks BLE protocol client<br/>upload, start, stop, stdout implemented"]
         WEBBT["Web Bluetooth API<br/>provided by the browser"]
@@ -38,8 +38,8 @@ The same layers as text, top to bottom:
 
 ```
 Browser (static files, no server)
-  Blockly editor ............................ planned
-    -> Python code generation ............... planned
+  Blockly editor ............................ implemented (ADR 0008), first block set
+    -> Python code generation ............... implemented (src/lib/blocks)
       -> mpy-cross (WebAssembly) ............ implemented (ADR 0006)
         -> Pybricks BLE protocol client ..... implemented: probe (read-only) and
            (src/lib/ble, src/lib/pybricks)    connection (upload/start/stop/stdout)
@@ -51,13 +51,20 @@ Hub-direct gamepad path (planned)
                                                  the browser is not in the loop)
 ```
 
-### Program path (planned)
+### Program path
 
-1. **Blockly editor:** the user builds a program from blocks.
-2. **Python code generation:** blocks become Pybricks MicroPython source. The generator enforces
-   the hub code rules in [CLAUDE.md](../CLAUDE.md) (main loop in `try`/`finally` that stops every
-   motor, `OSError` handling around controller reads, one config block for tuning constants, no
-   hardcoded ports inside logic).
+1. **Blockly editor** (`/blocks`, [ADR 0008](adr/0008-block-editor.md)): the user builds a
+   program from blocks. Each block is one Pybricks call. A "set up" block names each device and
+   its port. The Python program written directly on `/program` skips steps 1 and 2.
+2. **Python code generation** (`src/lib/blocks/generator.ts`): blocks become Pybricks
+   MicroPython source with a fixed shape that enforces the hub code rules in
+   [CLAUDE.md](../CLAUDE.md):
+   - ports in one Config section, and no hardcoded ports inside logic;
+   - the main program in `try`/`finally`, stopping every motor.
+
+   `OSError` handling around controller reads arrives with the controller blocks (milestone 5).
+   Problems such as a device used but not set up disable Run.
+
 3. **mpy-cross (WebAssembly):** the MicroPython cross-compiler, in Pybricks' published WebAssembly
    build ([ADR 0006](adr/0006-adopt-pybricks-mpy-cross.md)), turns the source
    into `.mpy` bytecode in the browser. Its output must match `pybricksdev` byte for byte (golden
@@ -76,7 +83,7 @@ telemetry, but it is never in the control loop.
 
 | Component           | Location                                 | Notes                                                                                                          |
 | ------------------- | ---------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| UI shell            | `src/app/`, `src/components/`            | Static pages `/` and `/hardware-test`; React client components                                                 |
+| UI shell            | `src/app/`, `src/components/`            | Static pages `/`, `/blocks`, `/program` and `/hardware-test`; React client components                          |
 | React bindings      | `src/hooks/`                             | The only place React touches `src/lib/`                                                                        |
 | Compatibility check | `src/lib/compat/`                        | Pure evaluation plus a collector for browser globals                                                           |
 | Hub probe           | `src/lib/ble/`                           | Framework-agnostic state machine; read-only by its types                                                       |
@@ -84,6 +91,7 @@ telemetry, but it is never in the control loop.
 | Hub connection      | `src/lib/ble/hub-connection.ts`          | Upload, start, stop, stdin, stdout; the only module that writes ([ADR 0007](adr/0007-ble-transport-writes.md)) |
 | Compiler            | `src/lib/pybricks/compiler.ts`, `mpy.ts` | Pybricks' mpy-cross WebAssembly build, self-hosted ([ADR 0006](adr/0006-adopt-pybricks-mpy-cross.md))          |
 | Monitor and plotter | `src/lib/monitor/`                       | Stream decoding, bounded log, Arduino-style plot parsing                                                       |
+| Block editor        | `src/lib/blocks/`                        | Blockly blocks, toolbox, themes, and the Python generator ([ADR 0008](adr/0008-block-editor.md))               |
 | Pybricks constants  | `src/lib/pybricks/`                      | UUIDs and version parsing, each cited to an upstream commit                                                    |
 | Export guard        | `scripts/verify-export.mjs`              | Fails the build without `out/index.html` or with third-party loads                                             |
 

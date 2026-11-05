@@ -169,7 +169,10 @@ reported no change.
 - **Spin for 3 seconds:** motor A went from -49 to 979 degrees in about 3 s at 350 to 370 deg/s,
   and stopped by itself.
 - **Distance:** the sensor read 2000 mm with nothing in front of it and fell to 40 mm with a hand
-  close by. 2000 is a hardware observation, not yet a cited firmware fact.
+  close by. 2000 is the firmware's value for "nothing in range": `distance()` returns 2000 for any
+  reading below 0 or from 2000 up
+  ([`pb_type_pupdevices_ultrasonicsensor.c#L39-L42`](https://github.com/pybricks/pybricks-micropython/blob/4104553405decb0384bcfb030fbfcb4b5a9854cc/pybricks/pupdevices/pb_type_pupdevices_ultrasonicsensor.c#L39-L42),
+  Pybricks v4.0.1).
 - **Colour and force:** reflection 0 to 47 %, force 0 to 10.1 N, both lines reacting.
 - **Syntax error:** `SyntaxError: invalid syntax (near line 16)`; nothing was sent to the hub.
 - **Disconnect while running:** the monitor showed "Disconnected."; after reconnecting, Run started
@@ -178,6 +181,35 @@ reported no change.
   program.
 - **Monitor timestamps** are the browser's arrival times. Bluetooth sometimes delivers several
   lines in one notification, so a few consecutive lines can share a timestamp.
+
+## Blocks checks (milestone 4)
+
+These checks use the **Blocks** page (`/blocks`) over HTTPS, with the same bench layout as the
+Program and Monitor checks. Start from the starter program (Start over).
+
+1. Connect. The Python beside the blocks matches the blocks, and Run is enabled.
+2. Run the starter program. Motor A turns a quarter turn four times, the plotter shows `angle`
+   rising by about 90 each time, and the monitor ends with `done` and "Program stopped."
+3. Run it again and press **Stop** in the middle. The program stops and motor A is released.
+4. From **Setup**, drag a colour sensor, a distance sensor and a touch sensor into "set up". They
+   take ports D, E and F. Build: repeat forever, plot `distance` = distance sensor distance, plot
+   `reflection` = colour sensor reflection, wait 100 ms. Run, move a hand and a sheet of paper
+   over the sensors: both lines move. Stop.
+5. Build: hub light red, hub display happy, beep 500 Hz for 200 ms. Run: the light turns red, the
+   display shows a smile, and the hub beeps.
+6. Build: wait until touch sensor is pressed, then motor run for 1000 ms. Run, then press the touch
+   sensor: motor A turns for about a second.
+7. Change the colour sensor's port to A, the motor's port. The block shows a warning, the page
+   lists "Port A is already used", and Run is disabled. Change it back.
+8. Press **Edit as Python**. `/program` opens with the same Python, and Run works there.
+9. Reload `/blocks`. The blocks are still there.
+
+### Blocks results
+
+| Date | Browser | OS  | Hub | Firmware | Result |
+| ---- | ------- | --- | --- | -------- | ------ |
+
+No run yet.
 
 ## Keeping this file current
 

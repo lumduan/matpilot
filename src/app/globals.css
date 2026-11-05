@@ -468,6 +468,88 @@ code {
   margin-top: 0.5rem;
 }
 
+/* Blocks page: the Blockly workspace, with the Python beside it on wide screens. */
+.blocks-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem;
+}
+
+.blocks-workspace {
+  height: clamp(26rem, 68vh, 44rem);
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.blocks-python {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.blocks-python-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.blocks-python-header h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.code-view {
+  display: flex;
+  align-items: flex-start;
+  flex: 1;
+  min-height: 12rem;
+  max-height: 28rem;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+  background: var(--bg);
+}
+
+.code-view .code-gutter {
+  font-size: 0.8rem;
+  position: sticky;
+  left: 0;
+  background: var(--bg);
+}
+
+.code-text {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  padding: 0.6rem 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--text);
+  white-space: pre;
+  tab-size: 4;
+}
+
+@media (min-width: 64rem) {
+  .blocks-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(18rem, 26rem);
+  }
+
+  .blocks-python {
+    height: clamp(26rem, 68vh, 44rem);
+  }
+
+  .code-view {
+    max-height: none;
+  }
+}
+
 .monitor-output {
   font-family: var(--font-mono);
   font-size: 0.8rem;
