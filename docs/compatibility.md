@@ -185,9 +185,15 @@ reported no change.
 ## Blocks checks (milestone 4)
 
 These checks use the **Blocks** page (`/blocks`) over HTTPS, with the same bench layout as the
-Program and Monitor checks. Start from the starter program (Start over). The page layout changed
-after the first run (2026-11-05, [ADR 0008](adr/0008-block-editor.md) amendment); the steps below
-use the new buttons and keep their numbers.
+Program and Monitor checks (A and B large motors, C medium motor, D colour, E distance, F touch).
+Start from the starter program (**Start over**).
+
+The lists were reorganised on 2026-11-05, after the first run: the starter program is now made of
+simple blocks ([ADR 0010](adr/0010-simple-blocks.md)), and the detailed blocks moved under
+**Advanced**. The earlier checks 1 to 3, 8 and 9 are simple-block checks 1 to 3, 9 and 10 below;
+the earlier checks 4 to 7 are the advanced checks.
+
+### Simple blocks checks (milestone 4)
 
 1. Press **Connect hub** (top right). Press **Python** (bottom right): the Python beside the blocks
    matches them, and Run is enabled.
@@ -195,18 +201,50 @@ use the new buttons and keep their numbers.
    turn four times, the plotter shows `angle` rising by about 90 each time, and the monitor ends
    with `done` and "Program stopped."
 3. Run it again and press **Stop** in the middle. The program stops and motor A is released.
-4. From **Setup**, drag a colour sensor, a distance sensor and a touch sensor into "set up". They
-   take ports D, E and F. Build: repeat forever, plot `distance` = distance sensor distance, plot
-   `reflection` = colour sensor reflection, wait 100 ms. Run, move a hand and a sheet of paper
-   over the sensors: both lines move. Stop.
-5. Build: hub light red, hub display happy, beep 500 Hz for 200 ms. Run: the light turns red, the
+4. Tap the **A** on the motor block. A picture of the hub opens: the port letters sit where they
+   are printed on your hub, and each port says what is plugged in (A and B "large motor", C
+   "medium motor", D "colour sensor", E "distance sensor", F "touch sensor"). Tap **C** and Run:
+   motor C turns. Set it back to A.
+5. Replace the blocks under "when the program starts" with **Movement** › "move ↑ for 1
+   rotations", then "turn right 90°". Run: motors A and B each turn one full turn, in opposite
+   directions (as the wheels on the two sides of a robot do); then each turns about half a turn,
+   both the same way.
+6. Tap "right 90°": a dial opens with the robot seen from above. Drag the handle to the left: the
+   robot in the dial turns, the block says "left 90°", and the Python says `robot.turn(-90)`. Run:
+   the half turns now go the other way.
+7. Build: "start moving, steering right 50", "wait 2 seconds", "stop moving". Tap "right 50" and
+   look at the path in the picture. Run: motor A turns for 2 seconds and motor B stays still, or
+   almost (steering 50 stops the inner wheel).
+8. **Light** › "show [picture] for 2 seconds": tap the picture, press **Clear**, and draw an arrow
+   pointing up. Run: the hub shows the arrow for 2 seconds, then its lights go off. Note which way
+   it points when the hub's port letters A and B are at the top. Add "set button light to" green:
+   the centre button turns green.
+9. **Motors** › "set motor A speed to": push the lever to 100 %, then 25 %, running "motor A run
+   for 1 rotations" each time: the motor is clearly faster at 100 %. Then press **Edit as
+   Python**: `/program` opens with the same Python, and Run works there.
+10. Reload `/blocks`. The blocks are still there.
+
+Optional, with a built two-wheel robot whose left wheel is on A and right wheel on B: "move ↑ for 1
+rotations" drives forward about one wheel turn, and "turn right 90°" turns it about a quarter to
+the right. If it drives backward, its motors face the other way: swap them with "set movement
+motors" (B + A). If the turn is short or long, measure the robot for "set wheel size".
+
+### Advanced blocks checks (milestone 4)
+
+Start over, then drag the "repeat" block (with everything in it) to the bin. Open **Advanced** in
+the toolbox: Setup, Output, Input, Flow, Data and Other are there.
+
+1. From **Advanced** › **Setup**, drag the "set up" block onto the page, then a motor, a colour
+   sensor, a distance sensor and a touch sensor into it. They take ports A, D, E and F. Build:
+   repeat forever, plot `distance` = distance sensor distance, plot `reflection` = colour sensor
+   reflection, wait 100 ms. Run, move a hand and a sheet of paper over the sensors: both lines
+   move. Stop.
+2. Build: hub light red, hub display happy, beep 500 Hz for 200 ms. Run: the light turns red, the
    display shows a smile, and the hub beeps.
-6. Build: wait until touch sensor is pressed, then motor run for 1000 ms. Run, then press the touch
+3. Build: wait until touch sensor is pressed, then motor run for 1000 ms. Run, then press the touch
    sensor: motor A turns for about a second.
-7. Change the colour sensor's port to A, the motor's port. The block shows a warning, the page
+4. Change the colour sensor's port to A, the motor's port. The block shows a warning, the page
    lists "Port A is already used", and Run is disabled. Change it back.
-8. Press **Edit as Python**. `/program` opens with the same Python, and Run works there.
-9. Reload `/blocks`. The blocks are still there.
 
 ### Layout and live values checks (milestone 4)
 
@@ -236,6 +274,10 @@ These check the full-window layout and the device bar ([ADR 0009](adr/0009-live-
 | ---------- | ---------- | ------------ | ----------- | -------- | ---------------------------------------------- |
 | 2026-11-05 | Chrome 156 | macOS 27.0.1 | SPIKE Prime | 4.0.1    | Checks 1 and 2 passed; 3 to 9 not yet reported |
 
+The 2026-11-05 row uses the numbering of the list before it was reorganised (see the start of this
+section): its checks 1 and 2 are simple-block checks 1 and 2 today, run then with the earlier
+starter program, which turned motor A the same way.
+
 Notes on the 2026-11-05 run (the maintainer's bench, over the HTTPS tunnel, with a screenshot and
 the page's copied text). The browser and OS were not restated for this run; they are assumed to be
 those of the earlier runs.
@@ -245,7 +287,8 @@ those of the earlier runs.
   `done` and "Program stopped."; the plotter's `angle` line ended at 307.
 - **Checks 3 to 9** were not reported separately. They are repeated after the page layout changes
   that the maintainer asked for after this run (a larger block area, a Python panel that opens and
-  closes, and live device values).
+  closes, and live device values), and after the simple blocks were added
+  ([ADR 0010](adr/0010-simple-blocks.md)): see the simple-block and advanced checks above.
 
 ## Keeping this file current
 

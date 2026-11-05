@@ -3,6 +3,7 @@ import { pythonGenerator } from 'blockly/python';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { compilePython } from '@/lib/pybricks/compiler';
 import { MATPILOT_BLOCK_TYPES, cleanPlotLabel } from './definitions';
+import { SIMPLE_BLOCK_TYPES } from './simple-definitions';
 import { generateProgram, listSetUpDevices } from './generator';
 import { loadWorkspace, registerBlocks } from './register';
 import { STARTER_WORKSPACE } from './starter';
@@ -105,20 +106,21 @@ from pybricks.pupdevices import Motor
 from pybricks.tools import wait
 
 # --- Config ---------------------------------------------------------------
-MOTOR_PORT = Port.A
+MOTOR_A_PORT = Port.A
 
 # --- Setup ----------------------------------------------------------------
-motor = Motor(MOTOR_PORT)
+motor_a = Motor(MOTOR_A_PORT)
+motor_a_speed = motor_a.control.limits()[0] * 50 // 100
 
 # --- Main -----------------------------------------------------------------
 try:
     for count in range(4):
-        motor.run_angle(360, 90)
-        print("angle:", motor.angle())
+        motor_a.run_angle(motor_a_speed, 90)
+        print("angle:", motor_a.angle())
         wait(500)
     print('done')
 finally:
-    motor.stop()
+    motor_a.stop()
 `);
     await expectCompiles(code);
   });
@@ -419,12 +421,22 @@ describe('problems', () => {
     ]);
   });
 
-  it('adds the required blocks to an empty saved workspace', () => {
+  it('adds the program block, and only that, to an empty saved workspace', () => {
     const workspace = new Blockly.Workspace();
     loadWorkspace(workspace, {});
-    expect(workspace.getBlocksByType('mp_setup', false)).toHaveLength(1);
-    expect(workspace.getBlocksByType('mp_program', false)).toHaveLength(1);
+    expect(workspace.getBlocksByType('mp_setup', false)).toHaveLength(0);
+    const [program] = workspace.getBlocksByType('mp_program', false);
+    expect(program?.isDeletable()).toBe(false);
     expect(generateProgram(workspace).problems).toEqual([]);
+    workspace.dispose();
+  });
+
+  it('lets an older saved “set up” block be deleted', () => {
+    const workspace = new Blockly.Workspace();
+    loadWorkspace(workspace, {
+      blocks: { languageVersion: 0, blocks: [{ type: 'mp_setup', deletable: false }] },
+    });
+    expect(workspace.getBlocksByType('mp_setup', false)[0]?.isDeletable()).toBe(true);
     workspace.dispose();
   });
 });
@@ -446,7 +458,7 @@ describe('listSetUpDevices', () => {
 
 describe('block registry', () => {
   it('defines and generates every MatPilot block', () => {
-    for (const type of MATPILOT_BLOCK_TYPES) {
+    for (const type of [...MATPILOT_BLOCK_TYPES, ...SIMPLE_BLOCK_TYPES]) {
       expect(Blockly.Blocks[type], type).toBeDefined();
       expect(pythonGenerator.forBlock[type], type).toBeDefined();
     }

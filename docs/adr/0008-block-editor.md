@@ -1,6 +1,7 @@
 # ADR 0008: The block editor: Blockly, with MatPilot's own blocks for Pybricks
 
-- Status: Accepted; decision 6 amended 2026-11-05 (see the end)
+- Status: Accepted; decision 6 amended 2026-11-05 (see the end); decisions 2 and 3 amended for the
+  simple blocks by [ADR 0010](0010-simple-blocks.md)
 - Date: 2026-11-05
 
 ## Context

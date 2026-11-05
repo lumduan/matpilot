@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ConnectButton } from '@/components/hub/ConnectButton';
 import { DeviceBar } from '@/components/hub/DeviceBar';
 import { MonitorPanel } from '@/components/hub/MonitorPanel';
@@ -12,6 +12,7 @@ import { useBlocksEditor } from '@/hooks/useBlocksEditor';
 import { useHubRunner } from '@/hooks/useHubRunner';
 import { saveProgramForEditor } from '@/hooks/useProgramRunner';
 import { useStoredState } from '@/hooks/useStoredState';
+import { hintsFromKey, hintsKey } from '@/lib/blocks/fields/hints';
 import { PROJECT_NAME, PROJECT_STATUS, TRADEMARK_DISCLAIMER } from '@/lib/project';
 import { CodeView } from './CodeView';
 
@@ -30,7 +31,10 @@ export function BlocksApp() {
   const router = useRouter();
   const runner = useHubRunner({ liveDevices: true });
   const host = useRef<HTMLDivElement>(null);
-  const editor = useBlocksEditor(host);
+  // What is plugged into each port, for the port pickers; changes only when a device does.
+  const portKey = hintsKey(runner.live.snapshot.reading);
+  const portHints = useMemo(() => hintsFromKey(portKey), [portKey]);
+  const editor = useBlocksEditor(host, portHints);
   const [copied, setCopied] = useState<'idle' | 'ok' | 'failed'>('idle');
   const [view, setView] = useStoredState('matpilot.blocks.view.v1', 'blocks', VIEWS);
   const [pythonPanel, setPythonPanel] = useStoredState(

@@ -76,11 +76,14 @@ entry in [NOTICE](NOTICE).
   - `src/lib/compat/`: browser compatibility checks
   - `src/lib/monitor/`: stdout line splitting, the monitor log, and the plotter's parser and scale
   - `src/lib/program/`: example programs for the Program and Monitor page (each cited)
-  - `src/lib/blocks/`: the block editor ([ADR 0008](docs/adr/0008-block-editor.md)): Blockly
-    block definitions, toolbox, themes, and the Python generator. Every Pybricks name a block
-    generates is cited in `src/lib/blocks/pybricks.ts`; add the citation there before adding a
-    block. Blockly is browser-loaded lazily (`editor.ts`); the generator also runs headless in
-    tests, where every test program must compile with the real compiler.
+  - `src/lib/blocks/`: the block editor ([ADR 0008](docs/adr/0008-block-editor.md),
+    [ADR 0010](docs/adr/0010-simple-blocks.md)): Blockly block definitions (the detailed blocks in
+    `definitions.ts`, the simple blocks in `simple-definitions.ts`), their picture fields
+    (`fields/`), toolbox, themes, and the Python generator. Every Pybricks name a block generates
+    is cited in `src/lib/blocks/pybricks.ts`; add the citation there before adding a block.
+    Blockly is browser-loaded lazily (`editor.ts`); the generator also runs headless in tests,
+    where every test program must compile with the real compiler. Keep the detailed blocks: the
+    simple blocks sit beside them, not instead of them.
   - `src/lib/devices/`: live device values ([ADR 0009](docs/adr/0009-live-device-values.md)): the
     reader that `HubConnection.runInRepl()` pastes into the hub's REPL (`hub-source.ts`; every
     Pybricks name it uses is cited there, and tests compile it with the real compiler) and the

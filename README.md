@@ -17,11 +17,13 @@ What works today:
   not if they cannot.
 - **Read-only hub probe:** connects to a SPIKE Prime hub running Pybricks firmware and reads its
   name, firmware revision, and protocol version. It writes nothing to the hub.
-- **Blocks** (`/blocks`): snap blocks together to program the hub in a full-window editor. The
-  Python they make opens beside them or fills the window. Each block is one Pybricks command;
-  motors and sensors are set up once by name and port, and every motor stops when the program ends
-  or is stopped. A bar above the blocks shows what is plugged into each port, with live values.
-  Built with Blockly.
+- **Blocks** (`/blocks`): snap blocks together to program the hub in a full-window editor. Simple
+  blocks for beginners choose motors and sensors by port and set turns, steering, speeds and the
+  hub's lights with pictures: a dial, a steering path, a lever, a 5×5 grid. The detailed blocks,
+  one Pybricks command each with devices set up by name, fold under **Advanced**. The Python they
+  make opens beside them or fills the window, and every motor stops when the program ends or is
+  stopped. A bar above the blocks shows what is plugged into each port, with live values. Built
+  with Blockly.
 - **Program & Monitor** (`/program`): write MicroPython, run it on the hub, and watch its output as
   text (like Arduino's Serial Monitor) and as a live graph (like its Serial Plotter). The program is
   compiled in the browser.
