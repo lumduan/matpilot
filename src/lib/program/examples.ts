@@ -147,3 +147,26 @@ while True:
 ];
 
 export const DEFAULT_PROGRAM_SOURCE: string = EXAMPLE_PROGRAMS[0]?.source ?? '';
+
+/** What the example picker shows for the program in the editor. */
+export interface ExampleSelection {
+  /** The example the editor holds unchanged, or `null`. */
+  readonly current: ExampleProgram | null;
+  /** When the editor holds something else: the example it was loaded from, if any. */
+  readonly editedFrom: ExampleProgram | null;
+}
+
+/**
+ * Works out which example the editor holds. A program matches an example only when it is
+ * character-for-character the same; anything else is an edited copy of the last loaded example
+ * (`lastExampleId`), or the user's own program.
+ */
+export function describeExampleSelection(
+  source: string,
+  lastExampleId: string | null,
+): ExampleSelection {
+  const current = EXAMPLE_PROGRAMS.find((example) => example.source === source) ?? null;
+  if (current) return { current, editedFrom: null };
+  const editedFrom = EXAMPLE_PROGRAMS.find((example) => example.id === lastExampleId) ?? null;
+  return { current: null, editedFrom };
+}

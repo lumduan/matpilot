@@ -9,11 +9,13 @@ import {
 } from '@/lib/ble/hub-connection';
 import { formatLog } from '@/lib/monitor/log';
 import { EMPTY_MONITOR_SNAPSHOT, MonitorStore, type MonitorSnapshot } from '@/lib/monitor/store';
-import { DEFAULT_PROGRAM_SOURCE } from '@/lib/program/examples';
+import { DEFAULT_PROGRAM_SOURCE, type ExampleProgram } from '@/lib/program/examples';
 import { compilePython, type CompileError } from '@/lib/pybricks/compiler';
 import { MAIN_MODULE_NAME, packMultiMpy } from '@/lib/pybricks/mpy';
 
 const SOURCE_STORAGE_KEY = 'matpilot.program.source.v1';
+/** The id of the example loaded last, so the picker can say "(edited)" after a change. */
+const EXAMPLE_STORAGE_KEY = 'matpilot.program.example.v1';
 
 /**
  * The firmware stops a program only on the stop command, the hub's stop button (the centre button
@@ -25,12 +27,20 @@ const SOURCE_STORAGE_KEY = 'matpilot.program.source.v1';
 const LOST_WHILE_RUNNING =
   'Connection lost. The program keeps running on the hub: press the hub’s centre button to stop it (that is the stop button unless the program changed it).';
 
-function readSavedSource(): string {
-  if (typeof window === 'undefined') return DEFAULT_PROGRAM_SOURCE;
+function readSaved(key: string): string | null {
+  if (typeof window === 'undefined') return null;
   try {
-    return window.localStorage.getItem(SOURCE_STORAGE_KEY) ?? DEFAULT_PROGRAM_SOURCE;
+    return window.localStorage.getItem(key);
   } catch {
-    return DEFAULT_PROGRAM_SOURCE;
+    return null;
+  }
+}
+
+function save(key: string, value: string): void {
+  try {
+    window.localStorage.setItem(key, value);
+  } catch {
+    // Storage blocked or full: the value is simply not remembered.
   }
 }
 
@@ -55,6 +65,9 @@ export interface ProgramRunner {
   readonly monitor: MonitorSnapshot;
   readonly source: string;
   readonly setSource: (source: string) => void;
+  /** The example loaded last (it may have been edited since), or `null`. */
+  readonly lastExampleId: string | null;
+  readonly loadExample: (example: ExampleProgram) => void;
   readonly compiling: boolean;
   readonly compileError: CompileError | null;
   /** Call from a click handler: the browser only opens its device picker on a user gesture. */
@@ -75,7 +88,10 @@ export function useProgramRunner(): ProgramRunner {
   const [store] = useState(() => new MonitorStore());
   const connection = useSyncExternalStore(hub.subscribe, hub.getSnapshot, getServerConnection);
   const monitor = useSyncExternalStore(store.subscribe, store.getSnapshot, getServerMonitor);
-  const [source, setSourceState] = useState(readSavedSource);
+  const [source, setSourceState] = useState(
+    () => readSaved(SOURCE_STORAGE_KEY) ?? DEFAULT_PROGRAM_SOURCE,
+  );
+  const [lastExampleId, setLastExampleId] = useState(() => readSaved(EXAMPLE_STORAGE_KEY));
   const [compiling, setCompiling] = useState(false);
   const [compileError, setCompileError] = useState<CompileError | null>(null);
 
@@ -120,12 +136,16 @@ export function useProgramRunner(): ProgramRunner {
 
   const setSource = useCallback((next: string) => {
     setSourceState(next);
-    try {
-      window.localStorage.setItem(SOURCE_STORAGE_KEY, next);
-    } catch {
-      // Storage blocked or full: the program is simply not remembered.
-    }
+    save(SOURCE_STORAGE_KEY, next);
   }, []);
+  const loadExample = useCallback(
+    (example: ExampleProgram) => {
+      setSource(example.source);
+      setLastExampleId(example.id);
+      save(EXAMPLE_STORAGE_KEY, example.id);
+    },
+    [setSource],
+  );
 
   const run = useCallback(() => {
     void (async () => {
@@ -174,6 +194,8 @@ export function useProgramRunner(): ProgramRunner {
     monitor,
     source,
     setSource,
+    lastExampleId,
+    loadExample,
     compiling,
     compileError,
     connect,
