@@ -11,6 +11,7 @@ import { formatLog } from '@/lib/monitor/log';
 import { EMPTY_MONITOR_SNAPSHOT, MonitorStore, type MonitorSnapshot } from '@/lib/monitor/store';
 import { compilePython, type CompileError } from '@/lib/pybricks/compiler';
 import { MAIN_MODULE_NAME, packMultiMpy } from '@/lib/pybricks/mpy';
+import { useLiveDevices, type LiveDevices } from './useLiveDevices';
 
 /**
  * The firmware stops a program only on the stop command, the hub's stop button (the centre button
@@ -54,13 +55,15 @@ export interface HubRunner {
   readonly clearPlot: () => void;
   readonly setPlotPaused: (paused: boolean) => void;
   readonly exportText: (withTimes: boolean) => string;
+  /** Live device values while the hub is idle; only when asked for (`liveDevices`). */
+  readonly live: LiveDevices;
 }
 
 /**
  * React binding for running programs on a hub: the connection, the monitor and plotter, and
  * compile-then-run. Shared by the Program and Monitor page and the Blocks page.
  */
-export function useHubRunner(): HubRunner {
+export function useHubRunner(options: { liveDevices?: boolean } = {}): HubRunner {
   const [hub] = useState(() => new HubConnection());
   const [store] = useState(() => new MonitorStore());
   const connection = useSyncExternalStore(hub.subscribe, hub.getSnapshot, getServerConnection);
@@ -72,12 +75,13 @@ export function useHubRunner(): HubRunner {
     const offOutput = hub.onOutput((bytes) => store.pushOutput(bytes));
     let previous = hub.getSnapshot();
     const offState = hub.subscribe((next) => {
-      if (!previous.flags.programRunning && next.flags.programRunning) {
+      // The live device values reader (useLiveDevices) is not the user's program: no notes.
+      if (!previous.flags.userProgramRunning && next.flags.userProgramRunning) {
         store.note('info', 'Program started.');
       }
       if (
-        previous.flags.programRunning &&
-        !next.flags.programRunning &&
+        previous.flags.userProgramRunning &&
+        !next.flags.userProgramRunning &&
         next.link.status === 'ready'
       ) {
         store.endOutput();
@@ -151,6 +155,7 @@ export function useHubRunner(): HubRunner {
     (withTimes: boolean) => formatLog(store.getSnapshot().lines, withTimes),
     [store],
   );
+  const live = useLiveDevices(hub, connection, compiling, options.liveDevices === true);
 
   return {
     connection,
@@ -166,5 +171,6 @@ export function useHubRunner(): HubRunner {
     clearPlot,
     setPlotPaused,
     exportText,
+    live,
   };
 }
