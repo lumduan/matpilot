@@ -151,6 +151,34 @@ Use no robot: the motors lie loose on the desk.
 
 Record the results in the hardware test record above, with the date, browser, OS and firmware.
 
+### Program and Monitor results
+
+| Date       | Browser    | OS           | Hub         | Firmware | Result               |
+| ---------- | ---------- | ------------ | ----------- | -------- | -------------------- |
+| 2026-11-05 | Chrome 156 | macOS 27.0.1 | SPIKE Prime | 4.0.1    | 9 of 9 checks passed |
+
+Notes on the 2026-11-05 run (the maintainer's bench, over the HTTPS tunnel, with a screen recording
+and the monitor's copied text). The browser and OS are those of the 2026-11-04 run; the maintainer
+reported no change.
+
+- **Hello monitor:** `count: 0` to `count: 19`, about 500 ms apart, then `done` and "Program
+  stopped."
+- **Motor angle:** turning motor A by hand moved the angle from -11 to 311 degrees in the plotter.
+  Stop ended the program; the hub printed `The program was stopped (SystemExit).` before "Program
+  stopped."
+- **Spin for 3 seconds:** motor A went from -49 to 979 degrees in about 3 s at 350 to 370 deg/s,
+  and stopped by itself.
+- **Distance:** the sensor read 2000 mm with nothing in front of it and fell to 40 mm with a hand
+  close by. 2000 is a hardware observation, not yet a cited firmware fact.
+- **Colour and force:** reflection 0 to 47 %, force 0 to 10.1 N, both lines reacting.
+- **Syntax error:** `SyntaxError: invalid syntax (near line 16)`; nothing was sent to the hub.
+- **Disconnect while running:** the monitor showed "Disconnected."; after reconnecting, Run started
+  a fresh program, so the old one had stopped.
+- **Link lost while running:** the warning appeared, and the hub's centre button stopped the
+  program.
+- **Monitor timestamps** are the browser's arrival times. Bluetooth sometimes delivers several
+  lines in one notification, so a few consecutive lines can share a timestamp.
+
 ## Keeping this file current
 
 The supported and unsupported lists also live in `README.md` (copied matrix) and

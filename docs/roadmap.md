@@ -1,6 +1,6 @@
 # Roadmap
 
-Last reviewed: 2026-11-04
+Last reviewed: 2026-11-05
 
 ## At a glance
 
@@ -12,9 +12,9 @@ flowchart TD
     M0["0 · Bootstrap: compatibility check and hub probe<br/>ACTIVE — code done, 1 of 7 supported rows verified on hardware"]
     M1["1 · Pybricks protocol documentation<br/>DONE"]
     M2["2 · mpy-cross in the browser<br/>adopt Pybricks build, golden tests<br/>DONE"]
-    M3["3 · BLE transport and Program and Monitor page<br/>upload, start, stop, stdout, plotter<br/>ACTIVE — code done, hardware checks pending"]
-    M4["4 · Blockly code generation<br/>with enforced safety rules<br/>BLOCKED — needs 3"]
-    M5["5 · Xbox test panel<br/>with live telemetry<br/>BLOCKED — needs 3"]
+    M3["3 · BLE transport and Program and Monitor page<br/>upload, start, stop, stdout, plotter<br/>DONE"]
+    M4["4 · Blockly code generation<br/>with enforced safety rules<br/>READY"]
+    M5["5 · Xbox test panel<br/>with live telemetry<br/>READY"]
     M6["6 · Offline PWA<br/>BLOCKED — needs 2"]
     M7["7 · Mat profiles<br/>with drag-and-drop objects<br/>READY"]
     GOAL["First usable release<br/>for classrooms and competitions<br/>GOAL"]
@@ -38,10 +38,10 @@ flowchart TD
     classDef blocked  fill:#f0f0f0,stroke:#888,color:#555
     classDef goal     fill:#ede0fb,stroke:#8a5cd8,color:#4d2e8f
 
-    class M0,M3 active
-    class M1,M2 done
-    class M7 ready
-    class M4,M5,M6 blocked
+    class M0 active
+    class M1,M2,M3 done
+    class M4,M5,M7 ready
+    class M6 blocked
     class GOAL goal
 ```
 
@@ -50,18 +50,17 @@ flowchart TD
 | **0 · Bootstrap**                | 🟡 ACTIVE  | Static Next.js app, Docker toolchain, CI, docs, ADRs, compatibility check, read-only hub probe, hardware test page                                                                                    | Hardware verification of the other 6 supported rows (Chrome on macOS verified 2026-11-04; [checklist](compatibility.md#how-to-verify-a-row-on-hardware)) |
 | **1 · Pybricks protocol docs**   | ✅ DONE    | [`docs/protocol/pybricks-ble.md`](protocol/pybricks-ble.md): capabilities, commands, events, program format and upload sequence, every statement cited to an upstream commit                          | —                                                                                                                                                        |
 | **2 · mpy-cross in the browser** | ✅ DONE    | Adopt Pybricks' `@pybricks/mpy-cross-v6` WebAssembly build ([ADR 0006](adr/0006-adopt-pybricks-mpy-cross.md)); golden tests prove byte-for-byte identical output to `pybricksdev` for the same source | — (goldens byte-identical; the `.wasm` loads from this site under the CSP)                                                                               |
-| **3 · BLE transport**            | 🟡 ACTIVE  | Upload a compiled program, start and stop it, stream stdout, in `src/lib/ble/`; Program and Monitor page with text monitor and plotter                                                                | Hardware checks on a real hub ([checklist](compatibility.md#program-and-monitor-checks-milestone-3)); code and fake-hub tests are done                   |
-| **4 · Blockly code generation**  | ⬜ BLOCKED | Blockly editor that generates Pybricks MicroPython and enforces the hub code rules (`try`/`finally` motor stop, `OSError` handling, config block, no hardcoded ports)                                 | Needs 3: the safety rules must be verified on a hub (for example, Stop really stops the motors)                                                          |
-| **5 · Xbox test panel**          | ⬜ BLOCKED | Ships a hub program that reads an Xbox controller (hub-direct, [ADR 0003](adr/0003-hub-direct-gamepad.md)) and shows its live telemetry in the browser                                                | Needs 3 (upload and stdout). Independent of 4                                                                                                            |
+| **3 · BLE transport**            | ✅ DONE    | Upload a compiled program, start and stop it, stream stdout, in `src/lib/ble/`; Program and Monitor page with text monitor and plotter                                                                | — (9 of 9 [hardware checks](compatibility.md#program-and-monitor-results) passed 2026-11-05)                                                             |
+| **4 · Blockly code generation**  | 🔵 READY   | Blockly editor that generates Pybricks MicroPython and enforces the hub code rules (`try`/`finally` motor stop, `OSError` handling, config block, no hardcoded ports)                                 | None: 3 is done, and Stop was verified to stop the program on a hub                                                                                      |
+| **5 · Xbox test panel**          | 🔵 READY   | Ships a hub program that reads an Xbox controller (hub-direct, [ADR 0003](adr/0003-hub-direct-gamepad.md)) and shows its live telemetry in the browser                                                | None technically (3 is done); scheduled after 4. Independent of 4                                                                                        |
 | **6 · Offline PWA**              | ⬜ BLOCKED | Service worker and manifest so the app, including the WebAssembly compiler, works without a network                                                                                                   | Needs 2 (the compiler must be cacheable to compile offline)                                                                                              |
 | **7 · Mat profiles**             | 🔵 READY   | Mat profiles with drag-and-drop objects, all in millimetres ([ADR 0004](adr/0004-millimetre-units.md))                                                                                                | None technically; scheduled last by priority                                                                                                             |
 | **Goal: first usable release**   | 🟪 GOAL    | Students program a robot with blocks, run it on a hub, drive it with a controller, and use the app offline                                                                                            | Needs 4, 5, 6 and 7                                                                                                                                      |
 
-**The real bottlenecks are hardware access and milestone 3.** Hardware verification (a real SPIKE
-Prime hub on each supported browser and platform) gates milestone 0 now and every BLE milestone
-later; it cannot be replaced by unit tests. Milestone 3 is the only join on the critical path:
-everything that runs code on the hub waited for both the protocol documentation (1, done
-2026-11-04) and the compiler (2). Milestones 2 and 7 can proceed in parallel today.
+**The real bottleneck is hardware access.** Hardware verification (a real SPIKE Prime hub on each
+supported browser and platform) gates milestone 0 and every BLE feature; it cannot be replaced by
+unit tests. Milestone 3, the only join on the critical path, is done (verified on a hub
+2026-11-05), so milestones 4, 5 and 7 can all proceed; 4 is next by priority.
 
 ## Milestones in planned order
 
@@ -88,7 +87,7 @@ Adopt Pybricks' published WebAssembly build of the MicroPython cross-compiler,
 ([ADR 0006](adr/0006-adopt-pybricks-mpy-cross.md)). Golden tests compile a corpus of programs with
 both the browser build and `pybricksdev`, and require byte-for-byte identical output.
 
-### 3 · BLE transport, and the Program and Monitor page
+### 3 · BLE transport, and the Program and Monitor page (done)
 
 Upload, start, stop, stdin, and stdout over Web Bluetooth, framework-agnostic in `src/lib/ble/`,
 with unit tests against fake GATT objects and an on-hardware test checklist. This is the first code

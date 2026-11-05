@@ -4,7 +4,11 @@ import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useProgramRunner } from '@/hooks/useProgramRunner';
 import type { ConnectionSnapshot } from '@/lib/ble/hub-connection';
 import { formatClock, type LogLine } from '@/lib/monitor/log';
-import { EXAMPLE_PROGRAMS } from '@/lib/program/examples';
+import {
+  EXAMPLE_PROGRAMS,
+  describeExampleSelection,
+  type ExampleProgram,
+} from '@/lib/program/examples';
 import { PlotterView } from './PlotterView';
 
 const noopSubscribe = () => () => {};
@@ -117,7 +121,12 @@ export function ProgramApp() {
         <div className="card-header">
           <h2 id="program-heading">Program</h2>
           <div className="button-row">
-            <ExamplePicker onPick={runner.setSource} disabled={running} />
+            <ExamplePicker
+              source={mounted ? runner.source : null}
+              lastExampleId={runner.lastExampleId}
+              onPick={runner.loadExample}
+              disabled={running}
+            />
             {running ? (
               <button type="button" className="button button-stop" onClick={runner.stop}>
                 Stop
@@ -193,30 +202,52 @@ export function ProgramApp() {
   );
 }
 
+/** Value of the picker's entry for a program that is not an unchanged example. */
+const OWN_PROGRAM = 'own';
+
 function ExamplePicker({
+  source,
+  lastExampleId,
   onPick,
   disabled,
 }: {
-  onPick: (source: string) => void;
+  /** `null` until the saved program has been read in the browser. */
+  source: string | null;
+  lastExampleId: string | null;
+  onPick: (example: ExampleProgram) => void;
   disabled: boolean;
 }) {
+  const selection = source === null ? null : describeExampleSelection(source, lastExampleId);
+  const current = selection?.current ?? null;
+  let ownLabel = 'Examples…';
+  if (selection?.editedFrom) ownLabel = `${selection.editedFrom.title} (edited)`;
+  else if (selection) ownLabel = 'Your program';
+
   return (
     <select
       className="select"
-      aria-label="Load an example program"
-      value=""
-      disabled={disabled}
+      aria-label="Example program"
+      value={current?.id ?? OWN_PROGRAM}
+      disabled={disabled || selection === null}
+      data-testid="example-picker"
       onChange={(event) => {
         const example = EXAMPLE_PROGRAMS.find((item) => item.id === event.target.value);
         if (!example) return;
+        // Swapping one unchanged example for another loses nothing; ask only before
+        // replacing a program the user wrote or edited.
         if (
-          window.confirm(`Replace the program with “${example.title}”?\n\n${example.description}`)
+          current ||
+          window.confirm(`Replace your program with “${example.title}”?\n\n${example.description}`)
         ) {
-          onPick(example.source);
+          onPick(example);
         }
       }}
     >
-      <option value="">Examples…</option>
+      {!current && (
+        <option value={OWN_PROGRAM} disabled>
+          {ownLabel}
+        </option>
+      )}
       {EXAMPLE_PROGRAMS.map((example) => (
         <option key={example.id} value={example.id}>
           {example.title}
