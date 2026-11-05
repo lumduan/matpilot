@@ -12,7 +12,9 @@ import {
 
 /** Seconds of history shown across the plot. */
 const WINDOW_MS = 10_000;
+/** Canvas height in CSS pixels, unless the plotter fills its container (`fill`). */
 const HEIGHT = 260;
+const MIN_FILL_HEIGHT = 120;
 const PAD = { top: 12, right: 96, bottom: 28, left: 56 };
 /** Direct labels at line ends only while the plot stays readable (dataviz: legend + ≤4 labels). */
 const MAX_DIRECT_LABELS = 4;
@@ -54,6 +56,7 @@ function formatValue(value: number | undefined): string {
 function draw(
   canvas: HTMLCanvasElement,
   width: number,
+  height: number,
   series: readonly SeriesData[],
   domain: PlotDomain,
   colors: Colors,
@@ -61,14 +64,14 @@ function draw(
 ): void {
   const ratio = window.devicePixelRatio || 1;
   canvas.width = Math.round(width * ratio);
-  canvas.height = Math.round(HEIGHT * ratio);
+  canvas.height = Math.round(height * ratio);
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
   ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
-  ctx.clearRect(0, 0, width, HEIGHT);
+  ctx.clearRect(0, 0, width, height);
 
   const plotW = Math.max(10, width - PAD.left - PAD.right);
-  const plotH = HEIGHT - PAD.top - PAD.bottom;
+  const plotH = height - PAD.top - PAD.bottom;
   const x = (time: number) =>
     PAD.left + ((time - domain.start) / (domain.end - domain.start)) * plotW;
   const y = (value: number) =>
@@ -92,7 +95,7 @@ function draw(
   ctx.textAlign = 'left';
   ctx.textBaseline = 'top';
   ctx.fillStyle = colors.muted;
-  ctx.fillText(`last ${WINDOW_MS / 1000} s`, PAD.left, HEIGHT - PAD.bottom + 8);
+  ctx.fillText(`last ${WINDOW_MS / 1000} s`, PAD.left, height - PAD.bottom + 8);
 
   // Lines: 2px, round joins, clipped to the plot area.
   ctx.save();
@@ -169,30 +172,51 @@ function draw(
   }
 }
 
-export function PlotterView({ series }: { series: readonly SeriesData[] }) {
+/**
+ * The live plot. With `fill`, the canvas takes the height its container leaves (the Blocks page's
+ * output drawer); otherwise it is HEIGHT pixels tall.
+ */
+export function PlotterView({
+  series,
+  fill = false,
+}: {
+  series: readonly SeriesData[];
+  fill?: boolean;
+}) {
   const wrapRef = useRef<HTMLDivElement>(null);
+  const legendRef = useRef<HTMLUListElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [width, setWidth] = useState(600);
+  const [boxHeight, setBoxHeight] = useState(HEIGHT);
+  const [legendHeight, setLegendHeight] = useState(0);
+  const hasSeries = series.length > 0;
   const [hover, setHover] = useState<HoverState | null>(null);
   const domain = useMemo(() => plotDomain(series, WINDOW_MS), [series]);
+  // In fill mode the legend's height comes off the box.
+  const height = fill ? Math.max(MIN_FILL_HEIGHT, boxHeight - legendHeight - 8) : HEIGHT;
 
   useEffect(() => {
     const element = wrapRef.current;
     if (!element) return;
-    const observer = new ResizeObserver((entries) => {
-      const next = Math.floor(entries[0]?.contentRect.width ?? 600);
+    const observer = new ResizeObserver(() => {
+      const next = Math.floor(element.clientWidth || 600);
+      const nextHeight = Math.floor(element.clientHeight || HEIGHT);
+      const nextLegend = legendRef.current?.offsetHeight ?? 0;
       setWidth((current) => (current === next ? current : next));
+      setBoxHeight((current) => (current === nextHeight ? current : nextHeight));
+      setLegendHeight((current) => (current === nextLegend ? current : nextLegend));
     });
     observer.observe(element);
+    if (legendRef.current) observer.observe(legendRef.current);
     return () => observer.disconnect();
-  }, []);
+  }, [hasSeries]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     const element = wrapRef.current;
     if (!canvas || !element || !domain) return;
-    draw(canvas, width, series, domain, readColors(element), hover);
-  }, [series, domain, width, hover]);
+    draw(canvas, width, height, series, domain, readColors(element), hover);
+  }, [series, domain, width, height, hover]);
 
   const onPointerMove = (event: React.PointerEvent<HTMLCanvasElement>) => {
     if (!domain) return;
@@ -217,7 +241,7 @@ export function PlotterView({ series }: { series: readonly SeriesData[] }) {
     : null;
 
   return (
-    <div className="plotter" ref={wrapRef}>
+    <div className={fill ? 'plotter plotter-fill' : 'plotter'} ref={wrapRef}>
       {series.length === 0 || !domain ? (
         <p className="muted plot-empty">
           Nothing to plot yet. Print numbers from your program, one sample per line, for example{' '}
@@ -225,7 +249,7 @@ export function PlotterView({ series }: { series: readonly SeriesData[] }) {
         </p>
       ) : (
         <>
-          <ul className="plot-legend" aria-label="Series and latest values">
+          <ul className="plot-legend" ref={legendRef} aria-label="Series and latest values">
             {series.map((s, index) => (
               <li key={s.label}>
                 <span className={`plot-key plot-key-${index + 1}`} aria-hidden="true" />
@@ -237,7 +261,7 @@ export function PlotterView({ series }: { series: readonly SeriesData[] }) {
           <div className="plot-canvas-wrap">
             <canvas
               ref={canvasRef}
-              style={{ width: '100%', height: HEIGHT }}
+              style={{ width: '100%', height }}
               role="img"
               aria-label={`Live plot of ${series.map((s) => s.label).join(', ')} over the last ${WINDOW_MS / 1000} seconds. The text monitor lists every value.`}
               onPointerMove={onPointerMove}

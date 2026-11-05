@@ -13,7 +13,7 @@ flowchart TD
     M1["1 · Pybricks protocol documentation<br/>DONE"]
     M2["2 · mpy-cross in the browser<br/>adopt Pybricks build, golden tests<br/>DONE"]
     M3["3 · BLE transport and Program and Monitor page<br/>upload, start, stop, stdout, plotter<br/>DONE"]
-    M4["4 · Blockly code generation<br/>with enforced safety rules<br/>ACTIVE — block set ran on a hub,<br/>layout changes, then checks"]
+    M4["4 · Blockly code generation<br/>with enforced safety rules<br/>ACTIVE — full-window layout and<br/>live values built, hub checks next"]
     M5["5 · Xbox test panel<br/>with live telemetry<br/>READY"]
     M6["6 · Offline PWA<br/>BLOCKED — needs 2"]
     M7["7 · Mat profiles<br/>with drag-and-drop objects<br/>READY"]
@@ -45,23 +45,24 @@ flowchart TD
     class GOAL goal
 ```
 
-| Milestone                        | Status     | What it is                                                                                                                                                                                            | Blocker                                                                                                                                                  |
-| -------------------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **0 · Bootstrap**                | 🟡 ACTIVE  | Static Next.js app, Docker toolchain, CI, docs, ADRs, compatibility check, read-only hub probe, hardware test page                                                                                    | Hardware verification of the other 6 supported rows (Chrome on macOS verified 2026-11-04; [checklist](compatibility.md#how-to-verify-a-row-on-hardware)) |
-| **1 · Pybricks protocol docs**   | ✅ DONE    | [`docs/protocol/pybricks-ble.md`](protocol/pybricks-ble.md): capabilities, commands, events, program format and upload sequence, every statement cited to an upstream commit                          | —                                                                                                                                                        |
-| **2 · mpy-cross in the browser** | ✅ DONE    | Adopt Pybricks' `@pybricks/mpy-cross-v6` WebAssembly build ([ADR 0006](adr/0006-adopt-pybricks-mpy-cross.md)); golden tests prove byte-for-byte identical output to `pybricksdev` for the same source | — (goldens byte-identical; the `.wasm` loads from this site under the CSP)                                                                               |
-| **3 · BLE transport**            | ✅ DONE    | Upload a compiled program, start and stop it, stream stdout, in `src/lib/ble/`; Program and Monitor page with text monitor and plotter                                                                | — (9 of 9 [hardware checks](compatibility.md#program-and-monitor-results) passed 2026-11-05)                                                             |
-| **4 · Blockly code generation**  | 🟡 ACTIVE  | `/blocks` ([ADR 0008](adr/0008-block-editor.md)): Blockly editor that generates Pybricks MicroPython and enforces the hub code rules (`try`/`finally` motor stop, config block, no hardcoded ports)   | Checks 1 and 2 passed on a hub 2026-11-05 ([results](compatibility.md#blocks-results)); the requested layout changes, then checks 3 to 9; then Tasks     |
-| **5 · Xbox test panel**          | 🔵 READY   | Ships a hub program that reads an Xbox controller (hub-direct, [ADR 0003](adr/0003-hub-direct-gamepad.md)) and shows its live telemetry in the browser; then controller blocks                        | None technically; scheduled after 4. Xbox only (the maintainer's controller); PS4 not needed for now and would need a new ADR (milestone 5 below)        |
-| **6 · Offline PWA**              | ⬜ BLOCKED | Service worker and manifest so the app, including the WebAssembly compiler, works without a network                                                                                                   | Needs 2 (the compiler must be cacheable to compile offline)                                                                                              |
-| **7 · Mat profiles**             | 🔵 READY   | Mat profiles with drag-and-drop objects, all in millimetres ([ADR 0004](adr/0004-millimetre-units.md))                                                                                                | None technically; scheduled last by priority                                                                                                             |
-| **Goal: first usable release**   | 🟪 GOAL    | Students program a robot with blocks, run it on a hub, drive it with a controller, and use the app offline                                                                                            | Needs 4, 5, 6 and 7                                                                                                                                      |
+| Milestone                        | Status     | What it is                                                                                                                                                                                            | Blocker                                                                                                                                                         |
+| -------------------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **0 · Bootstrap**                | 🟡 ACTIVE  | Static Next.js app, Docker toolchain, CI, docs, ADRs, compatibility check, read-only hub probe, hardware test page                                                                                    | Hardware verification of the other 6 supported rows (Chrome on macOS verified 2026-11-04; [checklist](compatibility.md#how-to-verify-a-row-on-hardware))        |
+| **1 · Pybricks protocol docs**   | ✅ DONE    | [`docs/protocol/pybricks-ble.md`](protocol/pybricks-ble.md): capabilities, commands, events, program format and upload sequence, every statement cited to an upstream commit                          | —                                                                                                                                                               |
+| **2 · mpy-cross in the browser** | ✅ DONE    | Adopt Pybricks' `@pybricks/mpy-cross-v6` WebAssembly build ([ADR 0006](adr/0006-adopt-pybricks-mpy-cross.md)); golden tests prove byte-for-byte identical output to `pybricksdev` for the same source | — (goldens byte-identical; the `.wasm` loads from this site under the CSP)                                                                                      |
+| **3 · BLE transport**            | ✅ DONE    | Upload a compiled program, start and stop it, stream stdout, in `src/lib/ble/`; Program and Monitor page with text monitor and plotter                                                                | — (9 of 9 [hardware checks](compatibility.md#program-and-monitor-results) passed 2026-11-05)                                                                    |
+| **4 · Blockly code generation**  | 🟡 ACTIVE  | `/blocks` ([ADR 0008](adr/0008-block-editor.md)): Blockly editor that generates Pybricks MicroPython and enforces the hub code rules (`try`/`finally` motor stop, config block, no hardcoded ports)   | Hardware checks of the new layout and live values ([checklists](compatibility.md#blocks-checks-milestone-4)); then Tasks, which need an `await`-aware generator |
+| **5 · Xbox test panel**          | 🔵 READY   | Ships a hub program that reads an Xbox controller (hub-direct, [ADR 0003](adr/0003-hub-direct-gamepad.md)) and shows its live telemetry in the browser; then controller blocks                        | None technically; scheduled after 4. Xbox only (the maintainer's controller); PS4 not needed for now and would need a new ADR (milestone 5 below)               |
+| **6 · Offline PWA**              | ⬜ BLOCKED | Service worker and manifest so the app, including the WebAssembly compiler, works without a network                                                                                                   | Needs 2 (the compiler must be cacheable to compile offline)                                                                                                     |
+| **7 · Mat profiles**             | 🔵 READY   | Mat profiles with drag-and-drop objects, all in millimetres ([ADR 0004](adr/0004-millimetre-units.md))                                                                                                | None technically; scheduled last by priority                                                                                                                    |
+| **Goal: first usable release**   | 🟪 GOAL    | Students program a robot with blocks, run it on a hub, drive it with a controller, and use the app offline                                                                                            | Needs 4, 5, 6 and 7                                                                                                                                             |
 
 **The real bottleneck is hardware access.** Hardware verification (a real SPIKE Prime hub on each
 supported browser and platform) gates milestone 0 and every BLE feature; it cannot be replaced by
 unit tests. Milestone 3, the only join on the critical path, is done (verified on a hub
-2026-11-05). Milestone 4's first block set ran on a hub (checks 1 and 2); the layout changes the
-maintainer asked for come next, then the remaining checks; 5 and 7 can proceed in parallel.
+2026-11-05). Milestone 4's first block set ran on a hub (checks 1 and 2); the full-window layout
+and live device values the maintainer asked for are built and wait for their hardware checks; 5
+and 7 can proceed in parallel.
 
 ## Milestones in planned order
 
@@ -107,7 +108,14 @@ program cannot omit them.
   - Output: motor moves, hub light, display and beep.
   - Input: motor, sensor, hub button, tilt, timer.
   - Flow, Data, Variables, and Other (print and plot).
-- **Next:** Tasks (`multitask`), which need an `await`-aware generator, then examples.
+- **Full-window layout and live device values (built 2026-11-05, after the first run on a hub):**
+  the blocks fill the window, Python opens beside them or fills the window, the Monitor and
+  Plotter open in a drawer, and a device bar shows what is plugged into each port with live values
+  ([ADR 0008](adr/0008-block-editor.md) amendment, [ADR 0009](adr/0009-live-device-values.md)).
+- **Next:** the hardware checks of the new layout and live values; then Tasks (`multitask`), which
+  need an `await`-aware generator; then examples.
+- **Later:** live values while the user's program runs. The reader cannot run beside the user's
+  program; the program would report them itself, which needs the same `await`-aware generator.
 
 ### 5 · Xbox test panel with live telemetry
 

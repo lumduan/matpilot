@@ -45,7 +45,16 @@ export const StatusFlag = {
  * FW lib/pbio/include/pbio/protocol.h#L401-L448
  */
 export const FeatureFlag = {
+  BUILTIN_REPL: 1 << 0,
   USER_PROG_FORMAT_MULTI_MPY_V6: 1 << 1,
+} as const;
+
+/**
+ * Built-in program ids for START_USER_PROGRAM (section 3). Ids 0 to 127 are downloaded program
+ * slots; 128 is the REPL. FW lib/pbio/include/pbio/protocol.h#L43-L84
+ */
+export const ProgramId = {
+  REPL: 128,
 } as const;
 
 /** Bytes before the data in WRITE_USER_RAM: 1 command byte and a u32 offset (section 6). */
@@ -141,6 +150,17 @@ export function encodeStopUserProgram(): Uint8Array {
  */
 export function encodeStartUserProgram(): Uint8Array {
   return Uint8Array.of(Command.START_USER_PROGRAM);
+}
+
+/**
+ * START_USER_PROGRAM with a program id (protocol 1.4+), for example the REPL. A built-in program
+ * does not touch the stored program slots (FW lib/pbio/sys/command.c#L47-L54).
+ */
+export function encodeStartProgramId(programId: number): Uint8Array {
+  if (!Number.isInteger(programId) || programId < 0 || programId > 255) {
+    throw new Error(`A program id is one byte; got ${programId}.`);
+  }
+  return Uint8Array.of(Command.START_USER_PROGRAM, programId);
 }
 
 /** WRITE_USER_PROGRAM_META with a u32 program size (section 3). */

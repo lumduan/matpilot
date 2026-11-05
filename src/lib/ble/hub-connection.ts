@@ -10,6 +10,10 @@
  * - disconnect() and dispose() send STOP before disconnecting when a program runs.
  * - A lost connection cannot stop the program: the firmware stops programs only on the stop
  *   command, the stop button, or shutdown, never on a disconnect. The UI says so.
+ *
+ * Besides uploaded programs, it can run source text in the hub's built-in REPL (runInRepl), which
+ * leaves the stored program slots untouched (docs/adr/0009-live-device-values.md). The REPL's
+ * output goes to onReplOutput(), never to onOutput().
  */
 
 import {
@@ -23,11 +27,14 @@ import {
   decodeHubCapabilities,
   decodeHubEvent,
   encodeProgramUpload,
+  encodeStartProgramId,
   encodeStartUserProgram,
   encodeStdinWrites,
   encodeStopUserProgram,
+  encodeWriteStdin,
   FeatureFlag,
   hasStatusFlag,
+  ProgramId,
   StatusFlag,
   type HubCapabilities,
 } from '../pybricks/protocol';
@@ -98,6 +105,8 @@ export interface ConnectedHub {
   readonly protocolRevision: string;
   readonly protocolVersion: ProtocolVersion | null;
   readonly capabilities: HubCapabilities;
+  /** The hub has the built-in REPL and accepts a program id in START (protocol 1.4+). */
+  readonly supportsRepl: boolean;
 }
 
 export type LinkState =
@@ -124,16 +133,33 @@ export type ProgramPhase =
   | { readonly phase: 'stopping' };
 
 export interface HubFlags {
-  /** From the hub's status reports; `false` until the first report. */
+  /** From the hub's status reports; `false` until the first report. Includes the REPL. */
   readonly programRunning: boolean;
+  /** A program other than the REPL runs: the user's program. */
+  readonly userProgramRunning: boolean;
+  /** The running program's id (protocol 1.4+), or `null`. */
+  readonly runningProgramId: number | null;
   readonly batteryLow: boolean;
   readonly shuttingDown: boolean;
 }
+
+/**
+ * Why the last REPL session ended: `stopped` by this page, `ended` on the hub (its stop button, or
+ * the source finished), or `failed` to start.
+ */
+export type ReplEnd = 'stopped' | 'ended' | 'failed';
+
+export type ReplState =
+  | { readonly phase: 'off'; readonly ended: ReplEnd | null }
+  | { readonly phase: 'starting' }
+  | { readonly phase: 'running' }
+  | { readonly phase: 'stopping' };
 
 export interface ConnectionSnapshot {
   readonly link: LinkState;
   readonly program: ProgramPhase;
   readonly flags: HubFlags;
+  readonly repl: ReplState;
 }
 
 export type RunError =
@@ -144,16 +170,62 @@ export type RunError =
 
 export type RunResult = { readonly ok: true } | { readonly ok: false; readonly error: RunError };
 
-const INITIAL_FLAGS: HubFlags = { programRunning: false, batteryLow: false, shuttingDown: false };
+export type ReplError =
+  | { readonly kind: 'not-connected' }
+  | { readonly kind: 'unsupported' }
+  | { readonly kind: 'busy' }
+  | { readonly kind: 'cancelled' }
+  | { readonly kind: 'timeout'; readonly stage: 'stop' | 'prompt' | 'paste-mode' | 'echo' }
+  | { readonly kind: 'write-failed'; readonly detail: string };
+
+export type ReplResult = { readonly ok: true } | { readonly ok: false; readonly error: ReplError };
+
+const INITIAL_FLAGS: HubFlags = {
+  programRunning: false,
+  userProgramRunning: false,
+  runningProgramId: null,
+  batteryLow: false,
+  shuttingDown: false,
+};
+
+const REPL_OFF: ReplState = { phase: 'off', ended: null };
 
 export const INITIAL_CONNECTION_SNAPSHOT: ConnectionSnapshot = Object.freeze<ConnectionSnapshot>({
   link: { status: 'idle' },
   program: { phase: 'idle' },
   flags: INITIAL_FLAGS,
+  repl: REPL_OFF,
 });
+
+/**
+ * The REPL session (docs/protocol/pybricks-ble.md section 8). MicroPython's friendly REPL prints
+ * this prompt, enters paste mode on Ctrl-E with the header below, echoes each pasted byte, and runs
+ * the paste on Ctrl-D. Cited at pybricks/micropython 13580b6: py/repl.h#L49-L51 (prompt),
+ * shared/runtime/pyexec.c#L628-L652 (paste mode).
+ */
+const REPL_PROMPT = '>>> ';
+const REPL_PASTE_HEADER = 'Ctrl-D to finish\r\n=== ';
+const CTRL_D = 0x04;
+const CTRL_E = 0x05;
+/**
+ * SPIKE Prime buffers 64 bytes of stdin (FW lib/pbio/platform/prime_hub/pbsysconfig.h#L21), of
+ * which its ring buffer can hold 63 (FW lib/lwrb/src/lwrb/lwrb.c#L274-L286). Bytes not yet echoed
+ * are at most what the buffer still holds, so keeping them at or below 60 can never overflow it.
+ */
+const REPL_CHUNK_BYTES = 30;
+const REPL_MAX_IN_FLIGHT = 60;
+/** Keep the matched text short; only the prompt and the paste header are searched in it. */
+const REPL_TAIL_CHARS = 256;
+
+export const REPL_PROMPT_TIMEOUT_MS = 5000;
+export const REPL_ECHO_TIMEOUT_MS = 3000;
+/** How long to wait for the hub to report that a stopped program has ended. */
+export const PROGRAM_END_TIMEOUT_MS = 2000;
 
 /** Stdout needs the WRITE_STDOUT event, added in protocol 1.3.0 (docs/protocol section 4). */
 const MIN_PROTOCOL_MINOR = 3;
+/** START with a program id, and so the REPL by id, needs protocol 1.4.0 (section 3). */
+const REPL_PROTOCOL_MINOR = 4;
 
 /** How long disconnect() waits for STOP to be acknowledged before disconnecting anyway. */
 export const STOP_BEFORE_DISCONNECT_TIMEOUT_MS = 1500;
@@ -180,11 +252,20 @@ export class HubConnection {
   readonly #listeners = new Set<Listener<ConnectionSnapshot>>();
   readonly #outputListeners = new Set<Listener<Uint8Array>>();
   readonly #getBluetooth: () => ControlBluetoothLike | undefined;
+  readonly #replListeners = new Set<Listener<Uint8Array>>();
   #device: ControlDeviceLike | null = null;
   #control: ControlCharacteristicLike | null = null;
   #attempt = 0;
   /** Serialises GATT operations. */
   #queue: Promise<unknown> = Promise.resolve();
+  /** Re-checked after every notification and on disconnect (see #waitFor). */
+  readonly #waiters = new Set<() => void>();
+  /** Where runInRepl() is: waiting for the prompt, for the paste header, counting the echo. */
+  #replStage: 'none' | 'prompt' | 'header' | 'echo' | 'run' = 'none';
+  #replTail = '';
+  #replEcho = 0;
+  #replStartSent = false;
+  #replSeenRunning = false;
 
   constructor(bluetooth?: ControlBluetoothLike | (() => ControlBluetoothLike | undefined)) {
     if (typeof bluetooth === 'function') this.#getBluetooth = bluetooth;
@@ -201,11 +282,19 @@ export class HubConnection {
     };
   };
 
-  /** Raw stdout bytes from the running program, as they arrive. */
+  /** Raw stdout bytes from the running program, as they arrive. Not the REPL's output. */
   readonly onOutput = (listener: Listener<Uint8Array>): (() => void) => {
     this.#outputListeners.add(listener);
     return () => {
       this.#outputListeners.delete(listener);
+    };
+  };
+
+  /** Raw stdout bytes while a REPL session runs, including the REPL's prompt and echo. */
+  readonly onReplOutput = (listener: Listener<Uint8Array>): (() => void) => {
+    this.#replListeners.add(listener);
+    return () => {
+      this.#replListeners.delete(listener);
     };
   };
 
@@ -219,7 +308,12 @@ export class HubConnection {
       return;
     }
     const attempt = ++this.#attempt;
-    this.#set({ link: { status: 'requesting' }, program: { phase: 'idle' }, flags: INITIAL_FLAGS });
+    this.#set({
+      link: { status: 'requesting' },
+      program: { phase: 'idle' },
+      flags: INITIAL_FLAGS,
+      repl: REPL_OFF,
+    });
 
     let device: ControlDeviceLike;
     try {
@@ -298,6 +392,9 @@ export class HubConnection {
           protocolRevision,
           protocolVersion,
           capabilities,
+          supportsRepl:
+            protocolVersion.minor >= REPL_PROTOCOL_MINOR &&
+            (capabilities.featureFlags & FeatureFlag.BUILTIN_REPL) !== 0,
         },
       });
     } catch (error) {
@@ -319,8 +416,15 @@ export class HubConnection {
     const link = this.#snapshot.link;
     if (link.status !== 'ready' || !this.#control)
       return { ok: false, error: { kind: 'not-connected' } };
-    if (this.#snapshot.program.phase !== 'idle' || this.#snapshot.flags.programRunning) {
+    if (this.#snapshot.program.phase !== 'idle' || this.#snapshot.flags.userProgramRunning) {
       return { ok: false, error: { kind: 'busy' } };
+    }
+    // A REPL session (live device values) gives way to the user's program.
+    if (this.#snapshot.repl.phase !== 'off' || this.#snapshot.flags.programRunning) {
+      if (!(await this.#endRepl())) return { ok: false, error: { kind: 'busy' } };
+      if (this.#snapshot.link.status !== 'ready' || this.#snapshot.program.phase !== 'idle') {
+        return { ok: false, error: { kind: 'busy' } };
+      }
     }
     const { maxProgramSize, maxWriteSize } = link.hub.capabilities;
     if (program.length > maxProgramSize) {
@@ -342,7 +446,7 @@ export class HubConnection {
       if (attempt !== this.#attempt) return { ok: false, error: { kind: 'not-connected' } };
       // The running flag in the next status report confirms the start.
       this.#setProgram(
-        this.#snapshot.flags.programRunning ? { phase: 'running' } : { phase: 'starting' },
+        this.#snapshot.flags.userProgramRunning ? { phase: 'running' } : { phase: 'starting' },
       );
       return { ok: true };
     } catch (error) {
@@ -367,6 +471,7 @@ export class HubConnection {
   async writeStdin(text: string): Promise<boolean> {
     const link = this.#snapshot.link;
     if (link.status !== 'ready' || !this.#control) return false;
+    if (this.#snapshot.repl.phase !== 'off') return false;
     try {
       const writes = encodeStdinWrites(
         new TextEncoder().encode(text),
@@ -379,13 +484,124 @@ export class HubConnection {
     }
   }
 
+  /**
+   * Starts the hub's REPL and runs `source` in it with MicroPython's paste mode, so nothing is
+   * written to the program slots. Resolves once the source has been sent and started; its output
+   * arrives through onReplOutput(). `source` must be printable ASCII, tabs and `\n` line endings.
+   *
+   * Pasting is paced by the REPL's echo: at most REPL_MAX_IN_FLIGHT bytes are sent ahead of what
+   * the REPL has echoed back, so the hub's 64-byte stdin buffer never overflows.
+   */
+  async runInRepl(source: string): Promise<ReplResult> {
+    const link = this.#snapshot.link;
+    if (link.status !== 'ready' || !this.#control)
+      return { ok: false, error: { kind: 'not-connected' } };
+    if (!link.hub.supportsRepl) return { ok: false, error: { kind: 'unsupported' } };
+    if (
+      this.#snapshot.repl.phase !== 'off' ||
+      this.#snapshot.program.phase !== 'idle' ||
+      this.#snapshot.flags.userProgramRunning
+    ) {
+      return { ok: false, error: { kind: 'busy' } };
+    }
+    if (!/^[\t\n\x20-\x7e]*$/.test(source)) {
+      throw new Error('REPL source must be printable ASCII, tabs and \\n line endings.');
+    }
+    const attempt = this.#attempt;
+    this.#replStage = 'none';
+    this.#replStartSent = false;
+    this.#replSeenRunning = false;
+    this.#setRepl({ phase: 'starting' });
+    const cancelled = () => attempt !== this.#attempt || this.#snapshot.repl.phase !== 'starting';
+    // Every wait also ends as soon as the session is stopped or the link drops.
+    const until = (predicate: () => boolean, timeoutMs: number) =>
+      this.#waitFor(() => cancelled() || predicate(), timeoutMs);
+
+    try {
+      // A REPL left running (for example after a lost link) is stopped first.
+      if (this.#snapshot.flags.programRunning) {
+        if (this.#snapshot.flags.runningProgramId !== ProgramId.REPL) {
+          return this.#replFailed(attempt, { kind: 'busy' });
+        }
+        await this.#write(encodeStopUserProgram());
+        const ended = await until(
+          () => !this.#snapshot.flags.programRunning,
+          PROGRAM_END_TIMEOUT_MS,
+        );
+        if (cancelled()) return this.#replCancelled(attempt);
+        if (!ended) return this.#replFailed(attempt, { kind: 'timeout', stage: 'stop' });
+      }
+
+      this.#replTail = '';
+      this.#replStage = 'prompt';
+      this.#replStartSent = true;
+      await this.#write(encodeStartProgramId(ProgramId.REPL));
+      const prompted = await until(
+        () => this.#replTail.includes(REPL_PROMPT),
+        REPL_PROMPT_TIMEOUT_MS,
+      );
+      if (cancelled()) return this.#replCancelled(attempt);
+      if (!prompted) return this.#replFailed(attempt, { kind: 'timeout', stage: 'prompt' });
+
+      this.#replTail = '';
+      this.#replEcho = 0;
+      this.#replStage = 'header';
+      await this.#write(encodeWriteStdin(Uint8Array.of(CTRL_E)));
+      const pasting = await until(() => this.#replStage === 'echo', REPL_PROMPT_TIMEOUT_MS);
+      if (cancelled()) return this.#replCancelled(attempt);
+      if (!pasting) return this.#replFailed(attempt, { kind: 'timeout', stage: 'paste-mode' });
+
+      const bytes = new TextEncoder().encode(source);
+      const chunkSize = Math.min(REPL_CHUNK_BYTES, link.hub.capabilities.maxWriteSize - 1);
+      let sent = 0;
+      while (sent < bytes.length) {
+        const chunk = bytes.subarray(sent, sent + chunkSize);
+        const room = await until(
+          () => sent - this.#replEcho + chunk.length <= REPL_MAX_IN_FLIGHT,
+          REPL_ECHO_TIMEOUT_MS,
+        );
+        if (cancelled()) return this.#replCancelled(attempt);
+        if (!room) return this.#replFailed(attempt, { kind: 'timeout', stage: 'echo' });
+        await this.#write(encodeWriteStdin(chunk));
+        sent += chunk.length;
+      }
+      const echoed = await until(() => this.#replEcho >= sent, REPL_ECHO_TIMEOUT_MS);
+      if (cancelled()) return this.#replCancelled(attempt);
+      if (!echoed) return this.#replFailed(attempt, { kind: 'timeout', stage: 'echo' });
+
+      this.#replStage = 'run';
+      await this.#write(encodeWriteStdin(Uint8Array.of(CTRL_D)));
+      if (cancelled()) return this.#replCancelled(attempt);
+      this.#setRepl({ phase: 'running' });
+      return { ok: true };
+    } catch (error) {
+      return this.#replFailed(attempt, { kind: 'write-failed', detail: errorDetail(error) });
+    }
+  }
+
+  /** Sends one byte of stdin to a running REPL session, as a keep-alive. Never rejects. */
+  async keepReplAlive(): Promise<boolean> {
+    if (this.#snapshot.repl.phase !== 'running' || !this.#control) return false;
+    try {
+      await this.#write(encodeWriteStdin(Uint8Array.of(0x2e)));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /** Stops a REPL session and waits (bounded) until the hub reports it ended. Never rejects. */
+  async stopRepl(): Promise<boolean> {
+    return this.#endRepl();
+  }
+
   /** Stops a running program (best effort, bounded wait), then disconnects. */
   async disconnect(): Promise<void> {
     const device = this.#device;
     if (!device) return;
     await this.#stopIfRunning();
     if (this.#device !== device) return;
-    const programWasRunning = this.#snapshot.flags.programRunning;
+    const programWasRunning = this.#snapshot.flags.userProgramRunning;
     this.#attempt++;
     this.#release(device);
     this.#set({
@@ -397,7 +613,9 @@ export class HubConnection {
       },
       program: { phase: 'idle' },
       flags: INITIAL_FLAGS,
+      repl: REPL_OFF,
     });
+    this.#notifyWaiters();
   }
 
   /** For page unload or unmount: stop (best effort, not awaited for long) and release. */
@@ -411,6 +629,105 @@ export class HubConnection {
     this.#attempt++;
     if (device) this.#release(device);
     if (this.#snapshot !== INITIAL_CONNECTION_SNAPSHOT) this.#set(INITIAL_CONNECTION_SNAPSHOT);
+    this.#notifyWaiters();
+  }
+
+  /** Ends a REPL session, or a REPL the hub was already running, before something else runs. */
+  async #endRepl(): Promise<boolean> {
+    const attempt = this.#attempt;
+    const { repl, flags } = this.#snapshot;
+    const replOnHub = flags.programRunning && flags.runningProgramId === ProgramId.REPL;
+    if (repl.phase === 'off' && !replOnHub) return !flags.programRunning;
+    if (repl.phase !== 'off' && !this.#replStartSent) {
+      // runInRepl() has not sent START yet; it sees the phase change and gives up.
+      this.#replStage = 'none';
+      this.#setRepl({ phase: 'off', ended: 'stopped' });
+      return !this.#snapshot.flags.programRunning;
+    }
+    if (repl.phase !== 'off') this.#setRepl({ phase: 'stopping' });
+    try {
+      await this.#write(encodeStopUserProgram());
+    } catch {
+      // Reported through the link state if the hub is gone.
+    }
+    const ended = await this.#waitFor(
+      () => this.#snapshot.repl.phase === 'off' && !this.#snapshot.flags.programRunning,
+      PROGRAM_END_TIMEOUT_MS,
+    );
+    if (attempt === this.#attempt && this.#snapshot.repl.phase !== 'off') {
+      // No status report confirmed it (for example START and STOP were too close together).
+      this.#replStage = 'none';
+      this.#setRepl({ phase: 'off', ended: 'stopped' });
+    }
+    return ended || (attempt === this.#attempt && !this.#snapshot.flags.programRunning);
+  }
+
+  #replCancelled(attempt: number): ReplResult {
+    return attempt === this.#attempt
+      ? { ok: false, error: { kind: 'cancelled' } }
+      : { ok: false, error: { kind: 'not-connected' } };
+  }
+
+  /** A REPL session failed to start: stop whatever started, and say why. */
+  #replFailed(attempt: number, error: ReplError): ReplResult {
+    if (attempt !== this.#attempt) return { ok: false, error: { kind: 'not-connected' } };
+    if (this.#snapshot.repl.phase !== 'starting') return this.#replCancelled(attempt);
+    const started = this.#replStartSent;
+    this.#replStage = 'none';
+    this.#setRepl({ phase: 'off', ended: 'failed' });
+    if (started) void this.#write(encodeStopUserProgram()).catch(() => undefined);
+    return { ok: false, error };
+  }
+
+  /**
+   * Resolves `true` once `predicate` holds, or `false` after `timeoutMs` or a disconnect. Checked
+   * now and after every notification.
+   */
+  #waitFor(predicate: () => boolean, timeoutMs: number): Promise<boolean> {
+    if (predicate()) return Promise.resolve(true);
+    const attempt = this.#attempt;
+    return new Promise((resolve) => {
+      const finish = (value: boolean) => {
+        clearTimeout(timer);
+        this.#waiters.delete(check);
+        resolve(value);
+      };
+      const check = () => {
+        if (attempt !== this.#attempt) finish(false);
+        else if (predicate()) finish(true);
+      };
+      const timer = setTimeout(() => finish(false), timeoutMs);
+      this.#waiters.add(check);
+    });
+  }
+
+  #notifyWaiters(): void {
+    for (const check of [...this.#waiters]) check();
+  }
+
+  /** Follows the REPL's output while runInRepl() waits for the prompt, header, and echo. */
+  #trackReplOutput(bytes: Uint8Array): void {
+    const stage = this.#replStage;
+    if (stage === 'echo') {
+      for (const byte of bytes) if (byte !== 0x0d) this.#replEcho++;
+      return;
+    }
+    if (stage !== 'prompt' && stage !== 'header') return;
+    let text = this.#replTail;
+    for (const byte of bytes) text += String.fromCharCode(byte);
+    if (stage === 'header') {
+      const at = text.indexOf(REPL_PASTE_HEADER);
+      if (at >= 0) {
+        // Bytes after the header in this notification are already echo.
+        for (const char of text.slice(at + REPL_PASTE_HEADER.length)) {
+          if (char !== '\r') this.#replEcho++;
+        }
+        this.#replStage = 'echo';
+        this.#replTail = '';
+        return;
+      }
+    }
+    this.#replTail = text.slice(-REPL_TAIL_CHARS);
   }
 
   async #stopIfRunning(): Promise<void> {
@@ -436,39 +753,70 @@ export class HubConnection {
     const decoded = decodeHubEvent(value);
     if (!decoded) return;
     if (decoded.type === 'stdout') {
-      for (const listener of [...this.#outputListeners]) listener(decoded.data);
+      const fromRepl =
+        this.#snapshot.repl.phase !== 'off' ||
+        this.#snapshot.flags.runningProgramId === ProgramId.REPL;
+      if (fromRepl) {
+        this.#trackReplOutput(decoded.data);
+        for (const listener of [...this.#replListeners]) listener(decoded.data);
+      } else {
+        for (const listener of [...this.#outputListeners]) listener(decoded.data);
+      }
+      this.#notifyWaiters();
       return;
     }
     if (decoded.type !== 'status') return;
+    const programRunning = hasStatusFlag(decoded.flags, StatusFlag.USER_PROGRAM_RUNNING);
+    let repl = this.#snapshot.repl;
+    // Protocol 1.3 reports no program id; then a running program is the REPL only while a
+    // session that this page started is active.
+    const isRepl =
+      programRunning &&
+      (decoded.programId === ProgramId.REPL ||
+        (decoded.programId === null && repl.phase !== 'off'));
     const flags: HubFlags = {
-      programRunning: hasStatusFlag(decoded.flags, StatusFlag.USER_PROGRAM_RUNNING),
+      programRunning,
+      userProgramRunning: programRunning && !isRepl,
+      runningProgramId: programRunning ? decoded.programId : null,
       batteryLow:
         hasStatusFlag(decoded.flags, StatusFlag.BATTERY_LOW_VOLTAGE_WARNING) ||
         hasStatusFlag(decoded.flags, StatusFlag.BATTERY_LOW_VOLTAGE_SHUTDOWN),
       shuttingDown: hasStatusFlag(decoded.flags, StatusFlag.SHUTDOWN),
     };
+    if (repl.phase !== 'off') {
+      if (isRepl && this.#replStartSent) this.#replSeenRunning = true;
+      else if (!programRunning && this.#replSeenRunning) {
+        repl = { phase: 'off', ended: repl.phase === 'stopping' ? 'stopped' : 'ended' };
+        this.#replStage = 'none';
+      }
+    }
     const phase = this.#snapshot.program.phase;
     let program = this.#snapshot.program;
-    if (flags.programRunning && (phase === 'starting' || phase === 'idle'))
+    if (flags.userProgramRunning && (phase === 'starting' || phase === 'idle'))
       program = { phase: 'running' };
-    if (!flags.programRunning && (phase === 'running' || phase === 'stopping'))
+    if (!flags.userProgramRunning && (phase === 'running' || phase === 'stopping'))
       program = { phase: 'idle' };
     const previous = this.#snapshot.flags;
     if (
       program === this.#snapshot.program &&
+      repl === this.#snapshot.repl &&
       previous.programRunning === flags.programRunning &&
+      previous.userProgramRunning === flags.userProgramRunning &&
+      previous.runningProgramId === flags.runningProgramId &&
       previous.batteryLow === flags.batteryLow &&
       previous.shuttingDown === flags.shuttingDown
     ) {
+      this.#notifyWaiters();
       return;
     }
-    this.#set({ ...this.#snapshot, program, flags });
+    this.#set({ ...this.#snapshot, program, flags, repl });
+    this.#notifyWaiters();
   };
 
   readonly #handleDisconnected = (): void => {
     const device = this.#device;
     if (!device) return;
-    const programWasRunning = this.#snapshot.flags.programRunning;
+    const programWasRunning = this.#snapshot.flags.userProgramRunning;
     this.#attempt++;
     this.#detach(device);
     this.#set({
@@ -480,7 +828,9 @@ export class HubConnection {
       },
       program: { phase: 'idle' },
       flags: INITIAL_FLAGS,
+      repl: REPL_OFF,
     });
+    this.#notifyWaiters();
   };
 
   #detach(device: ControlDeviceLike): void {
@@ -508,8 +858,13 @@ export class HubConnection {
     this.#set({ ...this.#snapshot, program });
   }
 
+  #setRepl(repl: ReplState): void {
+    this.#set({ ...this.#snapshot, repl });
+  }
+
   #set(next: ConnectionSnapshot): void {
     this.#snapshot = next;
     for (const listener of [...this.#listeners]) listener(next);
+    this.#notifyWaiters();
   }
 }

@@ -185,11 +185,15 @@ reported no change.
 ## Blocks checks (milestone 4)
 
 These checks use the **Blocks** page (`/blocks`) over HTTPS, with the same bench layout as the
-Program and Monitor checks. Start from the starter program (Start over).
+Program and Monitor checks. Start from the starter program (Start over). The page layout changed
+after the first run (2026-11-05, [ADR 0008](adr/0008-block-editor.md) amendment); the steps below
+use the new buttons and keep their numbers.
 
-1. Connect. The Python beside the blocks matches the blocks, and Run is enabled.
-2. Run the starter program. Motor A turns a quarter turn four times, the plotter shows `angle`
-   rising by about 90 each time, and the monitor ends with `done` and "Program stopped."
+1. Press **Connect hub** (top right). Press **Python** (bottom right): the Python beside the blocks
+   matches them, and Run is enabled.
+2. Open **Monitor** and **Plotter** (bottom right). Run the starter program. Motor A turns a quarter
+   turn four times, the plotter shows `angle` rising by about 90 each time, and the monitor ends
+   with `done` and "Program stopped."
 3. Run it again and press **Stop** in the middle. The program stops and motor A is released.
 4. From **Setup**, drag a colour sensor, a distance sensor and a touch sensor into "set up". They
    take ports D, E and F. Build: repeat forever, plot `distance` = distance sensor distance, plot
@@ -203,6 +207,28 @@ Program and Monitor checks. Start from the starter program (Start over).
    lists "Port A is already used", and Run is disabled. Change it back.
 8. Press **Edit as Python**. `/program` opens with the same Python, and Run works there.
 9. Reload `/blocks`. The blocks are still there.
+
+### Layout and live values checks (milestone 4)
+
+These check the full-window layout and the device bar ([ADR 0009](adr/0009-live-device-values.md)).
+
+1. Load `/blocks`. The introduction shows, then folds up after about 5 seconds; the arrow next to
+   "Blocks" opens and closes it. The blocks fill the window and the page does not scroll.
+2. **Python** opens the Python beside the blocks; × closes it. The **Blocks | Python** switch shows
+   the Python filling the window, and back.
+3. Connect. Within a few seconds the bar above the blocks shows A and B "large motor", C "medium
+   motor", D "colour sensor", E "distance sensor", F "touch sensor", and the hub's tilt.
+4. Turn motor A by hand: its angle changes. Hold a hand over E: millimetres, and "nothing" when
+   clear. Hold coloured paper under D: the colour's name and the reflection %. Press F: newtons and
+   "pressed". Tilt the hub: the tilt changes.
+5. Unplug the sensor on port E: E shows "empty" within about a second. Plug it back: it returns.
+6. Run the starter program. The bar says "Paused while your program runs" and greys the values.
+   When the program ends, the values come back by themselves within a few seconds.
+7. While values show, press the hub's centre button. The bar says "Live values were stopped on the
+   hub" with **Resume**; press it, and the values return.
+8. Run the starter once, wait for the values to come back, then press **Disconnect**. Press the
+   hub's centre button: the starter program runs on the hub (live values did not replace it).
+9. Switch **Live** off: the values disappear. Switch it on: they return.
 
 ### Blocks results
 

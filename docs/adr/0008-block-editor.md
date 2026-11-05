@@ -1,6 +1,6 @@
 # ADR 0008: The block editor: Blockly, with MatPilot's own blocks for Pybricks
 
-- Status: Accepted
+- Status: Accepted; decision 6 amended 2026-11-05 (see the end)
 - Date: 2026-11-05
 
 ## Context
@@ -88,3 +88,24 @@ variables and other, and to add MatPilot's own parts (such as a controller choic
   - check the `jsdom` peer range and the media file list;
   - check that the built-in blocks' Python still imports nothing MicroPython lacks;
   - check that no `eval` appears.
+
+## Amendment, 2026-11-05: a full-window editor
+
+After the first run on a hub, the maintainer reported that the block area was too narrow: a child
+who tried it preferred MakeCode and Minecraft Education, where the blocks fill the screen. The
+maintainer asked for the changes below, which replace decision 6.
+
+- **The block area fills the window.** `/blocks` has its own slim top bar (view switch, Start
+  over, Run, and a Connect button in the corner) instead of the site header, the hub card and the
+  page text. The page does not scroll.
+- **Python is a panel that opens and closes** beside the blocks (a sheet over them on phones), and
+  a **Blocks | Python** switch shows the Python alone, filling the window, like Minecraft
+  Education. The Python stays read-only; Copy and "Edit as Python" are unchanged. The choices are
+  remembered in the browser.
+- **The introduction folds away.** It shows for five seconds after the page loads (longer while the
+  pointer or focus is in it), then folds up; a chevron opens it again. It also carries the footer's
+  notices.
+- **The Monitor and Plotter open in a drawer** at the bottom, side by side when both are open.
+  While closed, their buttons show how many lines arrived and whether the plot has new values.
+- **A device bar above the blocks** shows what is plugged into each port, with live values
+  ([ADR 0009](0009-live-device-values.md)).

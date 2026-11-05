@@ -3,12 +3,14 @@ import {
   decodeHubCapabilities,
   decodeHubEvent,
   encodeProgramUpload,
+  encodeStartProgramId,
   encodeStartUserProgram,
   encodeStdinWrites,
   encodeStopUserProgram,
   encodeWriteUserProgramMeta,
   encodeWriteUserRam,
   hasStatusFlag,
+  ProgramId,
   StatusFlag,
 } from './protocol';
 
@@ -21,6 +23,12 @@ describe('command encoders', () => {
     expect(list(encodeStartUserProgram())).toEqual([0x01]);
     expect(list(encodeWriteUserProgramMeta(0x01020304))).toEqual([0x03, 4, 3, 2, 1]);
     expect(list(encodeWriteUserRam(258, Uint8Array.of(9, 8)))).toEqual([0x04, 2, 1, 0, 0, 9, 8]);
+  });
+
+  it('starts a built-in program by id, and refuses ids that are not one byte', () => {
+    expect(list(encodeStartProgramId(ProgramId.REPL))).toEqual([0x01, 0x80]);
+    expect(() => encodeStartProgramId(256)).toThrow(/one byte/);
+    expect(() => encodeStartProgramId(-1)).toThrow(/one byte/);
   });
 
   it('uploads like pybricksdev: meta 0, chunks of max-5 bytes, then meta size', () => {

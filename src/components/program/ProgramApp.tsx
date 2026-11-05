@@ -18,7 +18,7 @@ export function ProgramApp() {
   const runner = useProgramRunner();
   const { connection, monitor } = runner;
   const ready = connection.link.status === 'ready';
-  const running = connection.flags.programRunning || connection.program.phase !== 'idle';
+  const running = connection.flags.userProgramRunning || connection.program.phase !== 'idle';
   const status = programSummary(connection, runner.compiling);
 
   return (

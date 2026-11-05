@@ -24,6 +24,7 @@ export function MonitorPanel({
   onSend,
   onClear,
   exportText,
+  variant = 'card',
 }: {
   lines: readonly LogLine[];
   partial: string;
@@ -32,6 +33,8 @@ export function MonitorPanel({
   onSend: (text: string) => void;
   onClear: () => void;
   exportText: (withTimes: boolean) => string;
+  /** `pane`: inside the Blocks page's output drawer, filling its height. */
+  variant?: 'card' | 'pane';
 }) {
   const [autoScroll, setAutoScroll] = useState(true);
   const [showTimes, setShowTimes] = useState(true);
@@ -53,7 +56,7 @@ export function MonitorPanel({
   };
 
   return (
-    <section className="card" aria-labelledby="monitor-heading">
+    <section className={variant === 'pane' ? 'pane' : 'card'} aria-labelledby="monitor-heading">
       <div className="card-header">
         <h2 id="monitor-heading">Monitor</h2>
         <div className="button-row">

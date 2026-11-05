@@ -60,7 +60,8 @@ Feature flags ([FW protocol.h#L401-L448][feature-flags]):
 | 4   | Built-in IMU calibration program                     | 1.4.0 |
 | 5   | Same multi-file format, ABI v6.3 with native modules | 1.5.0 |
 
-MatPilot uploads bytecode only (no native code), so it requires **bit 1**.
+MatPilot uploads bytecode only (no native code), so it requires **bit 1**. It uses **bit 0** (the
+REPL) for live device values when present (section 8).
 
 ## 3. Commands (write to command/event)
 
@@ -177,6 +178,37 @@ Stdin is written as WRITE_STDIN chunks of at most `max_write_size - 1` bytes
   (command `0x07`, event `0x02`) without mixing it into the text output. The first plotter parses
   printed lines instead; AppData is an option for faster telemetry later.
 
+## 8. REPL sessions (live device values)
+
+MatPilot shows what is plugged into each port by running a small reader in the hub's built-in
+REPL ([ADR 0009](../adr/0009-live-device-values.md)). Code typed into the REPL is never stored,
+so the program in the selected slot stays there and still starts from the hub's button.
+
+- **Availability.** Feature flag bit 0 says the hub has the REPL (section 2); SPIKE Prime builds it
+  in ([FW pbsysconfig.h#L4][repl-prime]). START_USER_PROGRAM with program id `128` starts it
+  ([FW protocol.h#L58-L61][program-ids]); the id byte needs protocol 1.4.0 (section 3). MatPilot
+  uses this rather than the deprecated `0x02` START_REPL.
+- **Status.** While the REPL runs, the status report's running program id is `128` (section 4), so
+  MatPilot can tell it from the user's program (slots 0 to 4).
+- **What the REPL is.** The firmware imports every `pybricks` module and creates `hub` first
+  ([FW micropython.c#L383-L389][repl-start]), then runs MicroPython's friendly REPL
+  ([FW micropython.c#L100-L139][repl-run]). It prints the prompt `>>> ` ([MP py/repl.h#L49-L51][ps1]).
+- **Paste mode.** Ctrl-E (`0x05`) on an empty line enters paste mode, which prints
+  `paste mode; Ctrl-C to cancel, Ctrl-D to finish` and `=== `, then echoes every byte it reads
+  (a carriage return as `\r\n=== `). Ctrl-D (`0x04`) ends the paste and runs it as a file
+  ([MP shared/runtime/pyexec.c#L628-L652][paste]). MatPilot sends `\n` line endings only.
+- **Stdin is small.** SPIKE Prime keeps 64 bytes of stdin ([FW pbsysconfig.h#L21][stdin-size]), of
+  which the ring buffer holds 63 ([FW lwrb.c#L274-L286][lwrb]); a WRITE_STDIN that does not fit is
+  refused with BUSY ([FW command.c#L75-L83][cmd-stdin]). MatPilot never has more than 60 pasted
+  bytes that the REPL has not yet echoed, so a paste cannot overflow it.
+- **Ending it.** STOP raises `SystemExit` in the running code
+  ([FW micropython.c#L45-L57][stop-exit]); the REPL turns `SystemExit` into a forced exit and
+  returns, which ends the program ([MP pyexec.c#L142-L145][forced-exit],
+  [MP pyexec.c#L671-L674][repl-return]). The reader also ends itself with `raise SystemExit`.
+
+Stdin during the REPL session carries the paste and then one keep-alive byte (`.`) a second; the
+reader exits by itself when the keep-alives stop.
+
 ## Keeping this page current
 
 Change this page when MatPilot starts using another command or event, and when the tested
@@ -218,3 +250,14 @@ firmware baseline moves. Re-cite every link at the new commit; do not mix versio
 [fw-stop]: https://github.com/pybricks/pybricks-micropython/blob/4104553405decb0384bcfb030fbfcb4b5a9854cc/lib/pbio/sys/program_stop.c#L73-L88
 [fw-stop-button]: https://github.com/pybricks/pybricks-micropython/blob/4104553405decb0384bcfb030fbfcb4b5a9854cc/lib/pbio/platform/prime_hub/pbsysconfig.h#L12
 [fw-stop-set]: https://github.com/pybricks/pybricks-micropython/blob/4104553405decb0384bcfb030fbfcb4b5a9854cc/lib/pbio/sys/program_stop.c#L46-L53
+[repl-prime]: https://github.com/pybricks/pybricks-micropython/blob/4104553405decb0384bcfb030fbfcb4b5a9854cc/lib/pbio/platform/prime_hub/pbsysconfig.h#L4
+[program-ids]: https://github.com/pybricks/pybricks-micropython/blob/4104553405decb0384bcfb030fbfcb4b5a9854cc/lib/pbio/include/pbio/protocol.h#L58-L61
+[repl-start]: https://github.com/pybricks/pybricks-micropython/blob/4104553405decb0384bcfb030fbfcb4b5a9854cc/bricks/_common/micropython.c#L383-L389
+[repl-run]: https://github.com/pybricks/pybricks-micropython/blob/4104553405decb0384bcfb030fbfcb4b5a9854cc/bricks/_common/micropython.c#L100-L139
+[ps1]: https://github.com/pybricks/micropython/blob/13580b6ad057173f62e8b2363e01d6851bcc6699/py/repl.h#L49-L51
+[paste]: https://github.com/pybricks/micropython/blob/13580b6ad057173f62e8b2363e01d6851bcc6699/shared/runtime/pyexec.c#L628-L652
+[stdin-size]: https://github.com/pybricks/pybricks-micropython/blob/4104553405decb0384bcfb030fbfcb4b5a9854cc/lib/pbio/platform/prime_hub/pbsysconfig.h#L21
+[lwrb]: https://github.com/pybricks/pybricks-micropython/blob/4104553405decb0384bcfb030fbfcb4b5a9854cc/lib/lwrb/src/lwrb/lwrb.c#L274-L286
+[stop-exit]: https://github.com/pybricks/pybricks-micropython/blob/4104553405decb0384bcfb030fbfcb4b5a9854cc/bricks/_common/micropython.c#L45-L57
+[forced-exit]: https://github.com/pybricks/micropython/blob/13580b6ad057173f62e8b2363e01d6851bcc6699/shared/runtime/pyexec.c#L142-L145
+[repl-return]: https://github.com/pybricks/micropython/blob/13580b6ad057173f62e8b2363e01d6851bcc6699/shared/runtime/pyexec.c#L671-L674

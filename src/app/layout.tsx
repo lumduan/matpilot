@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
-import { SiteFooter } from '@/components/SiteFooter';
-import { PROJECT_NAME, PROJECT_STATUS } from '@/lib/project';
+import { PROJECT_NAME } from '@/lib/project';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -46,16 +45,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <meta httpEquiv="Content-Security-Policy" content={CONTENT_SECURITY_POLICY} />
         )}
       </head>
-      <body>
-        <header className="site-header">
-          <div className="container site-header-inner">
-            <span className="wordmark">{PROJECT_NAME}</span>
-            <span className="status-pill">{PROJECT_STATUS}</span>
-          </div>
-        </header>
-        {children}
-        <SiteFooter />
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

@@ -81,11 +81,17 @@ entry in [NOTICE](NOTICE).
     generates is cited in `src/lib/blocks/pybricks.ts`; add the citation there before adding a
     block. Blockly is browser-loaded lazily (`editor.ts`); the generator also runs headless in
     tests, where every test program must compile with the real compiler.
+  - `src/lib/devices/`: live device values ([ADR 0009](docs/adr/0009-live-device-values.md)): the
+    reader that `HubConnection.runInRepl()` pastes into the hub's REPL (`hub-source.ts`; every
+    Pybricks name it uses is cited there, and tests compile it with the real compiler) and the
+    parser for its `@mpv` lines. The reader only reads; it must never move a motor or change a
+    light, sound or display.
   - `src/lib/hwtest/`: the hardware test page's session, steps, and report (the steps mirror
     docs/compatibility.md; it reuses the read-only hub probe and adds no Bluetooth code)
 - `src/hooks/`: the only React code that creates or calls `src/lib/` objects with side effects
-  (the hub probe, the compatibility check, the hub connection in `useHubRunner`, the block editor
-  in `useBlocksEditor`). Components may import types and pure helpers.
+  (the hub probe, the compatibility check, the hub connection in `useHubRunner`, live device
+  values in `useLiveDevices`, the block editor in `useBlocksEditor`). Components may import types
+  and pure helpers.
 - `src/components/`, `src/app/`: UI only. They must not touch `navigator.bluetooth` (ESLint
   enforces this).
 - Pure logic goes behind functions with Vitest unit tests next to the source (`*.test.ts`). Mock
@@ -93,7 +99,9 @@ entry in [NOTICE](NOTICE).
 - The hub probe is **read-only**. Do not add GATT writes or `startNotifications()` to it. Only
   `src/lib/ble/hub-connection.ts` writes to the hub, following
   [ADR 0007](docs/adr/0007-ble-transport-writes.md): writes run one at a time, and every exit path
-  sends STOP first. Extend the protocol page before using another command.
+  sends STOP first. REPL sessions follow [ADR 0009](docs/adr/0009-live-device-values.md): the
+  user's program always takes priority, and nothing is written to a program slot. Extend the
+  protocol page before using another command.
 
 ## Hub code rules (MicroPython programs under `hub/`)
 
