@@ -9,14 +9,17 @@ export function PlotterCard({
   paused,
   onPausedChange,
   onClear,
+  variant = 'card',
 }: {
   series: readonly SeriesData[];
   paused: boolean;
   onPausedChange: (paused: boolean) => void;
   onClear: () => void;
+  /** `pane`: inside the Blocks page's output drawer, filling its height. */
+  variant?: 'card' | 'pane';
 }) {
   return (
-    <section className="card" aria-labelledby="plot-heading">
+    <section className={variant === 'pane' ? 'pane' : 'card'} aria-labelledby="plot-heading">
       <div className="card-header">
         <h2 id="plot-heading">Plotter</h2>
         <div className="button-row">
@@ -33,7 +36,7 @@ export function PlotterCard({
           </button>
         </div>
       </div>
-      <PlotterView series={series} />
+      <PlotterView series={series} fill={variant === 'pane'} />
     </section>
   );
 }

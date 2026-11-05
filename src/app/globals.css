@@ -13,6 +13,8 @@
   --border: #d6dbe1;
   --accent: #1f5fbf;
   --accent-text: #ffffff;
+  --run-bg: #1d7a43;
+  --run-text: #ffffff;
 
   --ok-bg: #e7f5ec;
   --ok-border: #2e8b57;
@@ -47,6 +49,8 @@
     --border: #2f3740;
     --accent: #5b9bf0;
     --accent-text: #0b1220;
+    --run-bg: #4cc27a;
+    --run-text: #08140d;
 
     --ok-bg: #12291c;
     --ok-border: #4caf7a;
@@ -468,48 +472,12 @@ code {
   margin-top: 0.5rem;
 }
 
-/* Blocks page: the Blockly workspace, with the Python beside it on wide screens. */
-.blocks-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 0.75rem;
-}
-
-.blocks-workspace {
-  height: clamp(26rem, 68vh, 44rem);
-  min-width: 0;
-  border: 1px solid var(--border);
-  border-radius: 0.4rem;
-  overflow: hidden;
-  background: var(--bg);
-}
-
-.blocks-python {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  min-width: 0;
-}
-
-.blocks-python-header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-}
-
-.blocks-python-header h3 {
-  margin: 0;
-  font-size: 1rem;
-}
-
+/* Read-only code (the Blocks page's Python). */
 .code-view {
   display: flex;
   align-items: flex-start;
   flex: 1;
   min-height: 12rem;
-  max-height: 28rem;
   overflow: auto;
   border: 1px solid var(--border);
   border-radius: 0.4rem;
@@ -536,17 +504,690 @@ code {
   tab-size: 4;
 }
 
-@media (min-width: 64rem) {
-  .blocks-layout {
-    grid-template-columns: minmax(0, 1fr) minmax(18rem, 26rem);
+/*
+ * Blocks page: a full-window editor ("studio"). Top bar, introduction, notices, device bar, then
+ * the block area (with the Python beside it or over it), the output drawer, and the status bar.
+ */
+.studio {
+  flex: none;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 30rem;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+.studio-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.75rem;
+  padding: 0.4rem 0.75rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.studio-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.studio-home {
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.studio-home:hover {
+  text-decoration: underline;
+}
+
+.studio-title {
+  font-size: 1.05rem;
+  margin: 0;
+  padding-left: 0.6rem;
+  border-left: 1px solid var(--border);
+}
+
+.studio-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.segmented {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 0.45rem;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.segmented-option {
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 0.3rem 0.9rem;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.segmented-option + .segmented-option {
+  border-left: 1px solid var(--border);
+}
+
+.segmented-option[aria-pressed='true'] {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+.segmented-option:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: -3px;
+}
+
+.button-small {
+  padding: 0.25rem 0.7rem;
+  font-size: 0.875rem;
+}
+
+.button-icon {
+  flex: none;
+}
+
+.button-run,
+.button-connect {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 1.1rem;
+}
+
+.button-run.button-primary {
+  background: var(--run-bg);
+  border-color: var(--run-bg);
+  color: var(--run-text);
+}
+
+.button-connect {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+
+.hub-pill,
+.hub-pill-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.hub-pill {
+  padding: 0.15rem 0.2rem 0.15rem 0.65rem;
+  border: 1px solid var(--ok-border);
+  border-radius: 999px;
+  background: var(--ok-bg);
+  color: var(--ok-text);
+  max-width: 18rem;
+}
+
+.hub-pill-dot {
+  flex: none;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: var(--ok-border);
+}
+
+.hub-pill-name {
+  font-weight: 600;
+  font-size: 0.875rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hub-pill .button-small {
+  border-radius: 999px;
+}
+
+.icon-button {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 0.4rem;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.icon-button:hover {
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.icon-button:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* The introduction folds up: a grid row from 1fr to 0fr. Padding lives on the paragraphs. */
+.studio-intro {
+  display: grid;
+  grid-template-rows: 0fr;
+  background: var(--surface);
+  border-bottom: 1px solid transparent;
+  transition:
+    grid-template-rows 320ms ease,
+    border-color 320ms ease;
+}
+
+.studio-intro[data-open='true'] {
+  grid-template-rows: 1fr;
+  border-bottom-color: var(--border);
+}
+
+.studio-intro-inner {
+  min-height: 0;
+  overflow: hidden;
+  padding: 0 1rem;
+  font-size: 0.92rem;
+}
+
+.studio-intro-inner > p {
+  max-width: 60rem;
+  margin: 0.45rem 0;
+}
+
+.studio-intro-inner > p:last-child {
+  margin-bottom: 0.6rem;
+}
+
+.studio-intro-legal {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .studio-intro {
+    transition: none;
+  }
+}
+
+.studio-notices {
+  padding: 0 0.75rem;
+}
+
+.studio-notices .notice {
+  margin: 0.4rem 0 0;
+  padding: 0.4rem 0.75rem;
+}
+
+/* Device bar: what is plugged into each port, with live values. Scrolls sideways on its own. */
+.device-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 3rem;
+  padding: 0.35rem 0.75rem;
+  overflow-x: auto;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.device-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.device-chips {
+  display: flex;
+  flex: none;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.device-chips-stale {
+  opacity: 0.55;
+}
+
+.device-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 7.5rem;
+  padding: 0.2rem 0.6rem 0.2rem 0.25rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  background: var(--bg);
+}
+
+.device-chip-empty {
+  min-width: 4.75rem;
+  border-style: dashed;
+  color: var(--muted);
+}
+
+.device-chip-empty .device-value {
+  font-weight: 500;
+}
+
+.device-port {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  min-width: 1.6rem;
+  height: 1.6rem;
+  padding: 0 0.3rem;
+  border-radius: 0.35rem;
+  background: var(--neutral-bg);
+  color: var(--neutral-text);
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
+.device-icon {
+  flex: none;
+  color: var(--muted);
+}
+
+.device-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.15;
+}
+
+.device-value {
+  font-weight: 700;
+  font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.device-detail {
+  font-size: 0.72rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* Swatches show the colour a sensor sees: the brick colours, the same in light and dark mode. */
+.device-swatch {
+  flex: none;
+  width: 1.1rem;
+  height: 1.1rem;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+}
+
+.swatch-red {
+  background: #d93838;
+}
+
+.swatch-yellow {
+  background: #f5c518;
+}
+
+.swatch-green {
+  background: #2f9e48;
+}
+
+.swatch-blue {
+  background: #2c6fd8;
+}
+
+.swatch-white {
+  background: #ffffff;
+}
+
+.swatch-none,
+.swatch-unknown {
+  background: transparent;
+  border-style: dashed;
+}
+
+.device-bar-message {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* The block area and the Python. */
+.studio-body {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.studio-canvas {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.blocks-workspace {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.studio-side {
+  display: flex;
+  flex-direction: column;
+  width: clamp(18rem, 30vw, 28rem);
+  min-height: 0;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+}
+
+/* Above Blockly's toolbox (z-index 70) so the Python view covers the whole block area. */
+.studio-python-full {
+  position: absolute;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+}
+
+.studio-panel-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.6rem 0.4rem 0.9rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.studio-panel-header h2 {
+  margin-right: auto;
+  font-size: 0.95rem;
+}
+
+.studio-side .code-view,
+.studio-python-full .code-view {
+  flex: 1;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+}
+
+.studio-python-full .code-gutter,
+.studio-python-full .code-text {
+  font-size: 0.95rem;
+}
+
+/* The output drawer: Monitor and Plotter, side by side when both are open. */
+.studio-drawer {
+  display: grid;
+  flex: none;
+  grid-template-columns: minmax(0, 1fr);
+  height: clamp(12rem, 36vh, 26rem);
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+}
+
+.studio-drawer[data-panes='2'] {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.pane {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  padding: 0.45rem 0.75rem 0.6rem;
+}
+
+.pane + .pane {
+  border-left: 1px solid var(--border);
+}
+
+.pane .card-header {
+  margin-bottom: 0.35rem;
+  gap: 0.4rem 0.75rem;
+}
+
+.pane h2 {
+  font-size: 0.95rem;
+}
+
+.pane .button {
+  padding: 0.2rem 0.6rem;
+  font-size: 0.85rem;
+}
+
+.pane .monitor-output {
+  flex: 1;
+  height: auto;
+  min-height: 0;
+}
+
+.pane .monitor-input {
+  margin-top: 0.4rem;
+}
+
+.pane .plot-empty {
+  padding: 1rem 0;
+}
+
+.plotter-fill {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.studio-problems {
+  flex: none;
+  max-height: 8rem;
+  overflow: auto;
+  padding: 0 0.75rem 0.4rem;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+}
+
+.studio-problems .notice {
+  margin-top: 0.4rem;
+  padding: 0.4rem 0.75rem;
+}
+
+.studio-problems ul {
+  margin: 0.2rem 0 0;
+  padding-left: 1.2rem;
+}
+
+.studio-status {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.35rem 0.75rem;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+}
+
+.studio-status-text {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  font-size: 0.85rem;
+  color: var(--muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.studio-toggles {
+  display: flex;
+  flex: none;
+  gap: 0.35rem;
+}
+
+.toggle-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.8rem;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.toggle-button:hover {
+  border-color: var(--accent);
+}
+
+.toggle-button[aria-pressed='true'] {
+  background: var(--neutral-bg);
+  border-color: var(--neutral-border);
+}
+
+.toggle-button:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.badge-count {
+  min-width: 1.25rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-size: 0.72rem;
+  line-height: 1.25rem;
+  text-align: center;
+}
+
+.badge-count-error {
+  background: var(--error-border);
+  color: #ffffff;
+}
+
+.badge-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+/* Phones and narrow windows: the Python panel becomes a sheet over the blocks, panes stack. */
+@media (max-width: 48rem) {
+  /* Two rows: home and hub; then the view switch, Start over and Run. */
+  .studio-bar .status-pill,
+  .studio-title {
+    display: none;
   }
 
-  .blocks-python {
-    height: clamp(26rem, 68vh, 44rem);
+  .studio-actions {
+    display: contents;
   }
 
-  .code-view {
-    max-height: none;
+  .studio-brand {
+    order: 1;
+    flex: 0 1 auto;
+  }
+
+  .hub-pill,
+  .hub-pill-wrap {
+    order: 2;
+    margin-left: auto;
+  }
+
+  .hub-pill {
+    max-width: 14rem;
+  }
+
+  .segmented {
+    order: 3;
+  }
+
+  .segmented-option {
+    padding: 0.3rem 0.6rem;
+  }
+
+  .button-run {
+    padding: 0.4rem 0.8rem;
+  }
+
+  .studio-actions > .button-small {
+    order: 4;
+    margin-left: auto;
+  }
+
+  .button-run {
+    order: 5;
+  }
+
+  .studio-side {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 85;
+    width: auto;
+    height: 55%;
+    border-left: 0;
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -4px 16px rgb(0 0 0 / 18%);
+  }
+
+  .studio-drawer {
+    height: 45vh;
+  }
+
+  .studio-drawer[data-panes='2'] {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .pane + .pane {
+    border-left: 0;
+    border-top: 1px solid var(--border);
   }
 }
 
