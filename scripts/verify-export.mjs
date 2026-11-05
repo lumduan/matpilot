@@ -5,7 +5,8 @@
 //   1. out/index.html was not produced, or
 //   2. any exported HTML or CSS file loads a resource from another origin
 //      (MatPilot must make zero runtime requests to third-party origins), or
-//   3. the self-hosted compiler binary (out/vendor/mpy-cross-v6.wasm, ADR 0006) is missing.
+//   3. the self-hosted compiler binary (out/vendor/mpy-cross-v6.wasm, ADR 0006) or Blockly's
+//      self-hosted media (out/vendor/blockly-media/, ADR 0008) is missing.
 //
 // Plain links (<a href="https://...">) are allowed: they are not loaded unless the user clicks.
 
@@ -15,6 +16,7 @@ import { join, relative } from 'node:path';
 const OUT_DIR = 'out';
 const INDEX = join(OUT_DIR, 'index.html');
 const COMPILER_WASM = join(OUT_DIR, 'vendor', 'mpy-cross-v6.wasm');
+const BLOCKLY_SPRITES = join(OUT_DIR, 'vendor', 'blockly-media', 'sprites.svg');
 
 /** Matches an absolute URL with a scheme, or a protocol-relative URL (`//host/...`). */
 const EXTERNAL_URL = /^(?:[a-z][a-z0-9+.-]*:)?\/\//i;
@@ -66,6 +68,12 @@ const problems = [];
 if (!existsSync(COMPILER_WASM)) {
   problems.push(
     `${COMPILER_WASM} is missing. Did scripts/vendor-assets.mjs run before next build?`,
+  );
+}
+
+if (!existsSync(BLOCKLY_SPRITES)) {
+  problems.push(
+    `${BLOCKLY_SPRITES} is missing. Blockly's media must be self-hosted (ADR 0008); did scripts/vendor-assets.mjs run?`,
   );
 }
 

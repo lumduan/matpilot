@@ -11,9 +11,9 @@ export default function HomePage() {
           Pybricks firmware, built for classrooms and robotics competitions. Everything runs in your
           browser over Bluetooth; there is no server and no account.
         </p>
-        <p className="muted">
-          This early build checks whether your browser can talk to a hub and reads basic information
-          from one. Block programming comes later.
+        <p>
+          <Link href="/blocks">Blocks</Link>: snap blocks together, see the Python they make, and
+          run it on your hub.
         </p>
         <p className="muted">
           Testing with a real hub? The <Link href="/hardware-test">hardware test</Link> walks
