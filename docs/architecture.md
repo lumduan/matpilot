@@ -53,13 +53,17 @@ Hub-direct gamepad path (planned)
 
 ### Program path
 
-1. **Blockly editor** (`/blocks`, [ADR 0008](adr/0008-block-editor.md)): the user builds a
-   program from blocks. Each block is one Pybricks call. A "set up" block names each device and
-   its port. The Python program written directly on `/program` skips steps 1 and 2.
+1. **Blockly editor** (`/blocks`, [ADR 0008](adr/0008-block-editor.md),
+   [ADR 0010](adr/0010-simple-blocks.md)): the user builds a program from blocks. The simple
+   blocks choose devices by port and set values with pictures (`src/lib/blocks/fields/`); the
+   detailed blocks, under Advanced, are one Pybricks call each, with a "set up" block that names
+   each device and its port. The Python program written directly on `/program` skips steps 1
+   and 2.
 2. **Python code generation** (`src/lib/blocks/generator.ts`): blocks become Pybricks
    MicroPython source with a fixed shape that enforces the hub code rules in
    [CLAUDE.md](../CLAUDE.md):
    - ports in one Config section, and no hardcoded ports inside logic;
+   - devices created once in Setup, one per port the simple blocks use, plus the drive base;
    - the main program in `try`/`finally`, stopping every motor.
 
    `OSError` handling around controller reads arrives with the controller blocks (milestone 5).
@@ -90,20 +94,20 @@ telemetry, but it is never in the control loop.
 
 ## What exists today
 
-| Component           | Location                                 | Notes                                                                                                                         |
-| ------------------- | ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| UI shell            | `src/app/`, `src/components/`            | Static pages; `(site)` pages have the site header and footer, `(studio)` pages (`/blocks`) fill the window                    |
-| React bindings      | `src/hooks/`                             | The only place React touches `src/lib/`                                                                                       |
-| Compatibility check | `src/lib/compat/`                        | Pure evaluation plus a collector for browser globals                                                                          |
-| Hub probe           | `src/lib/ble/`                           | Framework-agnostic state machine; read-only by its types                                                                      |
-| Hardware test       | `src/lib/hwtest/`                        | Session recorder, step logic, and plain-text report; no new BLE                                                               |
-| Hub connection      | `src/lib/ble/hub-connection.ts`          | Upload, start, stop, stdin, stdout, REPL sessions; the only module that writes ([ADR 0007](adr/0007-ble-transport-writes.md)) |
-| Compiler            | `src/lib/pybricks/compiler.ts`, `mpy.ts` | Pybricks' mpy-cross WebAssembly build, self-hosted ([ADR 0006](adr/0006-adopt-pybricks-mpy-cross.md))                         |
-| Monitor and plotter | `src/lib/monitor/`                       | Stream decoding, bounded log, Arduino-style plot parsing                                                                      |
-| Block editor        | `src/lib/blocks/`                        | Blockly blocks, toolbox, themes, and the Python generator ([ADR 0008](adr/0008-block-editor.md))                              |
-| Live device values  | `src/lib/devices/`                       | The reader pasted into the hub's REPL, and its line parser ([ADR 0009](adr/0009-live-device-values.md))                       |
-| Pybricks constants  | `src/lib/pybricks/`                      | UUIDs and version parsing, each cited to an upstream commit                                                                   |
-| Export guard        | `scripts/verify-export.mjs`              | Fails the build without `out/index.html` or with third-party loads                                                            |
+| Component           | Location                                 | Notes                                                                                                                                                |
+| ------------------- | ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| UI shell            | `src/app/`, `src/components/`            | Static pages; `(site)` pages have the site header and footer, `(studio)` pages (`/blocks`) fill the window                                           |
+| React bindings      | `src/hooks/`                             | The only place React touches `src/lib/`                                                                                                              |
+| Compatibility check | `src/lib/compat/`                        | Pure evaluation plus a collector for browser globals                                                                                                 |
+| Hub probe           | `src/lib/ble/`                           | Framework-agnostic state machine; read-only by its types                                                                                             |
+| Hardware test       | `src/lib/hwtest/`                        | Session recorder, step logic, and plain-text report; no new BLE                                                                                      |
+| Hub connection      | `src/lib/ble/hub-connection.ts`          | Upload, start, stop, stdin, stdout, REPL sessions; the only module that writes ([ADR 0007](adr/0007-ble-transport-writes.md))                        |
+| Compiler            | `src/lib/pybricks/compiler.ts`, `mpy.ts` | Pybricks' mpy-cross WebAssembly build, self-hosted ([ADR 0006](adr/0006-adopt-pybricks-mpy-cross.md))                                                |
+| Monitor and plotter | `src/lib/monitor/`                       | Stream decoding, bounded log, Arduino-style plot parsing                                                                                             |
+| Block editor        | `src/lib/blocks/`                        | Blockly blocks, picture fields, toolbox, themes, and the Python generator (ADRs [0008](adr/0008-block-editor.md), [0010](adr/0010-simple-blocks.md)) |
+| Live device values  | `src/lib/devices/`                       | The reader pasted into the hub's REPL, and its line parser ([ADR 0009](adr/0009-live-device-values.md))                                              |
+| Pybricks constants  | `src/lib/pybricks/`                      | UUIDs and version parsing, each cited to an upstream commit                                                                                          |
+| Export guard        | `scripts/verify-export.mjs`              | Fails the build without `out/index.html` or with third-party loads                                                                                   |
 
 ### Hub probe flow
 
