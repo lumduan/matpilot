@@ -206,10 +206,20 @@ Program and Monitor checks. Start from the starter program (Start over).
 
 ### Blocks results
 
-| Date | Browser | OS  | Hub | Firmware | Result |
-| ---- | ------- | --- | --- | -------- | ------ |
+| Date       | Browser    | OS           | Hub         | Firmware | Result                                         |
+| ---------- | ---------- | ------------ | ----------- | -------- | ---------------------------------------------- |
+| 2026-11-05 | Chrome 156 | macOS 27.0.1 | SPIKE Prime | 4.0.1    | Checks 1 and 2 passed; 3 to 9 not yet reported |
 
-No run yet.
+Notes on the 2026-11-05 run (the maintainer's bench, over the HTTPS tunnel, with a screenshot and
+the page's copied text). The browser and OS were not restated for this run; they are assumed to be
+those of the earlier runs.
+
+- **Checks 1 and 2:** connected, the Python matched the starter blocks, and Run worked. The monitor
+  showed `angle: 38`, `127`, `218`, `307` (steps of 89 to 91 degrees, about 1 s apart), then
+  `done` and "Program stopped."; the plotter's `angle` line ended at 307.
+- **Checks 3 to 9** were not reported separately. They are repeated after the page layout changes
+  that the maintainer asked for after this run (a larger block area, a Python panel that opens and
+  closes, and live device values).
 
 ## Keeping this file current
 

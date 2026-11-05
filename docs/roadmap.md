@@ -13,7 +13,7 @@ flowchart TD
     M1["1 · Pybricks protocol documentation<br/>DONE"]
     M2["2 · mpy-cross in the browser<br/>adopt Pybricks build, golden tests<br/>DONE"]
     M3["3 · BLE transport and Program and Monitor page<br/>upload, start, stop, stdout, plotter<br/>DONE"]
-    M4["4 · Blockly code generation<br/>with enforced safety rules<br/>ACTIVE — first block set done, hardware checks pending"]
+    M4["4 · Blockly code generation<br/>with enforced safety rules<br/>ACTIVE — block set ran on a hub,<br/>layout changes, then checks"]
     M5["5 · Xbox test panel<br/>with live telemetry<br/>READY"]
     M6["6 · Offline PWA<br/>BLOCKED — needs 2"]
     M7["7 · Mat profiles<br/>with drag-and-drop objects<br/>READY"]
@@ -51,8 +51,8 @@ flowchart TD
 | **1 · Pybricks protocol docs**   | ✅ DONE    | [`docs/protocol/pybricks-ble.md`](protocol/pybricks-ble.md): capabilities, commands, events, program format and upload sequence, every statement cited to an upstream commit                          | —                                                                                                                                                        |
 | **2 · mpy-cross in the browser** | ✅ DONE    | Adopt Pybricks' `@pybricks/mpy-cross-v6` WebAssembly build ([ADR 0006](adr/0006-adopt-pybricks-mpy-cross.md)); golden tests prove byte-for-byte identical output to `pybricksdev` for the same source | — (goldens byte-identical; the `.wasm` loads from this site under the CSP)                                                                               |
 | **3 · BLE transport**            | ✅ DONE    | Upload a compiled program, start and stop it, stream stdout, in `src/lib/ble/`; Program and Monitor page with text monitor and plotter                                                                | — (9 of 9 [hardware checks](compatibility.md#program-and-monitor-results) passed 2026-11-05)                                                             |
-| **4 · Blockly code generation**  | 🟡 ACTIVE  | `/blocks` ([ADR 0008](adr/0008-block-editor.md)): Blockly editor that generates Pybricks MicroPython and enforces the hub code rules (`try`/`finally` motor stop, config block, no hardcoded ports)   | Hardware checks ([checklist](compatibility.md#blocks-checks-milestone-4)); then the Tasks blocks (`multitask`), which need an `await`-aware generator    |
-| **5 · Xbox test panel**          | 🔵 READY   | Ships a hub program that reads an Xbox controller (hub-direct, [ADR 0003](adr/0003-hub-direct-gamepad.md)) and shows its live telemetry in the browser; then controller blocks                        | None technically; scheduled after 4. A PlayStation controller would need a new ADR (see milestone 5 below)                                               |
+| **4 · Blockly code generation**  | 🟡 ACTIVE  | `/blocks` ([ADR 0008](adr/0008-block-editor.md)): Blockly editor that generates Pybricks MicroPython and enforces the hub code rules (`try`/`finally` motor stop, config block, no hardcoded ports)   | Checks 1 and 2 passed on a hub 2026-11-05 ([results](compatibility.md#blocks-results)); the requested layout changes, then checks 3 to 9; then Tasks     |
+| **5 · Xbox test panel**          | 🔵 READY   | Ships a hub program that reads an Xbox controller (hub-direct, [ADR 0003](adr/0003-hub-direct-gamepad.md)) and shows its live telemetry in the browser; then controller blocks                        | None technically; scheduled after 4. Xbox only (the maintainer's controller); PS4 not needed for now and would need a new ADR (milestone 5 below)        |
 | **6 · Offline PWA**              | ⬜ BLOCKED | Service worker and manifest so the app, including the WebAssembly compiler, works without a network                                                                                                   | Needs 2 (the compiler must be cacheable to compile offline)                                                                                              |
 | **7 · Mat profiles**             | 🔵 READY   | Mat profiles with drag-and-drop objects, all in millimetres ([ADR 0004](adr/0004-millimetre-units.md))                                                                                                | None technically; scheduled last by priority                                                                                                             |
 | **Goal: first usable release**   | 🟪 GOAL    | Students program a robot with blocks, run it on a hub, drive it with a controller, and use the app offline                                                                                            | Needs 4, 5, 6 and 7                                                                                                                                      |
@@ -60,8 +60,8 @@ flowchart TD
 **The real bottleneck is hardware access.** Hardware verification (a real SPIKE Prime hub on each
 supported browser and platform) gates milestone 0 and every BLE feature; it cannot be replaced by
 unit tests. Milestone 3, the only join on the critical path, is done (verified on a hub
-2026-11-05). Milestone 4's first block set is built and waits for its hardware checks; 5 and 7
-can proceed in parallel.
+2026-11-05). Milestone 4's first block set ran on a hub (checks 1 and 2); the layout changes the
+maintainer asked for come next, then the remaining checks; 5 and 7 can proceed in parallel.
 
 ## Milestones in planned order
 
@@ -115,7 +115,9 @@ A panel that uploads a controller test program and shows what the hub reports in
 browser displays telemetry only; it is not in the control loop.
 
 **Controller choice (requested 2026-11-04).** The maintainer wants a choice of controller, for
-example Xbox or PS4.
+example Xbox or PS4. **Answered 2026-11-05: the maintainer has an Xbox controller, and PS4 is not
+needed for now.** Milestone 5 therefore builds the Xbox path only; the PS4 notes below stay as
+the record of what a PS4 path would need.
 
 - An Xbox controller connects to the hub directly ([ADR 0003](adr/0003-hub-direct-gamepad.md)).
 - `PlayStationController` exists in Pybricks v4.1.2, but it is enabled only for EV3. It is off
