@@ -1,8 +1,10 @@
 /**
  * Light and dark Blockly themes in MatPilot's colours (src/app/globals.css). Block colours are
  * the same in both: each is dark enough for Blockly's white block text (contrast of at least
- * 4.5:1). Built-in block styles are mapped onto MatPilot's categories: conditions and loops are
- * Flow, numbers and text are Data.
+ * 4.5:1; the lowest, Flow and Data, is 5.0). Built-in block styles are mapped onto MatPilot's
+ * categories: conditions and loops are Flow (Control), numbers and text are Data (Operators).
+ * The simple blocks' categories (ADR 0010) share colours with the detailed ones that do the same
+ * job: Motors with Output, Sensors with Input.
  */
 import * as Blockly from 'blockly/core';
 
@@ -14,6 +16,9 @@ export const CATEGORY_COLOURS = {
   data: '#15803d',
   variables: '#be185d',
   other: '#6d28d9',
+  movement: '#a21caf',
+  light: '#7e22ce',
+  sound: '#9f1239',
 } as const;
 
 const blockStyles = {
@@ -22,6 +27,11 @@ const blockStyles = {
   mp_output_blocks: { colourPrimary: CATEGORY_COLOURS.output },
   mp_input_blocks: { colourPrimary: CATEGORY_COLOURS.input },
   mp_other_blocks: { colourPrimary: CATEGORY_COLOURS.other },
+  mp_movement_blocks: { colourPrimary: CATEGORY_COLOURS.movement },
+  mp_motor_blocks: { colourPrimary: CATEGORY_COLOURS.output },
+  mp_light_blocks: { colourPrimary: CATEGORY_COLOURS.light },
+  mp_sound_blocks: { colourPrimary: CATEGORY_COLOURS.sound },
+  mp_sensor_blocks: { colourPrimary: CATEGORY_COLOURS.input },
   loop_blocks: { colourPrimary: CATEGORY_COLOURS.flow },
   logic_blocks: { colourPrimary: CATEGORY_COLOURS.flow },
   math_blocks: { colourPrimary: CATEGORY_COLOURS.data },
@@ -37,6 +47,11 @@ const categoryStyles = {
   math_category: { colour: CATEGORY_COLOURS.data },
   variable_category: { colour: CATEGORY_COLOURS.variables },
   mp_other_category: { colour: CATEGORY_COLOURS.other },
+  mp_movement_category: { colour: CATEGORY_COLOURS.movement },
+  mp_motor_category: { colour: CATEGORY_COLOURS.output },
+  mp_light_category: { colour: CATEGORY_COLOURS.light },
+  mp_sound_category: { colour: CATEGORY_COLOURS.sound },
+  mp_sensor_category: { colour: CATEGORY_COLOURS.input },
 };
 
 const fontStyle = { family: 'system-ui, -apple-system, "Segoe UI", sans-serif', size: 12 };

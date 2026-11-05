@@ -1,11 +1,19 @@
 /**
- * The toolbox (ADR 0008): Setup, Output, Input, Flow, Data, Variables, Other.
+ * The toolbox. First the simple blocks (ADR 0010, ./simple-toolbox.ts): Movement, Motors, Light,
+ * Sound, Control, Sensors, Operators, and Variables. Then "Advanced", which folds open like
+ * MakeCode's, with the detailed blocks (ADR 0008): Setup, Output, Input, Flow, Data, Other.
  *
  * Setup, Output and Input are filled when opened, from the devices in the "set up" block, so a
  * new block already names the user's motor or sensor, and a new set-up block takes the next free
  * port of the maintainer's bench layout (A, B, C motors; D colour; E distance; F touch).
  */
 import { DEVICES, DEVICE_TYPES, PORTS, type DeviceType, type PortName } from './pybricks';
+import {
+  CONTROL_CONTENTS,
+  LIGHT_CONTENTS,
+  OPERATOR_CONTENTS,
+  SOUND_CONTENTS,
+} from './simple-toolbox';
 
 export type FlyoutItem = Record<string, unknown> & { readonly kind: 'block' | 'label' | 'sep' };
 
@@ -20,6 +28,8 @@ export interface ToolboxState {
   }[];
   /** Every device variable's name, by type, whether or not it is set up. */
   readonly variableNames: Readonly<Record<DeviceType, readonly string[]>>;
+  /** Whether the workspace has a "set up" block (it is optional since ADR 0010). */
+  readonly hasSetupBlock: boolean;
 }
 
 const num = (value: number) => ({ shadow: { type: 'math_number', fields: { NUM: value } } });
@@ -55,9 +65,13 @@ export function nextFreePort(type: DeviceType, used: readonly PortName[]): PortN
 
 export function setupFlyout(state: ToolboxState): FlyoutItem[] {
   const usedPorts = state.devices.map((device) => device.port);
-  const items: FlyoutItem[] = [
-    label('Drag these into the “set up” block. Each device gets a name and a port.'),
-  ];
+  const items: FlyoutItem[] = state.hasSetupBlock
+    ? [label('Drag these into the “set up” block. Each device gets a name and a port.')]
+    : [
+        label('Start with a “set up” block, then drag devices into it.'),
+        block('mp_setup'),
+        label('Each device gets a name and a port.'),
+      ];
   for (const type of DEVICE_TYPES) {
     const setUp = new Set(
       state.devices.filter((device) => device.type === type).map((device) => device.name),
@@ -146,58 +160,120 @@ export function inputFlyout(state: ToolboxState): FlyoutItem[] {
   ];
 }
 
-/** The static part of the toolbox; `custom` categories are filled by the functions above. */
+/** The static part of the toolbox; `custom` categories are filled when they open. */
 export const TOOLBOX = {
   kind: 'categoryToolbox',
   contents: [
-    { kind: 'category', name: 'Setup', categorystyle: 'mp_setup_category', custom: 'MP_SETUP' },
-    { kind: 'category', name: 'Output', categorystyle: 'mp_output_category', custom: 'MP_OUTPUT' },
-    { kind: 'category', name: 'Input', categorystyle: 'mp_input_category', custom: 'MP_INPUT' },
     {
       kind: 'category',
-      name: 'Flow',
-      categorystyle: 'loop_category',
-      contents: [
-        block('mp_wait', { inputs: { TIME: num(1000) } }),
-        block('mp_wait_until'),
-        block('controls_repeat_ext', { inputs: { TIMES: num(4) } }),
-        block('mp_forever'),
-        block('controls_whileUntil'),
-        block('controls_if'),
-        block('controls_if', { extraState: { hasElse: true } }),
-        block('controls_flow_statements'),
-        block('mp_stop_program'),
-        label('Conditions'),
-        block('logic_compare', { inputs: { A: num(0), B: num(0) } }),
-        block('logic_operation'),
-        block('logic_negate'),
-        block('logic_boolean'),
-      ],
+      name: 'Movement',
+      categorystyle: 'mp_movement_category',
+      custom: 'MP_MOVEMENT',
+    },
+    { kind: 'category', name: 'Motors', categorystyle: 'mp_motor_category', custom: 'MP_MOTORS' },
+    {
+      kind: 'category',
+      name: 'Light',
+      categorystyle: 'mp_light_category',
+      contents: LIGHT_CONTENTS,
     },
     {
       kind: 'category',
-      name: 'Data',
+      name: 'Sound',
+      categorystyle: 'mp_sound_category',
+      contents: SOUND_CONTENTS,
+    },
+    {
+      kind: 'category',
+      name: 'Control',
+      categorystyle: 'loop_category',
+      contents: CONTROL_CONTENTS,
+    },
+    {
+      kind: 'category',
+      name: 'Sensors',
+      categorystyle: 'mp_sensor_category',
+      custom: 'MP_SENSORS',
+    },
+    {
+      kind: 'category',
+      name: 'Operators',
       categorystyle: 'math_category',
-      contents: [
-        block('math_number', { fields: { NUM: 0 } }),
-        block('math_arithmetic', { inputs: { A: num(1), B: num(1) } }),
-        block('math_modulo', { inputs: { DIVIDEND: num(10), DIVISOR: num(3) } }),
-        block('math_round', { inputs: { NUM: num(3.1) } }),
-        block('math_random_int', { inputs: { FROM: num(1), TO: num(100) } }),
-        block('text'),
-        block('text_join'),
-      ],
+      contents: OPERATOR_CONTENTS,
     },
     { kind: 'category', name: 'Variables', categorystyle: 'variable_category', custom: 'VARIABLE' },
+    { kind: 'sep' },
     {
       kind: 'category',
-      name: 'Other',
-      categorystyle: 'mp_other_category',
+      name: 'Advanced',
+      categorystyle: 'mp_setup_category',
+      expanded: 'false',
       contents: [
-        block('mp_print', { inputs: { VALUE: text('Hello') } }),
-        block('mp_plot', { inputs: { VALUE: num(0) } }),
-        label('The Plotter draws every “plot” name as a line.'),
+        { kind: 'category', name: 'Setup', categorystyle: 'mp_setup_category', custom: 'MP_SETUP' },
+        {
+          kind: 'category',
+          name: 'Output',
+          categorystyle: 'mp_output_category',
+          custom: 'MP_OUTPUT',
+        },
+        { kind: 'category', name: 'Input', categorystyle: 'mp_input_category', custom: 'MP_INPUT' },
+        {
+          kind: 'category',
+          name: 'Flow',
+          categorystyle: 'loop_category',
+          contents: [
+            block('mp_wait', { inputs: { TIME: num(1000) } }),
+            block('mp_wait_until'),
+            block('controls_repeat_ext', { inputs: { TIMES: num(4) } }),
+            block('mp_forever'),
+            block('controls_whileUntil'),
+            block('controls_if'),
+            block('controls_if', { extraState: { hasElse: true } }),
+            block('controls_flow_statements'),
+            block('mp_stop_program'),
+            label('Conditions'),
+            block('logic_compare', { inputs: { A: num(0), B: num(0) } }),
+            block('logic_operation'),
+            block('logic_negate'),
+            block('logic_boolean'),
+          ],
+        },
+        {
+          kind: 'category',
+          name: 'Data',
+          categorystyle: 'math_category',
+          contents: [
+            block('math_number', { fields: { NUM: 0 } }),
+            block('math_arithmetic', { inputs: { A: num(1), B: num(1) } }),
+            block('math_modulo', { inputs: { DIVIDEND: num(10), DIVISOR: num(3) } }),
+            block('math_round', { inputs: { NUM: num(3.1) } }),
+            block('math_random_int', { inputs: { FROM: num(1), TO: num(100) } }),
+            block('text'),
+            block('text_join'),
+          ],
+        },
+        {
+          kind: 'category',
+          name: 'Other',
+          categorystyle: 'mp_other_category',
+          contents: [
+            block('mp_print', { inputs: { VALUE: text('Hello') } }),
+            block('mp_plot', { inputs: { VALUE: num(0) } }),
+            label('The Plotter draws every “plot” name as a line.'),
+          ],
+        },
       ],
     },
   ],
 } as const;
+
+/** Every block a toolbox category lists (not counting the categories filled when opened). */
+export function staticToolboxBlocks(): FlyoutItem[] {
+  const walk = (items: readonly unknown[]): FlyoutItem[] =>
+    items.flatMap((item) => {
+      const entry = item as { kind: string; contents?: readonly unknown[] };
+      if (entry.kind === 'block') return [entry as FlyoutItem];
+      return entry.contents ? walk(entry.contents) : [];
+    });
+  return walk(TOOLBOX.contents);
+}

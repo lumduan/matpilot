@@ -49,6 +49,41 @@
  *   FW bricks/_common/micropython.c#L45-L57 #L79-L83
  * - The centre button is the stop button on SPIKE Prime, so no block reads it:
  *   FW lib/pbio/platform/prime_hub/pbsysconfig.h#L12
+ *
+ * The simple blocks (ADR 0010, ./simple-generator.ts) also use
+ * - pybricks.robotics.DriveBase: FW pybricks/robotics/pb_module_robotics.c#L18, built for SPIKE
+ *   Prime with the gyro option: FW bricks/primehub/mpconfigport.h#L58-L59
+ * - DriveBase(left_motor, right_motor, wheel_diameter, axle_track), sizes in mm (stored in µm):
+ *   FW pybricks/robotics/pb_type_drivebase.c#L61-L80, FW lib/pbio/src/drivebase.c#L269-L279
+ * - DriveBase.straight(distance) in mm, turn(angle) in degrees, both waiting by default:
+ *   pb_type_drivebase.c#L133-L152 #L155-L175; drive(speed, turn_rate): #L296-L312;
+ *   stop() coasts: #L106-L117; brake(): #L315-L326; the method table: #L477-L496
+ * - A positive turn is clockwise seen from above (to the right): the heading is
+ *   (left - right) / 2 of the wheel angles, FW lib/pbio/src/drivebase.c#L146-L151
+ * - DriveBase.settings() returns (straight_speed, straight_acceleration, turn_rate,
+ *   turn_acceleration); with keywords it sets them: pb_type_drivebase.c#L404-L447. A speed below
+ *   a small minimum (about 5 mm/s or 5 °/s with SPIKE wheels), such as 0, is refused:
+ *   FW lib/pbio/src/drivebase.c#L997-L1017, FW lib/pbio/src/trajectory.c#L130-L140
+ * - Default speeds: 40 % of the top speed straight, 33 % turning:
+ *   FW lib/pbio/src/drivebase.c#L76-L78 #L105-L108
+ * - DriveBase.distance_control and heading_control: pb_type_drivebase.c#L468-L471; Motor.control:
+ *   FW pybricks/common/pb_type_motor.c#L465; Control.limits() returns (speed, acceleration,
+ *   torque), the speed being the top speed: FW pybricks/common/pb_type_control.c#L83-L105
+ * - Motor.run_angle(speed, angle) turns the other way for a negative angle:
+ *   FW lib/pbio/src/servo.c#L740-L771, FW lib/pbio/src/control.c#L627-L631; with speed 0 it
+ *   ends at once: servo.c#L763-L768. Motor.brake(), run_time(): pb_type_motor.c#L484 #L495
+ * - A motor command or stop also stops the drive base that uses the motor:
+ *   servo.c#L542-L546
+ * - hub.display.icon() takes 5 rows of 5 brightness values, 0 to 100:
+ *   FW pybricks/common/pb_type_lightmatrix.c#L95-L149; pixel(row, column, brightness=100):
+ *   #L270-L282; the method table: #L347 #L352
+ * - hub.speaker.volume(volume), 0 to 100: FW pybricks/common/pb_type_speaker.c#L46-L60 #L332
+ * - Speeds, angles, distances and times may be floats; they are cut to whole numbers:
+ *   FW pybricks/util_mp/pb_obj_helper.c#L18-L24, floats being on for SPIKE Prime:
+ *   FW bricks/primehub/mpconfigport.h#L68, FW bricks/_common/mpconfigport.h#L105-L109
+ * - min, max and abs are built in: FW bricks/_common/mpconfigport.h#L85,
+ *   MP py/modbuiltins.c#L669 #L709-L710; math.pi: MP py/modmath.c#L388, math being on with
+ *   floats: FW bricks/_common/mpconfigport.h#L19
  */
 
 export type Option = readonly [label: string, value: string];

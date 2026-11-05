@@ -1,10 +1,11 @@
 /**
- * Turns a block workspace into a Pybricks MicroPython program (ADR 0008).
+ * Turns a block workspace into a Pybricks MicroPython program (ADR 0008, ADR 0010).
  *
  * The program always has the shape of the hub code rules in CLAUDE.md:
  * - every port is assigned once, in the Config section, and used by name (rules 3 and 4);
- * - devices are created once, in the Setup section, from the "set up" block;
- * - when any motor is set up, the main program runs inside `try`/`finally`, and `finally` stops
+ * - devices are created once, in the Setup section: from the "set up" block, and, for the simple
+ *   blocks, one per port they use (`motor_a`) plus the drive base;
+ * - when any motor is created, the main program runs inside `try`/`finally`, and `finally` stops
  *   every motor, so Stop, an error, or the end of the program never leaves a motor running
  *   (rule 1). Stop raises SystemExit in the program, so `finally` runs (./pybricks.ts).
  *
@@ -15,7 +16,25 @@ import * as Blockly from 'blockly/core';
 import { loops } from 'blockly/blocks';
 import { Order, pythonGenerator } from 'blockly/python';
 import { cleanPlotLabel } from './definitions';
+import {
+  INDENT,
+  PORT_DEVICES,
+  ROBOT,
+  SIMPLE_RESERVED,
+  beginNeeds,
+  endNeeds,
+  hubName,
+  motorSpeedName,
+  need,
+  portDeviceName,
+  timerName,
+  variableName as name,
+  arg,
+  type Needs,
+  type PortUse,
+} from './generator-context';
 import { DEVICES, isDeviceType, type DeviceType, type PortName } from './pybricks';
+import { registerSimpleGenerators } from './simple-generator';
 
 export interface Problem {
   /** The block to mark, or `null` for a problem with the program as a whole. */
@@ -58,48 +77,13 @@ const RESERVED = [
   'StopWatch',
   'math',
   'random',
+  ...SIMPLE_RESERVED,
 ];
-
-const INDENT = '    ';
 
 /** Section headings, in the same style as the hand-written examples. */
 function rule(title: string): string {
   return `# --- ${title} `.padEnd(76, '-');
 }
-
-/** What the blocks being generated need, collected while generating. */
-interface Needs {
-  readonly from: Map<string, Set<string>>;
-  hub: boolean;
-  timer: boolean;
-}
-
-let needs: Needs | null = null;
-
-function need(module: string, name: string): void {
-  if (!needs) return;
-  const names = needs.from.get(module) ?? new Set<string>();
-  names.add(name);
-  needs.from.set(module, names);
-}
-
-function hubName(): string {
-  need('pybricks.hubs', 'PrimeHub');
-  if (needs) needs.hub = true;
-  return 'hub';
-}
-
-function timerName(): string {
-  need('pybricks.tools', 'StopWatch');
-  if (needs) needs.timer = true;
-  return 'timer';
-}
-
-const name = (block: Blockly.Block, field: string) =>
-  pythonGenerator.getVariableName(block.getFieldValue(field) as string);
-
-const arg = (block: Blockly.Block, input: string, fallback = '0') =>
-  pythonGenerator.valueToCode(block, input, Order.NONE) || fallback;
 
 /** `then` and `wait` arguments of the motor moves, left out when they are the defaults. */
 function moveOptions(block: Blockly.Block): string {
@@ -123,6 +107,7 @@ export function registerGenerators(): void {
   g.INDENT = INDENT;
   g.addReservedWords(RESERVED.join(','));
   const forBlock = g.forBlock;
+  registerSimpleGenerators();
 
   // Set-up blocks become the Config and Setup sections (generateProgram), not statements.
   for (const type of [
@@ -304,9 +289,144 @@ function usageProblems(program: Blockly.Block, devices: readonly SetUpDevice[]):
   return problems;
 }
 
-function importLines(from: Map<string, Set<string>>, extra: readonly string[]): string[] {
-  const plain = [...new Set(extra.filter((line) => line.startsWith('import ')))].sort();
-  const pybricks = [...from.entries()]
+/** The drive base of the simple blocks: ports from "set movement motors", sizes in mm. */
+interface Movement {
+  readonly left: PortName;
+  readonly right: PortName;
+  readonly wheelDiameterMm: number;
+  readonly axleTrackMm: number;
+  /** The "set movement motors" block, if there is one. */
+  readonly blockId: string | null;
+}
+
+/** MatPilot's defaults: the bench layout's A and B; the wheels of the SPIKE Prime set. */
+export const DEFAULT_MOVEMENT: Movement = {
+  left: 'A',
+  right: 'B',
+  wheelDiameterMm: 56,
+  axleTrackMm: 112,
+  blockId: null,
+};
+
+/** Reads "set movement motors" and "set wheel size" from the program; they apply to all of it. */
+function movementSettings(program: Blockly.Block, problems: Problem[]): Movement {
+  let movement = DEFAULT_MOVEMENT;
+  let motors: Blockly.Block | null = null;
+  let wheels: Blockly.Block | null = null;
+  for (const block of program.getDescendants(true)) {
+    if (!block.isEnabled()) continue;
+    if (block.type === 'mp_move_motors') {
+      const ports = block.getFieldValue('PORTS') as string;
+      if (!motors) {
+        motors = block;
+        movement = {
+          ...movement,
+          left: ports[0] as PortName,
+          right: ports[1] as PortName,
+          blockId: block.id,
+        };
+      } else if (ports !== motors.getFieldValue('PORTS')) {
+        problems.push({
+          blockId: block.id,
+          message:
+            'The movement motors are set twice, to different ports. Keep one “set movement motors” block.',
+        });
+      }
+    } else if (block.type === 'mp_move_wheels') {
+      const wheel = Number(block.getFieldValue('WHEEL'));
+      const track = Number(block.getFieldValue('TRACK'));
+      if (!wheels) {
+        wheels = block;
+        movement = { ...movement, wheelDiameterMm: wheel, axleTrackMm: track };
+      } else if (
+        wheel !== Number(wheels.getFieldValue('WHEEL')) ||
+        track !== Number(wheels.getFieldValue('TRACK'))
+      ) {
+        problems.push({
+          blockId: block.id,
+          message:
+            'The wheel size is set twice, to different sizes. Keep one “set wheel size” block.',
+        });
+      }
+    }
+  }
+  return movement;
+}
+
+/**
+ * Problems with the ports the simple blocks use: a port the "set up" block already uses, a drive
+ * motor's port, or one port used for two kinds of device. Returns the problems and the devices to
+ * create, one per port.
+ */
+function portProblems(
+  uses: readonly PortUse[],
+  devices: readonly SetUpDevice[],
+  movement: Movement | null,
+  robotBlockId: string | null,
+): { problems: Problem[]; ports: Map<PortName, PortUse> } {
+  const problems: Problem[] = [];
+  const seen = new Set<string>();
+  const add = (blockId: string | null, message: string) => {
+    const key = `${blockId ?? ''}|${message}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    problems.push({ blockId, message });
+  };
+  const setUp = new Map<PortName, SetUpDevice>();
+  for (const device of devices) if (!setUp.has(device.port)) setUp.set(device.port, device);
+  const wheels = movement
+    ? new Map<PortName, string>([
+        [movement.left, 'left'],
+        [movement.right, 'right'],
+      ])
+    : new Map<PortName, string>();
+  if (movement) {
+    for (const [port, side] of wheels) {
+      const device = setUp.get(port);
+      if (device) {
+        add(
+          movement.blockId ?? robotBlockId,
+          `Port ${port} is set up as “${device.name}”, so it cannot also drive the ${side} wheel. Choose other movement motors.`,
+        );
+      }
+    }
+  }
+  const ports = new Map<PortName, PortUse>();
+  for (const use of uses) {
+    const label = PORT_DEVICES[use.kind].label;
+    const device = setUp.get(use.port);
+    const side = wheels.get(use.port);
+    const earlier = ports.get(use.port);
+    if (device) {
+      add(
+        use.blockId,
+        `Port ${use.port} is set up as “${device.name}” in the “set up” block. Use the “${device.name}” blocks, or choose another port.`,
+      );
+    } else if (movement && side) {
+      add(
+        use.blockId,
+        `Port ${use.port} drives the robot’s ${side} wheel (movement motors ${movement.left} + ${movement.right}). Choose another port for this ${label}, or change “set movement motors”.`,
+      );
+    } else if (!earlier) {
+      ports.set(use.port, use);
+    } else if (earlier.kind !== use.kind) {
+      add(
+        use.blockId,
+        `Port ${use.port} is used for a ${PORT_DEVICES[earlier.kind].label} in another block. One port holds one device.`,
+      );
+    }
+  }
+  return { problems, ports };
+}
+
+function importLines(needs: Needs, extra: readonly string[]): string[] {
+  const plain = [
+    ...new Set([
+      ...extra.filter((line) => line.startsWith('import ')),
+      ...[...needs.imports].map((module) => `import ${module}`),
+    ]),
+  ].sort();
+  const pybricks = [...needs.from.entries()]
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([module, names]) => `from ${module} import ${[...names].sort().join(', ')}`);
   return [...plain, ...pybricks];
@@ -320,7 +440,7 @@ export function generateProgram(workspace: Blockly.Workspace): GeneratedProgram 
   registerGenerators();
   const g = pythonGenerator;
   const problems: Problem[] = [];
-  needs = { from: new Map(), hub: false, timer: false };
+  const needs = beginNeeds();
   try {
     g.init(workspace);
     const programs = workspace.getBlocksByType('mp_program', true);
@@ -342,10 +462,20 @@ export function generateProgram(workspace: Blockly.Workspace): GeneratedProgram 
     problems.push(...setupProblems(devices));
     const program = programs[0];
     let body = '';
+    let movement = DEFAULT_MOVEMENT;
     if (program) {
       problems.push(...usageProblems(program, devices));
+      movement = movementSettings(program, problems);
       body = g.blockToCode(program) as string;
     }
+    const robot = needs.robotUses.length > 0;
+    const ports = portProblems(
+      needs.portUses,
+      devices,
+      robot ? movement : null,
+      needs.robotUses[0] ?? null,
+    );
+    problems.push(...ports.problems);
 
     // Variables the program uses start at 0, so "change by" works on a fresh variable.
     const variables = Blockly.Variables.allUsedVarModels(workspace)
@@ -357,6 +487,7 @@ export function generateProgram(workspace: Blockly.Workspace): GeneratedProgram 
     );
     const config: string[] = [];
     const setup: string[] = [];
+    const motors: string[] = [];
     if (needs.hub) setup.push('hub = PrimeHub()');
     for (const device of unique) {
       const python = g.getVariableName(device.variableId);
@@ -373,36 +504,71 @@ export function generateProgram(workspace: Blockly.Workspace): GeneratedProgram 
       } else {
         setup.push(`${python} = ${pythonClass}(${constant})`);
       }
+      if (device.type === 'Motor') motors.push(python);
+    }
+
+    // The simple blocks' devices, one per port, in port order.
+    for (const use of [...ports.ports.values()].sort((a, b) => a.port.localeCompare(b.port))) {
+      const python = portDeviceName(use.kind, use.port);
+      const constant = `${python.toUpperCase()}_PORT`;
+      const { pythonClass } = PORT_DEVICES[use.kind];
+      need('pybricks.parameters', 'Port');
+      need('pybricks.pupdevices', pythonClass);
+      config.push(`${constant} = Port.${use.port}`);
+      setup.push(`${python} = ${pythonClass}(${constant})`);
+      if (use.kind === 'Motor') {
+        motors.push(python);
+        // Until "set motor speed" runs, half the motor's top speed (degrees per second).
+        if (needs.speeds.has(use.port)) {
+          setup.push(`${motorSpeedName(use.port)} = ${python}.control.limits()[0] * 50 // 100`);
+        }
+      }
+    }
+
+    // The drive base. The left motor is mounted mirrored, so it counts counterclockwise as forward.
+    if (robot) {
+      need('pybricks.parameters', 'Port');
+      need('pybricks.parameters', 'Direction');
+      need('pybricks.pupdevices', 'Motor');
+      need('pybricks.robotics', 'DriveBase');
+      config.push(
+        `${ROBOT.leftPort} = Port.${movement.left}`,
+        `${ROBOT.rightPort} = Port.${movement.right}`,
+        `${ROBOT.wheelDiameter} = ${movement.wheelDiameterMm}`,
+        `${ROBOT.axleTrack} = ${movement.axleTrackMm}`,
+      );
+      setup.push(
+        `${ROBOT.left} = Motor(${ROBOT.leftPort}, positive_direction=Direction.COUNTERCLOCKWISE)`,
+        `${ROBOT.right} = Motor(${ROBOT.rightPort})`,
+        `${ROBOT.robot} = DriveBase(${ROBOT.left}, ${ROBOT.right}, ${ROBOT.wheelDiameter}, ${ROBOT.axleTrack})`,
+      );
+      motors.push(ROBOT.left, ROBOT.right);
     }
     if (needs.timer) setup.push('timer = StopWatch()');
     setup.push(...variables);
 
-    const motors = unique
-      .filter((device) => device.type === 'Motor')
-      .map((device) => g.getVariableName(device.variableId));
     const main = body.trimEnd() === '' ? 'pass' : body.trimEnd();
+    const stops = [
+      ...(robot ? [`${INDENT}${ROBOT.robot}.stop()`] : []),
+      ...motors.map((motor) => `${INDENT}${motor}.stop()`),
+    ];
     const mainLines =
-      motors.length > 0
-        ? [
-            'try:',
-            g.prefixLines(main, INDENT),
-            'finally:',
-            ...motors.map((motor) => `${INDENT}${motor}.stop()`),
-          ]
-        : [main];
+      motors.length > 0 ? ['try:', g.prefixLines(main, INDENT), 'finally:', ...stops] : [main];
 
     const definitions = Object.values(
       (g as unknown as { definitions_: Record<string, string> }).definitions_,
     );
+    const helpers = [...needs.helpers.values()];
     const sections = [
-      ['# Generated by MatPilot from blocks.', ...importLines(needs.from, definitions)],
+      ['# Generated by MatPilot from blocks.', ...importLines(needs, definitions)],
       config.length > 0 ? [rule('Config'), ...config] : [],
       setup.length > 0 ? [rule('Setup'), ...setup] : [],
+      helpers.length > 0 ? [rule('Helpers'), helpers.join('\n\n\n')] : [],
       [rule('Main'), ...mainLines],
     ].filter((section) => section.length > 0);
     const code = `${sections.map((section) => section.join('\n')).join('\n\n')}\n`;
     return { code, problems };
   } finally {
-    needs = null;
+    endNeeds();
   }
 }

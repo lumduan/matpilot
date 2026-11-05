@@ -5,9 +5,22 @@
  * Browser-only: import it lazily (src/hooks/useBlocksEditor.ts).
  */
 import * as Blockly from 'blockly/core';
-import { generateProgram, listSetUpDevices, type GeneratedProgram } from './generator';
-import { DEVICE_TYPES, type DeviceType } from './pybricks';
+import { getPortHints, setPortHints, type PortHints } from './fields/hints';
+import { splitPair } from './fields/port';
+import {
+  DEFAULT_MOVEMENT,
+  generateProgram,
+  listSetUpDevices,
+  type GeneratedProgram,
+} from './generator';
+import { DEVICE_TYPES, type DeviceType, type PortName } from './pybricks';
 import { ensureRequiredBlocks, loadWorkspace, registerBlocks } from './register';
+import {
+  motorsFlyout,
+  movementFlyout,
+  sensorsFlyout,
+  type SimpleToolboxState,
+} from './simple-toolbox';
 import { STARTER_WORKSPACE } from './starter';
 import { getThemes } from './theme';
 import { TOOLBOX, inputFlyout, outputFlyout, setupFlyout, type ToolboxState } from './toolbox';
@@ -28,6 +41,8 @@ export interface EditorHandle {
   /** `true` when the saved workspace could not be loaded and the starter was used instead. */
   readonly restoredStarter: boolean;
   setDark(dark: boolean): void;
+  /** What the hub says is plugged into each port, for the port pickers and new blocks. */
+  setPortHints(hints: PortHints): void;
   /** Replaces everything with the starter program. */
   reset(): void;
   dispose(): void;
@@ -43,7 +58,26 @@ function toolboxState(workspace: Blockly.Workspace): ToolboxState {
         .map((variable) => variable.getName()),
     ]),
   ) as Record<DeviceType, string[]>;
-  return { devices: listSetUpDevices(workspace), variableNames };
+  return {
+    devices: listSetUpDevices(workspace),
+    variableNames,
+    hasSetupBlock: workspace.getBlocksByType('mp_setup', false).length > 0,
+  };
+}
+
+/** Blocks that drive the robot (all "mp_move…" blocks but the two settings). */
+const isMovementBlock = (type: string) =>
+  type.startsWith('mp_move') && type !== 'mp_move_motors' && type !== 'mp_move_wheels';
+
+function simpleToolboxState(workspace: Blockly.Workspace): SimpleToolboxState {
+  const blocks = workspace.getAllBlocks(false).filter((block) => block.isEnabled());
+  const motors = blocks.find((block) => block.type === 'mp_move_motors');
+  const movement: readonly [PortName, PortName] | null = motors
+    ? splitPair(motors.getFieldValue('PORTS') as string)
+    : blocks.some((block) => isMovementBlock(block.type))
+      ? [DEFAULT_MOVEMENT.left, DEFAULT_MOVEMENT.right]
+      : null;
+  return { hints: getPortHints(), movement };
 }
 
 export function createEditor(options: EditorOptions): EditorHandle {
@@ -69,6 +103,16 @@ export function createEditor(options: EditorOptions): EditorHandle {
     workspace.registerToolboxCategoryCallback(
       name,
       (ws) => build(toolboxState(ws)) as unknown as Blockly.utils.toolbox.FlyoutDefinition,
+    );
+  }
+  for (const [name, build] of [
+    ['MP_MOVEMENT', movementFlyout],
+    ['MP_MOTORS', motorsFlyout],
+    ['MP_SENSORS', sensorsFlyout],
+  ] as const) {
+    workspace.registerToolboxCategoryCallback(
+      name,
+      (ws) => build(simpleToolboxState(ws)) as unknown as Blockly.utils.toolbox.FlyoutDefinition,
     );
   }
 
@@ -129,6 +173,9 @@ export function createEditor(options: EditorOptions): EditorHandle {
     setDark(dark) {
       workspace.setTheme(dark ? themes.dark : themes.light);
     },
+    setPortHints(hints) {
+      setPortHints(hints);
+    },
     reset() {
       workspace.clear();
       loadWorkspace(workspace, STARTER_WORKSPACE);
@@ -136,6 +183,7 @@ export function createEditor(options: EditorOptions): EditorHandle {
       schedule();
     },
     dispose() {
+      setPortHints({});
       cancelAnimationFrame(frame);
       observer.disconnect();
       workspace.dispose();
