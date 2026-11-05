@@ -76,10 +76,16 @@ entry in [NOTICE](NOTICE).
   - `src/lib/compat/`: browser compatibility checks
   - `src/lib/monitor/`: stdout line splitting, the monitor log, and the plotter's parser and scale
   - `src/lib/program/`: example programs for the Program and Monitor page (each cited)
+  - `src/lib/blocks/`: the block editor ([ADR 0008](docs/adr/0008-block-editor.md)): Blockly
+    block definitions, toolbox, themes, and the Python generator. Every Pybricks name a block
+    generates is cited in `src/lib/blocks/pybricks.ts`; add the citation there before adding a
+    block. Blockly is browser-loaded lazily (`editor.ts`); the generator also runs headless in
+    tests, where every test program must compile with the real compiler.
   - `src/lib/hwtest/`: the hardware test page's session, steps, and report (the steps mirror
     docs/compatibility.md; it reuses the read-only hub probe and adds no Bluetooth code)
 - `src/hooks/`: the only React code that creates or calls `src/lib/` objects with side effects
-  (the hub probe, the compatibility check). Components may import types and pure helpers.
+  (the hub probe, the compatibility check, the hub connection in `useHubRunner`, the block editor
+  in `useBlocksEditor`). Components may import types and pure helpers.
 - `src/components/`, `src/app/`: UI only. They must not touch `navigator.bluetooth` (ESLint
   enforces this).
 - Pure logic goes behind functions with Vitest unit tests next to the source (`*.test.ts`). Mock
@@ -102,6 +108,10 @@ generator, must follow these rules:
    in millimetres, timeouts).
 4. **Never hardcode ports inside logic.** Assign ports once in the config block and refer to the
    names everywhere else.
+
+The block editor's generator applies these rules structurally; how each one maps to generated code
+(for example, numbers typed into blocks stay in the blocks) is decided in
+[ADR 0008](docs/adr/0008-block-editor.md). Keep its tests green when changing a block.
 
 Shape to follow. `read_controller()` and `drive()` are placeholders. The Pybricks names used here are
 cited at pybricks-micropython tag v4.0.1, commit `4104553405decb0384bcfb030fbfcb4b5a9854cc`:
