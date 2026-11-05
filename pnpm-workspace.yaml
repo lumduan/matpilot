@@ -1,21 +1,6 @@
 # pnpm settings (pnpm 10+ reads settings from this file).
 #
 # pnpm 12 refuses packages published less than 24 hours ago (minimumReleaseAge), a supply-chain
-# guard. Next.js 16.4.5 was published on 2026-11-03 at about 17:51 UTC and was pinned on purpose as
-# the latest stable release, so its packages are excluded below, each by exact version only.
-#
-# These entries are redundant from 2026-11-04 17:52 UTC onwards and may be removed then. Never
-# exclude a package without a version.
-minimumReleaseAgeExclude:
-  - '@next/env@16.4.5'
-  - '@next/eslint-plugin-next@16.4.5'
-  - '@next/swc-darwin-arm64@16.4.5'
-  - '@next/swc-darwin-x64@16.4.5'
-  - '@next/swc-linux-arm64-gnu@16.4.5'
-  - '@next/swc-linux-arm64-musl@16.4.5'
-  - '@next/swc-linux-x64-gnu@16.4.5'
-  - '@next/swc-linux-x64-musl@16.4.5'
-  - '@next/swc-win32-arm64-msvc@16.4.5'
-  - '@next/swc-win32-x64-msvc@16.4.5'
-  - eslint-config-next@16.4.5
-  - next@16.4.5
+# guard. No package is excluded from it. If a fresh release is genuinely needed, list it here under
+# minimumReleaseAgeExclude with its exact version (never without one), together with the date after
+# which the entry can be removed (CONTRIBUTING.md, "Dependencies").
