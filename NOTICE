@@ -48,6 +48,14 @@ What MatPilot ports, and from where:
       lib/pbio/sys/program_stop.c
         (SPDX-License-Identifier: MIT; Copyright (c) 2018-2023 The Pybricks Authors)
 
+  src/lib/devices/hub-source.ts, src/lib/devices/live.ts
+    Device type ids of LEGO Powered Up devices, and the order of the colours
+    that ColorSensor.color() reports by default, from:
+      lib/lego/lego/lump.h
+        (SPDX-License-Identifier: MIT; Copyright (c) 2019-2020 The Pybricks Authors)
+      pybricks/util_pb/pb_color_map.c
+        (SPDX-License-Identifier: MIT; Copyright (c) 2018-2020 The Pybricks Authors)
+
 The upstream LICENSE states that its MIT license applies only to files carrying
 the "SPDX-License-Identifier: MIT" header. Every file listed above carries it.
 
@@ -110,6 +118,12 @@ What MatPilot ports, and from where:
     The .mpy header layout and the checks the firmware applies to it, from:
       py/persistentcode.c, py/persistentcode.h
         (The MIT License (MIT); Copyright (c) 2013-2020 Damien P. George)
+
+  src/lib/ble/hub-connection.ts
+    The REPL prompt and the paste mode header that the friendly REPL prints,
+    and its paste mode control characters, from:
+      py/repl.h, shared/runtime/pyexec.c
+        (The MIT License (MIT); Copyright (c) 2013, 2014 Damien P. George)
 
 ==============================================================================
 @pybricks/mpy-cross-v6 (npm package, redistributed unmodified)
