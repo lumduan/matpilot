@@ -1,14 +1,22 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
-import type { EditorHandle, EditorHistory } from '@/lib/blocks/editor';
+import type {
+  AddTabResult,
+  EditorHandle,
+  EditorHistory,
+  EditorTab,
+  SavedProgram,
+} from '@/lib/blocks/editor';
 import type { PortHints } from '@/lib/blocks/fields/hints';
 import type { GeneratedProgram } from '@/lib/blocks/generator';
 import {
+  MAIN_TAB_NAME,
   parseProgramFile,
   programFileName,
   serializeProgramFile,
   type ProgramFile,
+  type ProgramTabState,
 } from '@/lib/blocks/program-file';
 import {
   NEW_PROGRAM_META,
@@ -17,6 +25,9 @@ import {
   type ProgramMeta,
 } from '@/lib/blocks/program-meta';
 
+/** The program in tabs (ADR 0013): `{ tabs: [{ name, workspace }], active }`. */
+const PROGRAM_STORAGE_KEY = 'matpilot.blocks.tabs.v2';
+/** Before tabs: one workspace. Read once, when there is no program in tabs yet. */
 const WORKSPACE_STORAGE_KEY = 'matpilot.blocks.workspace.v1';
 const META_STORAGE_KEY = 'matpilot.blocks.program.v1';
 
@@ -51,18 +62,37 @@ function downloadTextFile(fileName: string, text: string): void {
   setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }
 
-function readSavedWorkspace(): object | null {
+const isObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+/** The program saved in this browser: in tabs, or from before tabs as the main tab. */
+function readSavedProgram(): SavedProgram | null {
   try {
-    const saved = window.localStorage.getItem(WORKSPACE_STORAGE_KEY);
-    return saved === null ? null : (JSON.parse(saved) as object);
+    const saved = window.localStorage.getItem(PROGRAM_STORAGE_KEY);
+    if (saved !== null) {
+      const data = JSON.parse(saved) as unknown;
+      if (isObject(data) && Array.isArray(data.tabs)) {
+        const tabs = (data.tabs as unknown[]).filter(
+          (tab): tab is ProgramTabState =>
+            isObject(tab) && typeof tab.name === 'string' && isObject(tab.workspace),
+        );
+        if (tabs.length > 0) {
+          return { tabs, active: typeof data.active === 'string' ? data.active : undefined };
+        }
+      }
+    }
+    const old = window.localStorage.getItem(WORKSPACE_STORAGE_KEY);
+    return old === null
+      ? null
+      : { tabs: [{ name: MAIN_TAB_NAME, workspace: JSON.parse(old) as object }] };
   } catch {
     return null;
   }
 }
 
-function saveWorkspace(state: object): void {
+function saveProgram(state: SavedProgram): void {
   try {
-    window.localStorage.setItem(WORKSPACE_STORAGE_KEY, JSON.stringify(state));
+    window.localStorage.setItem(PROGRAM_STORAGE_KEY, JSON.stringify(state));
   } catch {
     // Storage blocked or full: the blocks are simply not remembered.
   }
@@ -82,16 +112,27 @@ export interface BlocksEditor {
   readonly restoredStarter: boolean;
   /** The program's name, and the GitHub file it came from or was saved to. */
   readonly meta: ProgramMeta;
+  /** Undo and Redo of the open tab. */
   readonly history: EditorHistory;
+  /** The program's tabs, main first, and the open one. */
+  readonly tabs: readonly EditorTab[];
+  readonly activeTab: string;
   readonly undo: () => void;
   readonly redo: () => void;
-  /** Starts a new program from the starter blocks (Undo brings the old one back). */
+  /** Starts a new program from the starter blocks. */
   readonly reset: () => void;
+  /** Puts back the program from before the last open, start over, closed tab or moved function. */
+  readonly undoProgramChange: () => void;
+  readonly selectTab: (id: string) => void;
+  readonly addTab: () => AddTabResult;
+  readonly renameTab: EditorHandle['renameTab'];
+  readonly closeTab: (id: string) => void;
+  readonly showBlock: (tabId: string, blockId: string) => void;
   /** The program as the text of a file (ADR 0011). */
   readonly fileText: (name: string, savedBy: string) => string;
   /** Downloads the program as `<name>.matpilot.json`; returns the file name. */
   readonly saveToComputer: (name: string, savedBy: string) => string;
-  /** Opens a program file's text (Undo brings the old program back). */
+  /** Opens a program file's text (`undoProgramChange` brings the old program back). */
   readonly openFile: (text: string, fileName: string, github: GitHubLink | null) => OpenResult;
   /** Records a new name or GitHub file after saving. */
   readonly setMeta: (meta: ProgramMeta) => void;
@@ -99,20 +140,32 @@ export interface BlocksEditor {
 
 /**
  * React binding for the block editor (src/lib/blocks/editor.ts). Blockly is loaded only in the
- * browser, after the page has rendered; the workspace is saved in this browser after every change.
+ * browser, after the page has rendered; the program is saved in this browser after every change.
  * `hints` (what the hub says is plugged into each port) go to the port pickers and new blocks.
+ * `onProgramChange` hears about changes to the program as a whole that the editor made itself
+ * (a function moved to another tab, a tab closed), so the page can offer to undo them.
  */
 export function useBlocksEditor(
   host: RefObject<HTMLDivElement | null>,
   hints: PortHints,
+  onProgramChange: (message: string) => void,
 ): BlocksEditor {
   const [status, setStatus] = useState<BlocksEditorStatus>('loading');
   const [program, setProgram] = useState<GeneratedProgram | null>(null);
   const [restoredStarter, setRestoredStarter] = useState(false);
   const [meta, setMetaState] = useState<ProgramMeta>(NEW_PROGRAM_META);
   const [history, setHistory] = useState<EditorHistory>({ canUndo: false, canRedo: false });
+  const [tabs, setTabs] = useState<{ list: readonly EditorTab[]; active: string }>({
+    list: [{ id: 'main', name: MAIN_TAB_NAME }],
+    active: 'main',
+  });
   const editor = useRef<EditorHandle | null>(null);
   const latestHints = useRef(hints);
+  const latestOnProgramChange = useRef(onProgramChange);
+
+  useEffect(() => {
+    latestOnProgramChange.current = onProgramChange;
+  }, [onProgramChange]);
 
   useEffect(() => {
     latestHints.current = hints;
@@ -133,17 +186,19 @@ export function useBlocksEditor(
         const handle = createEditor({
           host: element,
           dark: scheme.matches,
-          saved: readSavedWorkspace(),
+          saved: readSavedProgram(),
           meta: savedMeta,
           onChange: (next, state) => {
             setProgram(next);
-            saveWorkspace(state);
+            saveProgram(state);
           },
           onMeta: (next) => {
             setMetaState(next);
             saveMeta(next);
           },
           onHistory: setHistory,
+          onTabs: (list, active) => setTabs({ list, active }),
+          onProgramChange: (message) => latestOnProgramChange.current(message),
         });
         editor.current = handle;
         handle.setPortHints(latestHints.current);
@@ -168,19 +223,39 @@ export function useBlocksEditor(
   const undo = useCallback(() => editor.current?.undo(), []);
   const redo = useCallback(() => editor.current?.redo(), []);
   const reset = useCallback(() => editor.current?.reset(), []);
+  const undoProgramChange = useCallback(() => editor.current?.undoProgramChange(), []);
   const setMeta = useCallback((next: ProgramMeta) => editor.current?.setMeta(next), []);
+  const selectTab = useCallback((id: string) => editor.current?.selectTab(id), []);
+  const addTab = useCallback(
+    (): AddTabResult =>
+      editor.current?.addTab() ?? { ok: false, message: 'The block editor is still loading.' },
+    [],
+  );
+  const renameTab = useCallback(
+    (id: string, text: string) =>
+      editor.current?.renameTab(id, text) ?? {
+        ok: false as const,
+        message: 'The block editor is still loading.',
+      },
+    [],
+  );
+  const closeTab = useCallback((id: string) => editor.current?.closeTab(id), []);
+  const showBlock = useCallback(
+    (tabId: string, blockId: string) => editor.current?.showBlock(tabId, blockId),
+    [],
+  );
 
-  const code = program?.code ?? '';
+  const files = program?.files;
   const fileText = useCallback(
     (name: string, savedBy: string) =>
       serializeProgramFile({
         name,
         savedBy,
         savedAt: new Date().toISOString(),
-        python: code,
-        workspace: editor.current?.save() ?? {},
+        python: files ?? [],
+        tabs: editor.current?.save().tabs ?? [],
       }),
-    [code],
+    [files],
   );
 
   const saveToComputer = useCallback(
@@ -200,12 +275,12 @@ export function useBlocksEditor(
       if (!parsed.ok) return parsed;
       const file: ProgramFile = {
         name: parsed.name,
-        workspace: parsed.workspace,
+        tabs: parsed.tabs,
         savedBy: parsed.savedBy,
         savedAt: parsed.savedAt,
       };
       try {
-        handle.open(file.workspace, { name: file.name, github });
+        handle.open(file.tabs, { name: file.name, github });
       } catch (error) {
         console.warn('A program file could not be opened.', error);
         return {
@@ -225,9 +300,17 @@ export function useBlocksEditor(
     restoredStarter,
     meta,
     history,
+    tabs: tabs.list,
+    activeTab: tabs.active,
     undo,
     redo,
     reset,
+    undoProgramChange,
+    selectTab,
+    addTab,
+    renameTab,
+    closeTab,
+    showBlock,
     fileText,
     saveToComputer,
     openFile,

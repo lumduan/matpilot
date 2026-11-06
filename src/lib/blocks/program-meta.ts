@@ -1,9 +1,9 @@
 /**
  * The open program's name, and the GitHub file it was opened from or saved to (ADR 0011). Opening
- * a program or starting over changes the blocks and these together, as one step that Undo
- * reverses, so Undo never leaves another program's GitHub file attached to your blocks.
+ * a program or starting over changes the blocks and these together; putting the old program back
+ * (./editor.ts, `undoProgramChange`) puts back its name and GitHub file too (ADR 0013), so your
+ * blocks never keep another program's GitHub file.
  */
-import * as Blockly from 'blockly/core';
 import { DEFAULT_PROGRAM_NAME, cleanProgramName } from './program-file';
 
 export interface GitHubLink {
@@ -44,66 +44,3 @@ export const sameMeta = (a: ProgramMeta, b: ProgramMeta) =>
   a.github?.repository === b.github?.repository &&
   a.github?.path === b.github?.path &&
   a.github?.sha === b.github?.sha;
-
-export const META_EVENT_TYPE = 'mp_program_meta';
-
-/**
- * A Blockly event that changes the program's meta, so it sits in the undo stack beside the block
- * changes of the same step. Blockly runs it backwards on Undo and forwards on Redo.
- */
-export class ProgramMetaChange extends Blockly.Events.Abstract {
-  override isBlank = false;
-  override type = META_EVENT_TYPE;
-
-  constructor(
-    workspace: Blockly.Workspace,
-    readonly before: ProgramMeta,
-    readonly after: ProgramMeta,
-    private readonly apply: (meta: ProgramMeta) => void,
-  ) {
-    super();
-    this.workspaceId = workspace.id;
-  }
-
-  override isNull(): boolean {
-    return sameMeta(this.before, this.after);
-  }
-
-  override run(forward: boolean): void {
-    this.apply(forward ? this.after : this.before);
-  }
-}
-
-/**
- * Replaces the blocks with `state` and the meta with `meta`, as one undoable step. The state is
- * first loaded into a scratch workspace, so a file with unknown blocks changes nothing and
- * throws instead.
- */
-export function replaceProgram(
-  workspace: Blockly.Workspace,
-  state: object,
-  meta: { readonly before: ProgramMeta; readonly after: ProgramMeta },
-  apply: (meta: ProgramMeta) => void,
-  finish: (workspace: Blockly.Workspace) => void,
-): void {
-  const scratch = new Blockly.Workspace();
-  const wasEnabled = Blockly.Events.isEnabled();
-  if (wasEnabled) Blockly.Events.disable();
-  try {
-    Blockly.serialization.workspaces.load(state, scratch);
-  } finally {
-    if (wasEnabled) Blockly.Events.enable();
-    scratch.dispose();
-  }
-
-  const outerGroup = Blockly.Events.getGroup();
-  if (!outerGroup) Blockly.Events.setGroup(true);
-  try {
-    Blockly.Events.fire(new ProgramMetaChange(workspace, meta.before, meta.after, apply));
-    apply(meta.after);
-    Blockly.serialization.workspaces.load(state, workspace, { recordUndo: true });
-    finish(workspace);
-  } finally {
-    if (!outerGroup) Blockly.Events.setGroup(false);
-  }
-}

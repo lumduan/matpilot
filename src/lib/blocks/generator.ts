@@ -9,6 +9,11 @@
  *   every motor, so Stop, an error, or the end of the program never leaves a motor running
  *   (rule 1). Stop raises SystemExit in the program, so `finally` runs (./pybricks.ts).
  *
+ * A program in tabs (ADR 0013) becomes several files when a tab other than main holds functions:
+ * setup.py has the Config, Setup and Helpers sections, every tab is a module of its own, and
+ * main.py imports them and runs the Main section. A program with functions in main only stays
+ * one file, with a Functions section before Main.
+ *
  * The Pybricks calls each block produces are cited in ./pybricks.ts.
  */
 import * as Blockly from 'blockly/core';
@@ -34,7 +39,17 @@ import {
   type Needs,
   type PortUse,
 } from './generator-context';
-import { DEVICES, isDeviceType, type DeviceType, type PortName } from './pybricks';
+import {
+  FUNCTION_BLOCKS,
+  beginFunctionGeneration,
+  collectFunctions,
+  endFunctionGeneration,
+  functionProblems,
+  registerFunctionGenerators,
+  type FunctionInfo,
+} from './functions';
+import { DEVICES, PORTS, isDeviceType, type DeviceType, type PortName } from './pybricks';
+import { SETUP_MODULE, programTabsOf, type ProgramTab } from './tabs';
 import { DEFAULT_CONTROLLER, controllerProfile, type ControllerId } from '../controller/layout';
 import {
   controllerConfig,
@@ -47,10 +62,29 @@ export interface Problem {
   /** The block to mark, or `null` for a problem with the program as a whole. */
   readonly blockId: string | null;
   readonly message: string;
+  /** The tab the block is in (main for a problem with the program as a whole). */
+  readonly tabId: string;
+}
+
+/** A problem before the generator knows which tab its block is in. */
+type DraftProblem = Omit<Problem, 'tabId'> & { readonly tabId?: string };
+
+/** One Python file of the program. */
+export interface PythonFile {
+  /** `main.py`, `setup.py`, or the tab's name and `.py`. */
+  readonly name: string;
+  /** The module the hub imports it as: main is `__main__` (./../pybricks/mpy.ts). */
+  readonly module: string;
+  /** The tab it is made from; `null` for setup.py. */
+  readonly tabId: string | null;
+  readonly code: string;
 }
 
 export interface GeneratedProgram {
+  /** main.py: the whole program when it is one file. */
   readonly code: string;
+  /** Every file, main.py first. One file unless a tab other than main holds functions. */
+  readonly files: readonly PythonFile[];
   /** Anything that must be fixed before the program can run. */
   readonly problems: readonly Problem[];
   /** The program reads the Xbox controller, so the page offers its live view (ADR 0012). */
@@ -90,6 +124,8 @@ const RESERVED = [
   'StopWatch',
   'math',
   'random',
+  // The module every tab imports in a program of several files (ADR 0013).
+  SETUP_MODULE,
   ...SIMPLE_RESERVED,
 ];
 
@@ -122,6 +158,7 @@ export function registerGenerators(): void {
   const forBlock = g.forBlock;
   registerSimpleGenerators();
   registerControllerGenerators();
+  registerFunctionGenerators();
 
   // Set-up blocks become the Config and Setup sections (generateProgram), not statements.
   for (const type of [
@@ -254,8 +291,8 @@ export function listSetUpDevices(workspace: Blockly.Workspace): SetUpDevice[] {
 }
 
 /** Problems with the set-up devices themselves: duplicates and shared ports. */
-function setupProblems(devices: readonly SetUpDevice[]): Problem[] {
-  const problems: Problem[] = [];
+function setupProblems(devices: readonly SetUpDevice[]): DraftProblem[] {
+  const problems: DraftProblem[] = [];
   const byVariable = new Map<string, SetUpDevice>();
   const byPort = new Map<PortName, SetUpDevice>();
   for (const device of devices) {
@@ -281,11 +318,14 @@ function setupProblems(devices: readonly SetUpDevice[]): Problem[] {
   return problems;
 }
 
-/** Device blocks under the program that use a device nobody set up. */
-function usageProblems(program: Blockly.Block, devices: readonly SetUpDevice[]): Problem[] {
+/** Device blocks in the program and its functions that use a device nobody set up. */
+function usageProblems(
+  roots: readonly Blockly.Block[],
+  devices: readonly SetUpDevice[],
+): DraftProblem[] {
   const known = new Set(devices.map((device) => device.variableId));
-  const problems: Problem[] = [];
-  for (const block of program.getDescendants(false)) {
+  const problems: DraftProblem[] = [];
+  for (const block of roots.flatMap((root) => root.getDescendants(false))) {
     if (!block.isEnabled()) continue;
     for (const input of block.inputList) {
       for (const field of input.fieldRow) {
@@ -322,12 +362,15 @@ export const DEFAULT_MOVEMENT: Movement = {
   blockId: null,
 };
 
-/** Reads "set movement motors" and "set wheel size" from the program; they apply to all of it. */
-function movementSettings(program: Blockly.Block, problems: Problem[]): Movement {
+/**
+ * Reads "set movement motors" and "set wheel size" from the program and its functions, in every
+ * tab; they apply to all of it.
+ */
+function movementSettings(roots: readonly Blockly.Block[], problems: DraftProblem[]): Movement {
   let movement = DEFAULT_MOVEMENT;
   let motors: Blockly.Block | null = null;
   let wheels: Blockly.Block | null = null;
-  for (const block of program.getDescendants(true)) {
+  for (const block of roots.flatMap((root) => root.getDescendants(true))) {
     if (!block.isEnabled()) continue;
     if (block.type === 'mp_move_motors') {
       const ports = block.getFieldValue('PORTS') as string;
@@ -377,8 +420,8 @@ function portProblems(
   devices: readonly SetUpDevice[],
   movement: Movement | null,
   robotBlockId: string | null,
-): { problems: Problem[]; ports: Map<PortName, PortUse> } {
-  const problems: Problem[] = [];
+): { problems: DraftProblem[]; ports: Map<PortName, PortUse> } {
+  const problems: DraftProblem[] = [];
   const seen = new Set<string>();
   const add = (blockId: string | null, message: string) => {
     const key = `${blockId ?? ''}|${message}`;
@@ -446,19 +489,260 @@ function importLines(needs: Needs, extra: readonly string[]): string[] {
   return [...plain, ...pybricks];
 }
 
+/** `code` with its strings and comments blanked out, so only names are left to find. */
+function withoutStrings(code: string): string {
+  let out = '';
+  let quote: string | null = null;
+  for (let i = 0; i < code.length; i += 1) {
+    const char = code[i]!;
+    if (quote) {
+      if (char === '\\') {
+        i += 1;
+      } else if (char === quote || char === '\n') {
+        quote = null;
+        out += char === '\n' ? '\n' : ' ';
+      }
+      continue;
+    }
+    if (char === '#') {
+      while (i + 1 < code.length && code[i + 1] !== '\n') i += 1;
+      continue;
+    }
+    if (char === '"' || char === "'") {
+      quote = char;
+      out += ' ';
+      continue;
+    }
+    out += char;
+  }
+  return out;
+}
+
+/** The names `code` uses on their own (not `x.name`), outside strings and comments. */
+export function namesIn(code: string): Set<string> {
+  return new Set(withoutStrings(code).match(/(?<![\w.])[A-Za-z_]\w*/g) ?? []);
+}
+
 /**
- * Generates the program. Problems never throw: the code is still returned so the user can see
- * it, and the page refuses to run it until the problems are fixed.
+ * The names a file defines at module level: assignments outside functions (also inside a
+ * module-level `try:`), and `def` names. Lines inside brackets continue the line before.
+ */
+export function topLevelNames(code: string): string[] {
+  const names: string[] = [];
+  let depth = 0;
+  let inDef = false;
+  for (const line of withoutStrings(code).split('\n')) {
+    const trimmed = line.trim();
+    if (depth === 0 && trimmed !== '') {
+      const indented = /^\s/.test(line);
+      if (!indented) {
+        const def = /^def\s+([A-Za-z_]\w*)/.exec(trimmed);
+        inDef = def !== null;
+        if (def) names.push(def[1]!);
+      }
+      const assign = inDef ? null : /^([A-Za-z_]\w*)\s*=(?!=)/.exec(trimmed);
+      if (assign) names.push(assign[1]!);
+    }
+    for (const char of line) {
+      if ('([{'.includes(char)) depth += 1;
+      else if (')]}'.includes(char)) depth = Math.max(0, depth - 1);
+    }
+  }
+  return [...new Set(names)];
+}
+
+/** The import lines of one file of a multi-file program, from the names it uses. */
+function fileImports(
+  code: string,
+  needs: Needs,
+  blocklyImports: readonly string[],
+  setupNames: readonly string[] | null,
+  tabModules: readonly string[],
+): string[] {
+  const names = namesIn(code);
+  const usesModule = (module: string) =>
+    new RegExp(`(?<![\\w.])${module}\\.`).test(withoutStrings(code));
+  const plain = [
+    ...new Set([
+      ...blocklyImports.filter((line) => line.startsWith('import ')),
+      ...[...needs.imports].filter(usesModule).map((module) => `import ${module}`),
+    ]),
+  ].sort();
+  const pybricks = [...needs.from.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([module, all]) => [module, [...all].filter((name) => names.has(name)).sort()] as const)
+    .filter(([, used]) => used.length > 0)
+    .map(([module, used]) => `from ${module} import ${used.join(', ')}`);
+  const local: string[] = [];
+  if (setupNames) {
+    const used = setupNames.filter((name) => names.has(name)).sort();
+    if (used.length > 0) local.push(`from ${SETUP_MODULE} import ${used.join(', ')}`);
+    if (usesModule(SETUP_MODULE)) local.push(`import ${SETUP_MODULE}`);
+  }
+  local.push(...tabModules.map((module) => `import ${module}`));
+  const outside = [...plain, ...pybricks];
+  return outside.length > 0 && local.length > 0
+    ? [...outside, '', ...local]
+    : [...outside, ...local];
+}
+
+/** Sections of a file, each a heading and its lines; empty sections are left out. */
+function joinSections(sections: readonly (readonly string[])[]): string {
+  return `${sections
+    .filter((section) => section.length > 0)
+    .map((section) => section.join('\n'))
+    .join('\n\n')}\n`;
+}
+
+/** What one tab made: its functions, its variables, and what it imports. */
+interface TabCode {
+  readonly tab: ProgramTab;
+  readonly functions: readonly string[];
+  readonly functionNames: readonly string[];
+  /** `x = 0` for each variable the tab uses. */
+  readonly variables: readonly string[];
+  readonly variableNames: readonly string[];
+  /** `import ...` lines Blockly's own blocks asked for. */
+  readonly blocklyImports: readonly string[];
+  /** Tabs whose functions it calls. */
+  readonly tabImports: ReadonlySet<string>;
+}
+
+const enabledDefinitions = (tab: ProgramTab) =>
+  tab.workspace.getBlocksByType(FUNCTION_BLOCKS.define, true).filter((block) => block.isEnabled());
+
+/**
+ * Generates one tab: `g.init`, then `generateMore` (the main tab's program), then its functions.
+ * The tab's variables start at 0. Motor speeds are module names too when the program is one file,
+ * so a function that changes one says `global`.
+ */
+function generateTab(
+  tab: ProgramTab,
+  functions: ReadonlyMap<string, FunctionInfo>,
+  multi: boolean,
+  generateMore: () => void = () => undefined,
+): TabCode {
+  const g = pythonGenerator;
+  g.init(tab.workspace);
+  const variableIds = Blockly.Variables.allUsedVarModels(tab.workspace)
+    .filter((variable) => variable.getType() === '')
+    .map((variable) => variable.getId());
+  const variableNames = variableIds.map((id) => g.getVariableName(id));
+  const imports = new Set<string>();
+  beginFunctionGeneration({
+    functions,
+    tab,
+    moduleNames: [...variableNames, ...(multi ? [] : PORTS.map(motorSpeedName))],
+    imports,
+  });
+  try {
+    generateMore();
+    const definitions = enabledDefinitions(tab);
+    const code = definitions.map((block) => (g.blockToCode(block) as string).trimEnd());
+    const blocklyImports = Object.values(
+      (g as unknown as { definitions_: Record<string, string> }).definitions_,
+    ).filter((line) => line.startsWith('import '));
+    imports.delete(tab.name);
+    return {
+      tab,
+      functions: code,
+      functionNames: definitions.map((block) => block.getFieldValue('NAME') as string),
+      variables: variableNames.map((name) => `${name} = 0`),
+      variableNames,
+      blocklyImports,
+      tabImports: imports,
+    };
+  } finally {
+    endFunctionGeneration();
+  }
+}
+
+/** A variable with the name of a function or a tab the same file uses. */
+function nameClashes(code: TabCode, modules: readonly string[]): DraftProblem[] {
+  const problems: DraftProblem[] = [];
+  for (const name of code.variableNames) {
+    if (code.functionNames.includes(name)) {
+      problems.push({
+        tabId: code.tab.id,
+        blockId: null,
+        message: `The variable “${name}” has the same name as the function “${name}”. Rename one of them.`,
+      });
+    }
+    if (modules.includes(name)) {
+      problems.push({
+        tabId: code.tab.id,
+        blockId: null,
+        message: `The variable “${name}” has the same name as the tab “${name}”. Rename one of them.`,
+      });
+    }
+  }
+  return problems;
+}
+
+/** Puts each problem in the tab its block is in. */
+function placeProblems(drafts: readonly DraftProblem[], tabs: readonly ProgramTab[]): Problem[] {
+  const mainId = tabs[0]?.id ?? 'main';
+  return drafts.map((draft) => ({
+    blockId: draft.blockId,
+    message: draft.message,
+    tabId:
+      draft.tabId ??
+      (draft.blockId
+        ? tabs.find((tab) => tab.workspace.getBlockById(draft.blockId!))?.id
+        : undefined) ??
+      mainId,
+  }));
+}
+
+/**
+ * Generates the program of the tab `workspace` belongs to (./tabs.ts): every tab, main first.
+ * A workspace on its own is a program with one tab.
  */
 export function generateProgram(workspace: Blockly.Workspace): GeneratedProgram {
+  return generateTabs(programTabsOf(workspace));
+}
+
+/**
+ * Generates a program in tabs, main first. Problems never throw: the code is still returned so
+ * the user can see it, and the page refuses to run it until the problems are fixed.
+ */
+export function generateTabs(tabs: readonly ProgramTab[]): GeneratedProgram {
   registerGenerators();
   const g = pythonGenerator;
-  const problems: Problem[] = [];
+  const problems: DraftProblem[] = [];
   const needs = beginNeeds();
+  const main = tabs[0];
+  if (!main) throw new Error('A program has at least the main tab.');
+  const others = tabs.slice(1);
   try {
-    g.init(workspace);
-    const programs = workspace.getBlocksByType('mp_program', true);
-    const setups = workspace.getBlocksByType('mp_setup', true);
+    const functions = collectFunctions(tabs);
+    // Tabs with functions become modules; with none, the program stays one file.
+    const moduleTabs = others.filter((tab) => enabledDefinitions(tab).length > 0);
+    const multi = moduleTabs.length > 0;
+    needs.qualifySpeeds = multi;
+
+    // Blocks that belong in main only.
+    for (const tab of others) {
+      for (const block of tab.workspace.getBlocksByType('mp_program', false)) {
+        problems.push({
+          tabId: tab.id,
+          blockId: block.id,
+          message: '“when the program starts” belongs in the main tab. Delete this one.',
+        });
+      }
+      for (const block of tab.workspace.getBlocksByType('mp_setup', false)) {
+        problems.push({
+          tabId: tab.id,
+          blockId: block.id,
+          message:
+            'The “set up” block belongs in the main tab. Every tab can use the devices set up there.',
+        });
+      }
+    }
+
+    // --- main: the program, its functions, and the set-up devices' names --------------------
+    const programs = main.workspace.getBlocksByType('mp_program', true);
+    const setups = main.workspace.getBlocksByType('mp_setup', true);
     if (programs.length === 0) {
       problems.push({ blockId: null, message: 'Add a “when the program starts” block.' });
     }
@@ -472,16 +756,30 @@ export function generateProgram(workspace: Blockly.Workspace): GeneratedProgram 
       problems.push({ blockId: extra.id, message: 'Use only one “set up” block.' });
     }
 
-    const devices = listSetUpDevices(workspace);
+    const devices = listSetUpDevices(main.workspace);
     problems.push(...setupProblems(devices));
+    const unique = devices.filter(
+      (device, index) => devices.findIndex((d) => d.variableId === device.variableId) === index,
+    );
     const program = programs[0];
+    // The program and every function, in every tab: what the program may run.
+    const roots = [
+      ...(program ? [program] : []),
+      ...tabs.flatMap((tab) => enabledDefinitions(tab)),
+    ];
+    problems.push(...usageProblems(roots, devices));
+    const movement = movementSettings(roots, problems);
     let body = '';
-    let movement = DEFAULT_MOVEMENT;
-    if (program) {
-      problems.push(...usageProblems(program, devices));
-      movement = movementSettings(program, problems);
-      body = g.blockToCode(program) as string;
-    }
+    const deviceNames = new Map<string, string>();
+    const mainCode = generateTab(main, functions, multi, () => {
+      if (program) body = g.blockToCode(program) as string;
+      for (const device of unique) {
+        deviceNames.set(device.variableId, g.getVariableName(device.variableId));
+      }
+    });
+    const tabCodes = moduleTabs.map((tab) => generateTab(tab, functions, multi));
+    problems.push(...functionProblems(tabs, functions));
+
     const robot = needs.robotUses.length > 0;
     const ports = portProblems(
       needs.portUses,
@@ -491,20 +789,12 @@ export function generateProgram(workspace: Blockly.Workspace): GeneratedProgram 
     );
     problems.push(...ports.problems);
 
-    // Variables the program uses start at 0, so "change by" works on a fresh variable.
-    const variables = Blockly.Variables.allUsedVarModels(workspace)
-      .filter((variable) => variable.getType() === '')
-      .map((variable) => `${g.getVariableName(variable.getId())} = 0`);
-
-    const unique = devices.filter(
-      (device, index) => devices.findIndex((d) => d.variableId === device.variableId) === index,
-    );
     const config: string[] = [];
     const setup: string[] = [];
     const motors: string[] = [];
     if (needs.hub) setup.push('hub = PrimeHub()');
     for (const device of unique) {
-      const python = g.getVariableName(device.variableId);
+      const python = deviceNames.get(device.variableId) ?? g.getVariableName(device.variableId);
       const constant = `${python.toUpperCase()}_PORT`;
       const { pythonClass } = DEVICES[device.type];
       need('pybricks.parameters', 'Port');
@@ -574,28 +864,106 @@ export function generateProgram(workspace: Blockly.Workspace): GeneratedProgram 
       config.push(...controllerConfig());
       setup.push(...controllerSetup());
     }
-    setup.push(...variables);
 
-    const main = body.trimEnd() === '' ? 'pass' : body.trimEnd();
+    // A function may not share a name with a set-up device either.
+    for (const info of functions.values()) {
+      if (info.enabled && [...deviceNames.values()].includes(info.name)) {
+        problems.push({
+          tabId: info.tab.id,
+          blockId: info.id,
+          message: `“${info.name}” is also the name of a device in the “set up” block. Rename the function.`,
+        });
+      }
+    }
+
+    const main_ = body.trimEnd() === '' ? 'pass' : body.trimEnd();
     const stops = [
       ...(robot ? [`${INDENT}${ROBOT.robot}.stop()`] : []),
       ...motors.map((motor) => `${INDENT}${motor}.stop()`),
     ];
     const mainLines =
-      motors.length > 0 ? ['try:', g.prefixLines(main, INDENT), 'finally:', ...stops] : [main];
-
-    const definitions = Object.values(
-      (g as unknown as { definitions_: Record<string, string> }).definitions_,
-    );
+      motors.length > 0 ? ['try:', g.prefixLines(main_, INDENT), 'finally:', ...stops] : [main_];
     const helpers = [...needs.helpers.values()];
-    const sections = [
-      ['# Generated by MatPilot from blocks.', ...importLines(needs, definitions)],
-      config.length > 0 ? [rule('Config'), ...config] : [],
-      setup.length > 0 ? [rule('Setup'), ...setup] : [],
-      helpers.length > 0 ? [rule('Helpers'), helpers.join('\n\n\n')] : [],
-      [rule('Main'), ...mainLines],
-    ].filter((section) => section.length > 0);
-    const code = `${sections.map((section) => section.join('\n')).join('\n\n')}\n`;
+    const configSection = config.length > 0 ? [rule('Config'), ...config] : [];
+    const helperSection = helpers.length > 0 ? [rule('Helpers'), helpers.join('\n\n\n')] : [];
+    const functionSection = (code: TabCode) =>
+      code.functions.length > 0 ? [rule('Functions'), code.functions.join('\n\n\n')] : [];
+
+    const files: PythonFile[] = [];
+    const moduleNames = moduleTabs.map((tab) => tab.name);
+    if (!multi) {
+      // One file, as before tabs: Config, Setup (with the variables), Helpers, Functions, Main.
+      setup.push(...mainCode.variables);
+      const code = joinSections([
+        ['# Generated by MatPilot from blocks.', ...importLines(needs, mainCode.blocklyImports)],
+        configSection,
+        setup.length > 0 ? [rule('Setup'), ...setup] : [],
+        helperSection,
+        functionSection(mainCode),
+        [rule('Main'), ...mainLines],
+      ]);
+      files.push({ name: 'main.py', module: '__main__', tabId: main.id, code });
+      problems.push(...nameClashes(mainCode, []));
+    } else {
+      // setup.py: what every tab uses.
+      const setupBody = joinSections([
+        configSection,
+        setup.length > 0 ? [rule('Setup'), ...setup] : [],
+        helperSection,
+      ]);
+      const setupNames = topLevelNames(setupBody);
+      const setupFile: PythonFile = {
+        name: `${SETUP_MODULE}.py`,
+        module: SETUP_MODULE,
+        tabId: null,
+        code: joinSections([
+          [
+            '# Generated by MatPilot from blocks: the ports, devices and helpers every tab uses.',
+            ...fileImports(setupBody, needs, [], null, []),
+          ],
+          [setupBody.trimEnd()],
+        ]),
+      };
+
+      const tabFile = (code: TabCode, isMain: boolean): string => {
+        const bodyText = joinSections([
+          code.variables.length > 0 ? [rule('Variables'), ...code.variables] : [],
+          functionSection(code),
+          isMain ? [rule('Main'), ...mainLines] : [],
+        ]);
+        // Main imports every tab with functions; a tab imports the tabs it uses.
+        const tabImports = isMain
+          ? moduleNames
+          : moduleNames.filter((name) => code.tabImports.has(name));
+        const header = isMain
+          ? '# Generated by MatPilot from blocks: the main tab, where the program starts.'
+          : `# Generated by MatPilot from blocks: the tab “${code.tab.name}”.`;
+        return joinSections([
+          [header, ...fileImports(bodyText, needs, code.blocklyImports, setupNames, tabImports)],
+          [bodyText.trimEnd()],
+        ]);
+      };
+      // main.py first: the hub runs the first module (../pybricks/mpy.ts).
+      files.push({
+        name: 'main.py',
+        module: '__main__',
+        tabId: main.id,
+        code: tabFile(mainCode, true),
+      });
+      problems.push(...nameClashes(mainCode, moduleNames));
+      for (const code of tabCodes) {
+        files.push({
+          name: `${code.tab.name}.py`,
+          module: code.tab.name,
+          tabId: code.tab.id,
+          code: tabFile(code, false),
+        });
+        problems.push(...nameClashes(code, moduleNames));
+      }
+      // A program with no ports, devices or helpers needs no setup.py.
+      if (setupBody.trim() !== '') files.push(setupFile);
+    }
+
     const controls = usesController
       ? [
           ...needs.controllerControls,
@@ -603,8 +971,9 @@ export function generateProgram(workspace: Blockly.Workspace): GeneratedProgram 
         ]
       : [];
     return {
-      code,
-      problems,
+      code: files[0]!.code,
+      files,
+      problems: placeProblems(problems, tabs),
       usesController,
       controller: usesController ? controllerProfile(chosen).id : null,
       controls,

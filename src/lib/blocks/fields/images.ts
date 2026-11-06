@@ -46,6 +46,9 @@ export const ICONS = {
   touch: svg(
     '<rect x="4" y="11" width="16" height="9" rx="2"/><path d="M9 11V6.5a3 3 0 0 1 6 0V11"/>',
   ),
+  function: svg(
+    '<rect x="3.5" y="4" width="8" height="6" rx="1.5"/><rect x="12.5" y="14" width="8" height="6" rx="1.5"/><path d="M7.5 10v4.5a2.5 2.5 0 0 0 2.5 2.5h2.5"/>',
+  ),
   controller: svg(
     '<path d="M7.5 6.5h9a5 5 0 0 1 4.8 6.4l-1.1 4a2.4 2.4 0 0 1-4.1.9l-1.8-2.3h-4.6l-1.8 2.3a2.4 2.4 0 0 1-4.1-.9l-1.1-4a5 5 0 0 1 4.8-6.4z"/><path d="M7.5 9.5v3.5M5.8 11.2h3.5"/><path d="M15.5 10h.01M17.5 12.3h.01" stroke-width="2.6"/>',
   ),

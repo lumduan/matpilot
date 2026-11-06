@@ -208,6 +208,12 @@ export const TOOLBOX = {
       contents: OPERATOR_CONTENTS,
     },
     { kind: 'category', name: 'Variables', categorystyle: 'variable_category', custom: 'VARIABLE' },
+    {
+      kind: 'category',
+      name: 'Functions',
+      categorystyle: 'mp_function_category',
+      custom: 'MP_FUNCTIONS',
+    },
     { kind: 'sep' },
     {
       kind: 'category',

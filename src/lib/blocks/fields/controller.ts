@@ -18,26 +18,24 @@ import {
   type InputOption,
 } from '../../controller/layout';
 import { XBOX_BUTTONS, type XboxButtonName } from '../../controller/xbox';
+import { programBlocksByType } from '../tabs';
 import { button, closePicker, htmlEl, openPicker, svgEl } from './common';
 import { controllerButton } from './images';
 import { PAD_HEIGHT, PAD_WIDTH, drawPad, partKey, type PadPart } from './pad-drawing';
 
-/** The controller the program uses: its "use the controller" block, or the default. */
+/** The controller the program uses: its "use the controller" block (in any tab), or the default. */
 function programController(field: Blockly.Field): ControllerProfile {
   const block = field.getSourceBlock();
-  const use = block?.workspace
-    .getBlocksByType('mp_ctrl_use', false)
-    .find((candidate) => candidate.isEnabled());
+  const use = block ? programBlocksByType(block.workspace, 'mp_ctrl_use')[0] : undefined;
   return controllerProfile(use?.getFieldValue('CONTROLLER') as string | undefined);
 }
 
-/** Fingers the program's "drive with the controller" blocks keep busy. */
+/** Fingers the program's "drive with the controller" blocks, in every tab, keep busy. */
 function drivingFingers(field: Blockly.Field): Set<Finger> {
   const block = field.getSourceBlock();
   const busy = new Set<Finger>();
   if (!block || block.isInFlyout) return busy;
-  for (const drive of block.workspace.getBlocksByType('mp_ctrl_drive', false)) {
-    if (!drive.isEnabled()) continue;
+  for (const drive of programBlocksByType(block.workspace, 'mp_ctrl_drive')) {
     for (const finger of DRIVE_FINGERS[drive.getFieldValue('STYLE') as string] ?? []) {
       busy.add(finger);
     }

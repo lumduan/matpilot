@@ -21,12 +21,13 @@ import { ControllerPanel } from './ControllerPanel';
 import { GitHubSettingsDialog } from './GitHubSettingsDialog';
 import { LoadDialog } from './LoadDialog';
 import { SaveDialog } from './SaveDialog';
+import { TabBar } from './TabBar';
 
 /** How long the page's introduction stays open after the page loads. */
 const INTRO_OPEN_MS = 5000;
 
-/** How long the "Opened …" notice stays after a program is loaded. */
-const OPENED_NOTICE_MS = 12_000;
+/** How long a notice with Undo stays (after opening a program, closing a tab, ...). */
+const NOTICE_MS = 12_000;
 
 const VIEWS = ['blocks', 'python'] as const;
 const OPEN_CLOSED = ['open', 'closed'] as const;
@@ -47,14 +48,20 @@ export function BlocksApp() {
   // What is plugged into each port, for the port pickers; changes only when a device does.
   const portKey = hintsKey(runner.live.snapshot.reading);
   const portHints = useMemo(() => hintsFromKey(portKey), [portKey]);
-  const editor = useBlocksEditor(host, portHints);
+  // A change to the program as a whole, with Undo: opened, started over, tab closed, moved.
+  const [notice, setNotice] = useState<string | null>(null);
+  const editor = useBlocksEditor(host, portHints, setNotice);
   const github = useGitHub();
   const [dialog, setDialog] = useState<{
     readonly name: DialogName;
     /** The dialog to go back to when GitHub settings close. */
     readonly back: DialogName | null;
   } | null>(null);
-  const [openedNotice, setOpenedNotice] = useState<string | null>(null);
+  // The Python file shown; it follows the open tab until another file is chosen.
+  const [chosenFile, setChosenFile] = useState<{
+    readonly name: string;
+    readonly tab: string;
+  } | null>(null);
   const [copied, setCopied] = useState<'idle' | 'ok' | 'failed'>('idle');
   const [view, setView] = useStoredState('matpilot.blocks.view.v1', 'blocks', VIEWS);
   const [pythonPanel, setPythonPanel] = useStoredState(
@@ -93,8 +100,21 @@ export function BlocksApp() {
 
   const ready = connection.link.status === 'ready';
   const running = connection.flags.userProgramRunning || connection.program.phase !== 'idle';
-  const code = editor.program?.code ?? '';
+  const files = editor.program?.files ?? [];
   const problems = editor.program?.problems ?? [];
+  const tabName = (id: string) => editor.tabs.find((tab) => tab.id === id)?.name ?? '';
+  const mainTabId = editor.tabs[0]?.id ?? 'main';
+  const activeFile = files.find((file) => file.tabId === editor.activeTab)?.name;
+  const shownName =
+    chosenFile && chosenFile.tab === editor.activeTab ? chosenFile.name : (activeFile ?? 'main.py');
+  const shownFile = files.find((file) => file.name === shownName) ?? files[0];
+  const code = shownFile?.code ?? '';
+  const severalFiles = files.length > 1;
+  const errorLine =
+    runner.compileError && (runner.compileError.file ?? 'main.py') === shownFile?.name
+      ? runner.compileError.line
+      : null;
+  const problemTabs = new Set(problems.map((problem) => problem.tabId));
   const monitorOpen = monitorPane === 'open';
   const plotterOpen = plotterPane === 'open';
   // The controller view is offered while the program uses the controller, or has reported it.
@@ -116,12 +136,12 @@ export function BlocksApp() {
       current?.name === 'github' && current.back ? { name: current.back, back: null } : null,
     );
 
-  // The "Opened …" notice folds away by itself.
+  // A notice with Undo folds away by itself.
   useEffect(() => {
-    if (!openedNotice) return;
-    const timer = setTimeout(() => setOpenedNotice(null), OPENED_NOTICE_MS);
+    if (!notice) return;
+    const timer = setTimeout(() => setNotice(null), NOTICE_MS);
     return () => clearTimeout(timer);
-  }, [openedNotice]);
+  }, [notice]);
 
   // Ctrl+S (⌘S) saves and Ctrl+O (⌘O) loads, as in other editors. Blockly already handles
   // Ctrl+Z / Ctrl+Shift+Z when the blocks have focus.
@@ -156,6 +176,7 @@ export function BlocksApp() {
   };
 
   const openInPythonEditor = () => {
+    if (severalFiles) return;
     const message =
       'Open this Python on the Program & Monitor page?\n\nIt replaces the program there. Your blocks stay here. Leaving this page disconnects the hub.';
     if (!window.confirm(message)) return;
@@ -183,18 +204,58 @@ export function BlocksApp() {
 
   const pythonTools = (
     <div className="button-row">
-      <button type="button" className="button button-small" onClick={copy} disabled={code === ''}>
+      <button
+        type="button"
+        className="button button-small"
+        onClick={copy}
+        disabled={code === ''}
+        title={severalFiles ? `Copy ${shownFile?.name ?? 'this file'}` : 'Copy the Python'}
+      >
         {copied === 'ok' ? 'Copied' : 'Copy'}
       </button>
       <button
         type="button"
         className="button button-small"
         onClick={openInPythonEditor}
-        disabled={code === ''}
+        disabled={code === '' || severalFiles}
+        title={
+          severalFiles
+            ? 'The Python editor holds one file, and this program has several.'
+            : 'Open this Python on the Program & Monitor page'
+        }
       >
         Edit as Python
       </button>
     </div>
+  );
+
+  // The files the blocks make: one per tab with functions, and setup.py (ADR 0013).
+  const pythonFiles = (
+    <>
+      {severalFiles && (
+        <div className="python-files" role="tablist" aria-label="Python files">
+          {files.map((file) => (
+            <button
+              key={file.name}
+              type="button"
+              role="tab"
+              className="python-file"
+              aria-selected={file.name === shownFile?.name}
+              onClick={() => setChosenFile({ name: file.name, tab: editor.activeTab })}
+              data-testid={`python-file-${file.name}`}
+            >
+              {file.name}
+            </button>
+          ))}
+        </div>
+      )}
+      {editor.activeTab !== mainTabId && !activeFile && (
+        <p className="python-note">
+          The tab “{tabName(editor.activeTab)}” has no functions yet, so it makes no Python file.
+          Add a “define” block from Functions.
+        </p>
+      )}
+    </>
   );
 
   return (
@@ -263,11 +324,11 @@ export function BlocksApp() {
             onClick={() => {
               if (
                 window.confirm(
-                  'Start a new program from the starter blocks? (Undo brings yours back.)',
+                  'Start a new program from the starter blocks? Every tab is replaced. (Undo, right after, brings yours back.)',
                 )
               ) {
                 editor.reset();
-                setOpenedNotice(null);
+                setNotice('Started a new program from the starter blocks.');
               }
             }}
             disabled={!editorReady || running}
@@ -289,7 +350,7 @@ export function BlocksApp() {
               onClick={() => {
                 // Show the controller live while a controller program runs.
                 if (editor.program?.usesController) setControllerPane('open');
-                runner.runSource(code);
+                runner.runFiles(files);
               }}
               disabled={!ready || runner.compiling || !editor.program || problems.length > 0}
               data-testid="run"
@@ -319,9 +380,11 @@ export function BlocksApp() {
           <p>
             Snap blocks together under “when the program starts” and press <strong>Run</strong>. Tap
             a block’s picture to choose a port, a turn, a speed or a light picture; press{' '}
-            <strong>Python</strong> to see the code it makes. <strong>Undo</strong> (↶) takes back a
-            change, and <strong>Save</strong> and <strong>Load</strong> keep programs in a file or
-            in your team’s GitHub repository.
+            <strong>Python</strong> to see the code it makes. Make blocks of your own in{' '}
+            <strong>Functions</strong>, and keep them in tabs (<strong>+</strong>): each tab is a
+            Python file that main uses. <strong>Undo</strong> (↶) takes back a change, and{' '}
+            <strong>Save</strong> and <strong>Load</strong> keep programs in a file or in your
+            team’s GitHub repository.
           </p>
           <p className="muted">
             <strong>Stop</strong> ends the program, and every motor stops with it. Leaving or
@@ -345,30 +408,31 @@ export function BlocksApp() {
         connection.flags.batteryLow ||
         editor.status === 'failed' ||
         editor.restoredStarter ||
-        openedNotice ||
+        notice ||
         copied === 'failed') && (
         <div className="studio-notices">
-          {openedNotice && (
+          {notice && (
             <p
               className="notice notice-ok notice-actions"
               role="status"
               data-testid="opened-notice"
             >
-              <span>{openedNotice}</span>
+              <span>{notice}</span>
               <button
                 type="button"
                 className="button button-small"
                 onClick={() => {
-                  editor.undo();
-                  setOpenedNotice(null);
+                  editor.undoProgramChange();
+                  setNotice(null);
                 }}
+                data-testid="notice-undo"
               >
                 Undo
               </button>
               <button
                 type="button"
                 className="icon-button"
-                onClick={() => setOpenedNotice(null)}
+                onClick={() => setNotice(null)}
                 title="Hide"
               >
                 <CloseIcon />
@@ -417,46 +481,63 @@ export function BlocksApp() {
 
       <div className="studio-body" data-python-panel={pythonOpen ? 'open' : 'closed'}>
         <div className="studio-canvas">
-          <div
-            className="blocks-workspace"
-            ref={host}
-            data-testid="blocks-workspace"
-            data-status={editor.status}
-            inert={view === 'python'}
+          <TabBar
+            tabs={editor.tabs}
+            active={editor.activeTab}
+            problemTabs={problemTabs}
+            disabled={!editorReady || running}
+            onSelect={editor.selectTab}
+            onAdd={editor.addTab}
+            onRename={editor.renameTab}
+            onClose={editor.closeTab}
           />
-          {view === 'blocks' && editorReady && (
-            <div className="history-buttons" role="group" aria-label="Undo and redo">
-              <button
-                type="button"
-                className="history-button"
-                onClick={editor.undo}
-                disabled={!editor.history.canUndo}
-                title={`Undo (${mod}Z)`}
-                data-testid="undo"
-              >
-                <UndoIcon />
-                <span className="visually-hidden">Undo</span>
-              </button>
-              <button
-                type="button"
-                className="history-button"
-                onClick={editor.redo}
-                disabled={!editor.history.canRedo}
-                title={`Redo (${mod}${mac ? '⇧Z' : 'Y'})`}
-                data-testid="redo"
-              >
-                <UndoIcon redo />
-                <span className="visually-hidden">Redo</span>
-              </button>
-            </div>
-          )}
+          <div className="blocks-area">
+            <div
+              className="blocks-workspace"
+              ref={host}
+              data-testid="blocks-workspace"
+              data-status={editor.status}
+              inert={view === 'python'}
+            />
+            {view === 'blocks' && editorReady && (
+              <div className="history-buttons" role="group" aria-label="Undo and redo">
+                <button
+                  type="button"
+                  className="history-button"
+                  onClick={editor.undo}
+                  disabled={!editor.history.canUndo}
+                  title={`Undo (${mod}Z)`}
+                  data-testid="undo"
+                >
+                  <UndoIcon />
+                  <span className="visually-hidden">Undo</span>
+                </button>
+                <button
+                  type="button"
+                  className="history-button"
+                  onClick={editor.redo}
+                  disabled={!editor.history.canRedo}
+                  title={`Redo (${mod}${mac ? '⇧Z' : 'Y'})`}
+                  data-testid="redo"
+                >
+                  <UndoIcon redo />
+                  <span className="visually-hidden">Redo</span>
+                </button>
+              </div>
+            )}
+          </div>
           {view === 'python' && (
             <section className="studio-python-full" aria-labelledby="python-full-heading">
               <div className="studio-panel-header">
                 <h2 id="python-full-heading">Python made from your blocks</h2>
                 {pythonTools}
               </div>
-              <CodeView code={code} errorLine={runner.compileError?.line ?? null} />
+              {pythonFiles}
+              <CodeView
+                code={code}
+                errorLine={errorLine}
+                label={shownFile ? `Python: ${shownFile.name}` : undefined}
+              />
             </section>
           )}
         </div>
@@ -475,7 +556,12 @@ export function BlocksApp() {
                 <span className="visually-hidden">Close the Python panel</span>
               </button>
             </div>
-            <CodeView code={code} errorLine={runner.compileError?.line ?? null} />
+            {pythonFiles}
+            <CodeView
+              code={code}
+              errorLine={errorLine}
+              label={shownFile ? `Python: ${shownFile.name}` : undefined}
+            />
           </aside>
         )}
       </div>
@@ -519,14 +605,36 @@ export function BlocksApp() {
             <div className="notice notice-warn" data-testid="block-problems">
               <strong>Fix before running:</strong>
               <ul>
-                {problems.map((problem, index) => (
-                  <li key={`${problem.blockId ?? 'program'}-${index}`}>{problem.message}</li>
-                ))}
+                {problems.map((problem, index) => {
+                  const where = editor.tabs.length > 1 ? `${tabName(problem.tabId)}: ` : '';
+                  const blockId = problem.blockId;
+                  return (
+                    <li key={`${blockId ?? 'program'}-${index}`}>
+                      {blockId ? (
+                        <button
+                          type="button"
+                          className="problem-link"
+                          onClick={() => editor.showBlock(problem.tabId, blockId)}
+                          title="Show the block"
+                        >
+                          {where}
+                          {problem.message}
+                        </button>
+                      ) : (
+                        <>
+                          {where}
+                          {problem.message}
+                        </>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           )}
           {runner.compileError && (
             <p className="notice notice-error" role="alert" data-testid="compile-error">
+              {runner.compileError.file && `${runner.compileError.file}: `}
               <strong>{runner.compileError.message}</strong>
               {runner.compileError.line !== null && ` near line ${runner.compileError.line}`}
             </p>
@@ -549,7 +657,7 @@ export function BlocksApp() {
           onClose={closeDialog}
           onOpened={(message) => {
             setDialog(null);
-            setOpenedNotice(message);
+            setNotice(message);
           }}
           onSetUpGitHub={openGitHubSettings}
         />

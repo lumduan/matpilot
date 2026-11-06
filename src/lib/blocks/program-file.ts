@@ -1,19 +1,35 @@
 /**
  * The file a block program is saved in, on this computer or on GitHub (ADR 0011). It is JSON:
- * the Blockly workspace, the program's name, who saved it and when, and the Python the blocks
- * made, as lines, so the file can be read on GitHub. Loading uses only the workspace; the Python
- * is made again from the blocks.
+ * the program's name, who saved it and when, each tab's Blockly workspace (ADR 0013), and the
+ * Python files the blocks made, as lines, so the file can be read on GitHub. Loading uses only
+ * the tabs; the Python is made again from the blocks.
+ *
+ * Version 1 (before tabs) had one `workspace` and the Python as one list of lines; it opens as a
+ * program with only the main tab. Version 2 has `tabs` and `python` as a list of files.
  */
 
 export const PROGRAM_FILE_FORMAT = 'matpilot-blocks';
-export const PROGRAM_FILE_VERSION = 1;
+export const PROGRAM_FILE_VERSION = 2;
+
+/** The tab the program starts in (./tabs.ts). */
+export const MAIN_TAB_NAME = 'main';
+
+/** How many tabs a program may have, main included. */
+export const MAX_TABS = 10;
 export const PROGRAM_FILE_EXTENSION = '.matpilot.json';
 export const PROGRAM_NAME_MAX_LENGTH = 60;
 export const DEFAULT_PROGRAM_NAME = 'My program';
 
-export interface ProgramFile {
+/** One tab of a saved program: its name and its blocks. */
+export interface ProgramTabState {
   readonly name: string;
   readonly workspace: object;
+}
+
+export interface ProgramFile {
+  readonly name: string;
+  /** Every tab, main first. */
+  readonly tabs: readonly ProgramTabState[];
   /** Who saved it, as they typed their name; empty when unknown. */
   readonly savedBy: string;
   /** ISO 8601 time, or empty when unknown. */
@@ -64,8 +80,20 @@ export function programNameFromFileName(fileName: string): string {
   return cleanProgramName(stem) || DEFAULT_PROGRAM_NAME;
 }
 
-export function serializeProgramFile(file: ProgramFile & { readonly python: string }): string {
-  const python = file.python.replace(/\n$/, '');
+/** A Python file the blocks made, as the file shows it. */
+export interface ProgramPythonFile {
+  readonly name: string;
+  readonly code: string;
+}
+
+const lines = (code: string) => {
+  const text = code.replace(/\n$/, '');
+  return text === '' ? [] : text.split('\n');
+};
+
+export function serializeProgramFile(
+  file: ProgramFile & { readonly python: readonly ProgramPythonFile[] },
+): string {
   return `${JSON.stringify(
     {
       format: PROGRAM_FILE_FORMAT,
@@ -73,8 +101,8 @@ export function serializeProgramFile(file: ProgramFile & { readonly python: stri
       name: cleanProgramName(file.name) || DEFAULT_PROGRAM_NAME,
       savedBy: file.savedBy.trim(),
       savedAt: file.savedAt,
-      python: python === '' ? [] : python.split('\n'),
-      workspace: file.workspace,
+      python: file.python.map((each) => ({ file: each.name, lines: lines(each.code) })),
+      tabs: file.tabs.map((tab) => ({ name: tab.name, workspace: tab.workspace })),
     },
     null,
     2,
@@ -105,15 +133,35 @@ export function parseProgramFile(text: string, fallbackName: string): ParsedProg
         'This program was saved by a newer MatPilot. Reload the page to update, then try again.',
     };
   }
-  if (!isObject(data.workspace)) {
-    return { ok: false, message: 'This program file has no blocks in it.' };
-  }
+  const tabs = readTabs(data);
+  if (typeof tabs === 'string') return { ok: false, message: tabs };
   const name = typeof data.name === 'string' ? cleanProgramName(data.name) : '';
   return {
     ok: true,
     name: name || cleanProgramName(fallbackName) || DEFAULT_PROGRAM_NAME,
-    workspace: data.workspace,
+    tabs,
     savedBy: typeof data.savedBy === 'string' ? data.savedBy.trim() : '',
     savedAt: typeof data.savedAt === 'string' ? data.savedAt : '',
   };
+}
+
+/** The tabs of a parsed file, main first, or what is wrong with them. */
+function readTabs(data: Record<string, unknown>): ProgramTabState[] | string {
+  const empty = 'This program file has no blocks in it.';
+  const damaged = 'The tabs in this program file are damaged, so it cannot be opened.';
+  // Version 1: one workspace, which is the main tab.
+  if (data.version === 1 || !('tabs' in data)) {
+    return isObject(data.workspace) ? [{ name: MAIN_TAB_NAME, workspace: data.workspace }] : empty;
+  }
+  if (!Array.isArray(data.tabs) || data.tabs.length === 0) return empty;
+  if (data.tabs.length > MAX_TABS) return damaged;
+  const tabs: ProgramTabState[] = [];
+  for (const [index, tab] of (data.tabs as unknown[]).entries()) {
+    if (!isObject(tab) || !isObject(tab.workspace) || typeof tab.name !== 'string') return damaged;
+    // The first tab is always main, whatever it was called.
+    const tabName = index === 0 ? MAIN_TAB_NAME : tab.name;
+    if (tabName === '' || tabs.some((other) => other.name === tabName)) return damaged;
+    tabs.push({ name: tabName, workspace: tab.workspace });
+  }
+  return tabs;
 }

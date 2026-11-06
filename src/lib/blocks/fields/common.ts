@@ -74,7 +74,34 @@ export function openPicker(field: Blockly.Field, content: HTMLElement, onHide?: 
   Blockly.DropDownDiv.getContentDiv().appendChild(content);
   const { primary, tertiary } = blockColours(field);
   Blockly.DropDownDiv.setColour(primary, tertiary);
+  const area = blockArea(field);
+  // Never taller than the block area: it scrolls inside instead.
+  if (area) {
+    content.style.maxHeight = `${Math.max(160, Math.floor(area.height - 16))}px`;
+    content.style.overflowY = 'auto';
+  }
   Blockly.DropDownDiv.showPositionedByField(field, onHide);
+  if (area) keepInside(area);
+}
+
+/** The block area the drop-down is drawn in (Blockly puts it in the workspace's own div). */
+function blockArea(field: Blockly.Field): DOMRect | null {
+  const workspace = field.getSourceBlock()?.workspace as Partial<Blockly.WorkspaceSvg> | undefined;
+  return workspace?.getInjectionDiv?.()?.getBoundingClientRect() ?? null;
+}
+
+/**
+ * When a picker fits neither below nor above its block, Blockly puts it at the top of the page.
+ * The block area hides anything outside it, so above the block area (under the page's header and
+ * tabs) the picker would be cut off. Move it down into the block area.
+ */
+function keepInside(area: DOMRect): void {
+  const div = Blockly.DropDownDiv.getContentDiv().parentElement;
+  if (!div) return;
+  const rect = div.getBoundingClientRect();
+  const shift =
+    rect.top < area.top ? area.top - rect.top + 8 : Math.min(0, area.bottom - rect.bottom - 8);
+  if (shift !== 0) div.style.top = `${parseFloat(div.style.top || '0') + shift}px`;
 }
 
 export function closePicker(field: Blockly.Field): void {

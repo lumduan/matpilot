@@ -20,6 +20,7 @@ export const CATEGORY_COLOURS = {
   light: '#7e22ce',
   sound: '#9f1239',
   controller: '#3f6212',
+  functions: '#4338ca',
 } as const;
 
 const blockStyles = {
@@ -34,6 +35,8 @@ const blockStyles = {
   mp_sound_blocks: { colourPrimary: CATEGORY_COLOURS.sound },
   mp_sensor_blocks: { colourPrimary: CATEGORY_COLOURS.input },
   mp_controller_blocks: { colourPrimary: CATEGORY_COLOURS.controller },
+  mp_function_blocks: { colourPrimary: CATEGORY_COLOURS.functions },
+  mp_function_define_blocks: { colourPrimary: CATEGORY_COLOURS.functions, hat: 'cap' },
   loop_blocks: { colourPrimary: CATEGORY_COLOURS.flow },
   logic_blocks: { colourPrimary: CATEGORY_COLOURS.flow },
   math_blocks: { colourPrimary: CATEGORY_COLOURS.data },
@@ -55,6 +58,7 @@ const categoryStyles = {
   mp_sound_category: { colour: CATEGORY_COLOURS.sound },
   mp_sensor_category: { colour: CATEGORY_COLOURS.input },
   mp_controller_category: { colour: CATEGORY_COLOURS.controller },
+  mp_function_category: { colour: CATEGORY_COLOURS.functions },
 };
 
 const fontStyle = { family: 'system-ui, -apple-system, "Segoe UI", sans-serif', size: 12 };
