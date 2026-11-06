@@ -84,6 +84,32 @@
  * - min, max and abs are built in: FW bricks/_common/mpconfigport.h#L85,
  *   MP py/modbuiltins.c#L669 #L709-L710; math.pi: MP py/modmath.c#L388, math being on with
  *   floats: FW bricks/_common/mpconfigport.h#L19
+ *
+ * The Controller blocks (ADR 0012, ./controller-generator.ts) also use
+ * (XB = FW pybricks/iodevices/pb_type_iodevices_xbox_controller.c)
+ * - pybricks.iodevices.XboxController: FW pybricks/iodevices/pb_module_iodevices.c#L91-L92, on for
+ *   SPIKE Prime: FW bricks/primehub/mpconfigport.h#L41
+ * - XboxController(joystick_deadzone=10, name=None, timeout=10000, connect=True): XB#L425-L435;
+ *   timeout in ms (None: no limit): XB#L451; on SPIKE Prime a failed attempt is tried once more
+ *   after 2 s: XB#L303-L309. Not found in time: OSError(ETIMEDOUT),
+ *   FW lib/pbio/drv/bluetooth/bluetooth_btstack.c#L727, FW pybricks/util_pb/pb_error.c#L131.
+ *   It may not be made once tasks run (multitask): XB#L437, FW pybricks/tools/pb_module_tools.c
+ *   #L45-L49
+ * - joystick_left(), joystick_right() return (x, y), each -100 to 100, y counted up from the
+ *   bottom (the raw axis is turned over): XB#L539-L569. triggers() returns (left, right), 0 to
+ *   100: XB#L571-L579. The method table: XB#L659-L671
+ * - buttons.pressed() returns the set of pressed Buttons, with the D-pad as UP, DOWN, LEFT, RIGHT
+ *   (two at once on a diagonal): XB#L179-L261 (the D-pad at #L238-L258); the buttons attribute:
+ *   XB#L674-L677, Keypad.pressed: FW pybricks/common/pb_type_keypad.c#L25-L29
+ * - Button members LEFT, RIGHT, UP, DOWN, A, B, X, Y, LB, RB, VIEW, MENU, GUIDE, LJ, RJ:
+ *   FW pybricks/parameters/pb_type_button.c#L23-L24 #L31-L32 #L39-L49
+ * - Reading a controller that went away raises OSError(ENODEV): XB#L168-L177,
+ *   FW pybricks/util_pb/pb_error.c#L115
+ * - rumble(power=100, duration=200, count=1, delay=100), durations in ms (10 ms steps, at most
+ *   2.5 s), waiting only for the command to be sent: XB#L592-L657, #L402-L411
+ * - print() never blocks the program for a missing link: without a connected computer the text
+ *   is dropped: FW bricks/_common/mphalport.c#L60-L82, FW lib/pbio/sys/host.c#L148-L185
+ * - Motor.hold(): pb_type_motor.c#L490; dict.get(key, default): MP py/objdict.c#L339 #L599
  */
 
 export type Option = readonly [label: string, value: string];

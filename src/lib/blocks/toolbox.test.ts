@@ -144,6 +144,7 @@ describe('the toolbox', () => {
       'Sound',
       'Control',
       'Sensors',
+      'Controller',
       'Operators',
       'Variables',
       'sep',

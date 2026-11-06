@@ -18,6 +18,7 @@ import { NEW_PROGRAM_META, replaceProgram, sameMeta, type ProgramMeta } from './
 import { DEVICE_TYPES, type DeviceType, type PortName } from './pybricks';
 import { ensureRequiredBlocks, loadWorkspace, registerBlocks } from './register';
 import {
+  controllerFlyout,
   motorsFlyout,
   movementFlyout,
   sensorsFlyout,
@@ -89,9 +90,10 @@ function toolboxState(workspace: Blockly.Workspace): ToolboxState {
   };
 }
 
-/** Blocks that drive the robot (all "mp_move…" blocks but the two settings). */
+/** Blocks that drive the robot (all "mp_move…" blocks but the two settings, and the controller's). */
 const isMovementBlock = (type: string) =>
-  type.startsWith('mp_move') && type !== 'mp_move_motors' && type !== 'mp_move_wheels';
+  (type.startsWith('mp_move') && type !== 'mp_move_motors' && type !== 'mp_move_wheels') ||
+  type === 'mp_ctrl_drive';
 
 function simpleToolboxState(workspace: Blockly.Workspace): SimpleToolboxState {
   const blocks = workspace.getAllBlocks(false).filter((block) => block.isEnabled());
@@ -133,6 +135,7 @@ export function createEditor(options: EditorOptions): EditorHandle {
     ['MP_MOVEMENT', movementFlyout],
     ['MP_MOTORS', motorsFlyout],
     ['MP_SENSORS', sensorsFlyout],
+    ['MP_CONTROLLER', controllerFlyout],
   ] as const) {
     workspace.registerToolboxCategoryCallback(
       name,

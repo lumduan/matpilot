@@ -46,6 +46,9 @@ export const ICONS = {
   touch: svg(
     '<rect x="4" y="11" width="16" height="9" rx="2"/><path d="M9 11V6.5a3 3 0 0 1 6 0V11"/>',
   ),
+  controller: svg(
+    '<path d="M7.5 6.5h9a5 5 0 0 1 4.8 6.4l-1.1 4a2.4 2.4 0 0 1-4.1.9l-1.8-2.3h-4.6l-1.8 2.3a2.4 2.4 0 0 1-4.1-.9l-1.1-4a5 5 0 0 1 4.8-6.4z"/><path d="M7.5 9.5v3.5M5.8 11.2h3.5"/><path d="M15.5 10h.01M17.5 12.3h.01" stroke-width="2.6"/>',
+  ),
 } as const;
 
 export function icon(name: keyof typeof ICONS) {
@@ -88,4 +91,45 @@ export function swatch(value: string, label: string): Picture {
     ? `<circle cx="12" cy="12" r="8" fill="${fill}" stroke="#fff" stroke-width="2"/>`
     : '<circle cx="12" cy="12" r="8" stroke="#fff" stroke-width="2" stroke-dasharray="3 2.4"/><path d="M7 17 17 7"/>';
   return picture(svg(body, 22), label, 22);
+}
+
+/** The face buttons in the colours printed on the controller; the others grey. */
+const BUTTON_FILLS: Readonly<Record<string, string>> = {
+  A: '#2e9e44',
+  B: '#d83b3b',
+  X: '#2f6fd6',
+  Y: '#e2ad00',
+};
+
+const escapeXml = (text: string) =>
+  text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+/**
+ * A controller button for an image dropdown: A, B, X and Y as coloured circles with their letter;
+ * other buttons as a grey key with a short label, or an arrow for the D-pad.
+ */
+export function controllerButton(python: string, label: string): Picture {
+  const fill = BUTTON_FILLS[python];
+  if (fill) {
+    const body = `<circle cx="12" cy="12" r="9" fill="${fill}" stroke="#fff" stroke-width="1.6"/><text x="12" y="16.4" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12.5" font-weight="700" fill="#fff" stroke="none">${python}</text>`;
+    return picture(svg(body, 24), label, 24);
+  }
+  const arrows: Record<string, string> = {
+    UP: 'M12 6.5 7.5 12h9z',
+    DOWN: 'M12 17.5 7.5 12h9z',
+    LEFT: 'M6.5 12 12 7.5v9z',
+    RIGHT: 'M17.5 12 12 7.5v9z',
+  };
+  const arrow = arrows[python];
+  if (arrow) {
+    const body = `<rect x="2.5" y="2.5" width="19" height="19" rx="5" fill="#5f6b78" stroke="#fff" stroke-width="1.6"/><path d="${arrow}" fill="#fff" stroke="none"/>`;
+    return picture(svg(body, 24), label, 24);
+  }
+  const short =
+    python === 'LJ' ? 'LS' : python === 'RJ' ? 'RS' : python === 'VIEW' ? 'View' : python;
+  const width = Math.max(24, 9 + short.length * 7.5);
+  const src = `data:image/svg+xml,${encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="24" viewBox="0 0 ${width} 24"><rect x="1" y="2.5" width="${width - 2}" height="19" rx="6" fill="#5f6b78" stroke="#fff" stroke-width="1.6"/><text x="${width / 2}" y="16.2" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11.5" font-weight="700" fill="#fff">${escapeXml(short)}</text></svg>`,
+  )}`;
+  return { src, width, height: 24, alt: label };
 }

@@ -45,6 +45,18 @@ export const ROBOT = {
   axleTrack: 'AXLE_TRACK_MM',
 } as const;
 
+/** Names the controller blocks define (./controller-generator.ts, ADR 0012). */
+export const CONTROLLER = {
+  controller: 'controller',
+  memory: 'controller_memory',
+  report: 'controller_report',
+  buttons: 'CONTROLLER_BUTTONS',
+  searchMs: 'CONTROLLER_SEARCH_MS',
+  reportMs: 'CONTROLLER_REPORT_MS',
+  read: 'read_controller',
+  lost: 'controller_lost',
+} as const;
+
 /** Every Python name the simple blocks may define, so user variables never take one. */
 export const SIMPLE_RESERVED: readonly string[] = [
   ...Object.values(ROBOT),
@@ -55,6 +67,15 @@ export const SIMPLE_RESERVED: readonly string[] = [
   'DriveBase',
   'set_movement_speed',
   'drive_with_steering',
+  ...Object.values(CONTROLLER),
+  'XboxController',
+  'drive_with_controller',
+  'run_motor_with_controller',
+  'controller_pair',
+  'controller_value',
+  'controller_pressed',
+  'controller_just_pressed',
+  'controller_rumble',
 ];
 
 export interface PortUse {
@@ -78,6 +99,10 @@ export interface Needs {
   readonly robotUses: string[];
   /** Helper functions by name, in the order first needed. */
   readonly helpers: Map<string, string>;
+  /** Blocks that use the Xbox controller. */
+  readonly controllerUses: string[];
+  /** Controller blocks that remember something between runs of a loop, numbered from 0. */
+  controllerSlots: number;
 }
 
 let needs: Needs | null = null;
@@ -92,6 +117,8 @@ export function beginNeeds(): Needs {
     speeds: new Set(),
     robotUses: [],
     helpers: new Map(),
+    controllerUses: [],
+    controllerSlots: 0,
   };
   return needs;
 }
@@ -142,6 +169,17 @@ export function motorSpeed(block: Blockly.Block, field: string): string {
 export function robotName(block: Blockly.Block): string {
   needs?.robotUses.push(block.id);
   return ROBOT.robot;
+}
+
+/** Marks the block as using the Xbox controller. */
+export function markControllerUse(block: Blockly.Block): void {
+  needs?.controllerUses.push(block.id);
+}
+
+/** A number for a controller block that remembers something between runs of a loop. */
+export function controllerSlot(): number {
+  if (!needs) return 0;
+  return needs.controllerSlots++;
 }
 
 /** Adds a helper function (once) and returns its name. */

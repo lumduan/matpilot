@@ -1,6 +1,6 @@
 /**
  * The simple blocks' toolbox categories (ADR 0010): Movement, Motors, Light, Sound, Control,
- * Sensors and Operators.
+ * Sensors, Controller (ADR 0012) and Operators.
  *
  * Movement, Motors and Sensors are filled when opened. A new block takes the port where the hub
  * says such a device is plugged in (./fields/hints.ts); without a hub, the maintainer's bench
@@ -125,6 +125,42 @@ export function sensorsFlyout(state: SimpleToolboxState): FlyoutItem[] {
       },
     }),
     block('mp_print', { inputs: { VALUE: text('Hello') } }),
+  ];
+}
+
+/** The Controller category: ready-made driving first, then each block, then ideas. */
+export function controllerFlyout(state: SimpleToolboxState): FlyoutItem[] {
+  // The drive block uses the wheels, so a motor block here avoids them even before it is placed.
+  const PORT = defaultMotorPort({ ...state, movement: state.movement ?? ['A', 'B'] });
+  const drive = { type: 'mp_ctrl_drive', fields: { STYLE: 'ONE_STICK' } };
+  const motor = { type: 'mp_ctrl_motor', fields: { PORT, SOURCE: 'A_B' } };
+  return [
+    label('Drive with an Xbox controller. Menu (☰) stops the program.'),
+    block('mp_forever', { inputs: { DO: { block: { ...drive, next: { block: motor } } } } }),
+    label('One block at a time, inside “repeat forever”'),
+    block(drive.type, { fields: drive.fields }),
+    block(motor.type, { fields: motor.fields }),
+    block('mp_ctrl_rumble', { fields: { KIND: 'SHORT' } }),
+    label('Buttons, sticks and triggers'),
+    block('mp_ctrl_pressed', { fields: { BUTTON: 'A' } }),
+    block('mp_ctrl_clicked', { fields: { BUTTON: 'A' } }),
+    block('mp_ctrl_value', { fields: { VALUE: 'LEFT_Y' } }),
+    label('Ideas'),
+    block('mp_wait_until', {
+      inputs: { CONDITION: { block: { type: 'mp_ctrl_pressed', fields: { BUTTON: 'A' } } } },
+    }),
+    block('controls_if', {
+      inputs: {
+        IF0: { block: { type: 'mp_ctrl_clicked', fields: { BUTTON: 'X' } } },
+        DO0: { block: { type: 'mp_ctrl_rumble', fields: { KIND: 'TWICE' } } },
+      },
+    }),
+    block('mp_plot', {
+      fields: { LABEL: 'left_stick' },
+      inputs: {
+        VALUE: { ...num(0), block: { type: 'mp_ctrl_value', fields: { VALUE: 'LEFT_Y' } } },
+      },
+    }),
   ];
 }
 
