@@ -30,10 +30,12 @@ import {
   timerName,
   variableName as name,
   arg,
+  type ControllerControl,
   type Needs,
   type PortUse,
 } from './generator-context';
 import { DEVICES, isDeviceType, type DeviceType, type PortName } from './pybricks';
+import { DEFAULT_CONTROLLER, controllerProfile, type ControllerId } from '../controller/layout';
 import {
   controllerConfig,
   controllerSetup,
@@ -53,6 +55,10 @@ export interface GeneratedProgram {
   readonly problems: readonly Problem[];
   /** The program reads the Xbox controller, so the page offers its live view (ADR 0012). */
   readonly usesController: boolean;
+  /** The controller it uses, when it uses one. */
+  readonly controller: ControllerId | null;
+  /** What each control does in this program, for the Controller pane. */
+  readonly controls: readonly ControllerControl[];
 }
 
 export interface SetUpDevice {
@@ -553,8 +559,18 @@ export function generateProgram(workspace: Blockly.Workspace): GeneratedProgram 
       motors.push(ROBOT.left, ROBOT.right);
     }
     if (needs.timer) setup.push('timer = StopWatch()');
-    // The Xbox controller last: if it is not found, nothing has moved yet (ADR 0012).
-    if (needs.controllerUses.length > 0) {
+    // The controller last: if it is not found, nothing has moved yet (ADR 0012).
+    const usesController = needs.controllerUses.length > 0;
+    const chosen = needs.controllerChoices[0]?.id ?? DEFAULT_CONTROLLER;
+    for (const other of needs.controllerChoices.slice(1)) {
+      if (other.id !== chosen) {
+        problems.push({
+          blockId: other.blockId,
+          message: `The program uses the ${controllerProfile(chosen).short} controller in another “use the controller” block. Use one controller.`,
+        });
+      }
+    }
+    if (usesController) {
       config.push(...controllerConfig());
       setup.push(...controllerSetup());
     }
@@ -580,7 +596,19 @@ export function generateProgram(workspace: Blockly.Workspace): GeneratedProgram 
       [rule('Main'), ...mainLines],
     ].filter((section) => section.length > 0);
     const code = `${sections.map((section) => section.join('\n')).join('\n\n')}\n`;
-    return { code, problems, usesController: needs.controllerUses.length > 0 };
+    const controls = usesController
+      ? [
+          ...needs.controllerControls,
+          { control: 'Menu ☰', action: 'stops the program', fingers: ['right thumb'] },
+        ]
+      : [];
+    return {
+      code,
+      problems,
+      usesController,
+      controller: usesController ? controllerProfile(chosen).id : null,
+      controls,
+    };
   } finally {
     endNeeds();
   }

@@ -188,7 +188,7 @@ const CSS = `
   color: #fff;
   font: 13px/1.35 system-ui, -apple-system, "Segoe UI", sans-serif;
   padding: 2px 4px;
-  max-width: min(94vw, 480px);
+  max-width: min(94vw, 560px);
   user-select: none;
   -webkit-user-select: none;
 }
@@ -217,6 +217,35 @@ const CSS = `
 .mp-port { cursor: pointer; }
 .mp-port:focus { outline: none; }
 .mp-port:focus-visible .mp-port-tab { stroke: #fff; stroke-width: 3.5; }
+.mp-pad-part { cursor: pointer; }
+.mp-pad-part.mp-pad-off { cursor: default; }
+.mp-pad-part:focus { outline: none; }
+.mp-pad-part:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+.mp-pad-layout {
+  display: flex; flex-wrap: wrap; gap: 8px 12px; justify-content: center; align-items: center;
+}
+.mp-pad-layout > svg { flex: 0 1 320px; margin: 0; }
+.mp-pad-list {
+  display: flex; flex-direction: column; gap: 4px; flex: 1 1 150px; max-width: 220px;
+}
+.mp-pad-item { text-align: left; border-radius: 10px; min-height: 28px; }
+@media (max-width: 30rem) {
+  .mp-pad-list {
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+    flex-basis: 100%; max-width: none;
+  }
+  .mp-pad-item { font-size: 12px; min-height: 26px; padding: 2px 8px; }
+}
+.mp-pad-describe { font-size: 13px; font-weight: 600; }
+.mp-pad-advice { font-weight: 700; }
+.mp-pad-advice:empty { display: none; }
+.mp-pad-cards { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.mp-pad-card {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  border-radius: 14px; padding: 8px 10px;
+}
+.mp-pad-card[aria-pressed="true"] { background: rgba(0, 0, 0, 0.3); color: #fff; border-color: #fff; }
+.mp-pad-card-name { font-weight: 700; }
 .mp-matrix { display: flex; gap: 12px; justify-content: center; align-items: stretch; }
 .mp-matrix-grid {
   display: grid; grid-template-columns: repeat(5, 36px); grid-auto-rows: 36px; gap: 6px;

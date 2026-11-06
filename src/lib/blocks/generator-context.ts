@@ -76,7 +76,15 @@ export const SIMPLE_RESERVED: readonly string[] = [
   'controller_pressed',
   'controller_just_pressed',
   'controller_rumble',
+  'controller_power',
 ];
+
+/** One control of the controller and what the program does with it. */
+export interface ControllerControl {
+  readonly control: string;
+  readonly action: string;
+  readonly fingers: readonly string[];
+}
 
 export interface PortUse {
   readonly port: PortName;
@@ -99,8 +107,12 @@ export interface Needs {
   readonly robotUses: string[];
   /** Helper functions by name, in the order first needed. */
   readonly helpers: Map<string, string>;
-  /** Blocks that use the Xbox controller. */
+  /** Blocks that use the controller. */
   readonly controllerUses: string[];
+  /** The controller each "use the controller" block names, with the block. */
+  readonly controllerChoices: { readonly id: string; readonly blockId: string }[];
+  /** What each control does in this program, for the Controller pane. */
+  readonly controllerControls: ControllerControl[];
   /** Controller blocks that remember something between runs of a loop, numbered from 0. */
   controllerSlots: number;
 }
@@ -118,6 +130,8 @@ export function beginNeeds(): Needs {
     robotUses: [],
     helpers: new Map(),
     controllerUses: [],
+    controllerChoices: [],
+    controllerControls: [],
     controllerSlots: 0,
   };
   return needs;
@@ -150,19 +164,27 @@ export function timerName(): string {
   return 'timer';
 }
 
-/** A device the block uses by port; returns its Python name. */
-export function portDevice(block: Blockly.Block, field: string, kind: PortDeviceKind): string {
-  const port = block.getFieldValue(field) as PortName;
+/** A device the block uses on `port`; returns its Python name. */
+export function portDeviceAt(block: Blockly.Block, port: PortName, kind: PortDeviceKind): string {
   needs?.portUses.push({ port, kind, blockId: block.id });
   return portDeviceName(kind, port);
 }
 
-/** The speed variable of the motor on the block's port; registers the motor too. */
-export function motorSpeed(block: Blockly.Block, field: string): string {
-  const port = block.getFieldValue(field) as PortName;
-  portDevice(block, field, 'Motor');
+/** A device the block uses by the port in its field; returns its Python name. */
+export function portDevice(block: Blockly.Block, field: string, kind: PortDeviceKind): string {
+  return portDeviceAt(block, block.getFieldValue(field) as PortName, kind);
+}
+
+/** The speed variable of the motor on `port`; registers the motor too. */
+export function motorSpeedAt(block: Blockly.Block, port: PortName): string {
+  portDeviceAt(block, port, 'Motor');
   needs?.speeds.add(port);
   return motorSpeedName(port);
+}
+
+/** The speed variable of the motor on the block's port; registers the motor too. */
+export function motorSpeed(block: Blockly.Block, field: string): string {
+  return motorSpeedAt(block, block.getFieldValue(field) as PortName);
 }
 
 /** The drive base; returns its Python name. */
@@ -174,6 +196,20 @@ export function robotName(block: Blockly.Block): string {
 /** Marks the block as using the Xbox controller. */
 export function markControllerUse(block: Blockly.Block): void {
   needs?.controllerUses.push(block.id);
+}
+
+/** Records the controller a "use the controller" block names. */
+export function chooseController(block: Blockly.Block, id: string): void {
+  needs?.controllerChoices.push({ id, blockId: block.id });
+}
+
+/** Records what a control does, for the page's controls list (each once). */
+export function addControl(control: ControllerControl): void {
+  if (!needs) return;
+  const known = needs.controllerControls.some(
+    (each) => each.control === control.control && each.action === control.action,
+  );
+  if (!known) needs.controllerControls.push(control);
 }
 
 /** A number for a controller block that remembers something between runs of a loop. */
