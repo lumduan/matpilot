@@ -1,8 +1,10 @@
 import * as Blockly from 'blockly/core';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { compilePython } from '@/lib/pybricks/compiler';
+import { INPUT_OPTIONS } from '../controller/layout';
 import { parseControllerLine, XBOX_BUTTONS } from '../controller/xbox';
-import { CHECKABLE_BUTTONS, CONTROLLER_VALUES, MOTOR_SOURCES } from './controller-definitions';
+import { CHECKABLE_BUTTONS } from './fields/controller';
+import { FieldMotorSet, describeMotorSet, parseMotorSet } from './fields/port';
 import { generateProgram } from './generator';
 import { loadWorkspace, registerBlocks } from './register';
 import { controllerFlyout } from './simple-toolbox';
@@ -102,11 +104,11 @@ describe('controller blocks', () => {
     });
   });
 
-  it('runs a motor with every source, and every other block compiles', async () => {
+  it('runs motors with every input, and every other block compiles', async () => {
     const blocks: State[] = [
-      ...Object.keys(MOTOR_SOURCES).map((source) => ({
+      ...INPUT_OPTIONS.filter((option) => option.drives).map((option) => ({
         type: 'mp_ctrl_motor',
-        fields: { PORT: 'C', SOURCE: source },
+        fields: { SOURCE: option.value, MOTORS: 'C+' },
       })),
       ...['ONE_STICK', 'TANK', 'RACING'].map((style) => ({
         type: 'mp_ctrl_drive',
@@ -132,19 +134,20 @@ describe('controller blocks', () => {
           },
         },
       ]),
-      ...Object.keys(CONTROLLER_VALUES).map((value) => ({
+      ...INPUT_OPTIONS.filter((option) => option.number).map((option) => ({
         type: 'mp_plot',
-        fields: { LABEL: value.toLowerCase() },
-        inputs: { VALUE: { block: { type: 'mp_ctrl_value', fields: { VALUE: value } } } },
+        fields: { LABEL: option.value.toLowerCase() },
+        inputs: { VALUE: { block: { type: 'mp_ctrl_value', fields: { VALUE: option.value } } } },
       })),
     ];
-    const { code, problems } = generate([forever(blocks)]);
+    const { code, problems, controls } = generate([forever(blocks)]);
     expect(problems).toEqual([]);
     expect(code).toContain(
       'run_motor_with_controller(0, motor_c, motor_c_speed, controller_pair(Button.A, Button.B))',
     );
+    // INPUT_OPTIONS order: the eighth that runs motors is the right stick ↕ (value 3).
     expect(code).toContain(
-      'run_motor_with_controller(5, motor_c, motor_c_speed, controller_value(3))',
+      'run_motor_with_controller(7, motor_c, motor_c_speed, controller_value(3))',
     );
     expect(code).toContain(
       'run_motor_with_controller(9, motor_c, motor_c_speed, controller_value(5) - controller_value(4))',
@@ -152,8 +155,40 @@ describe('controller blocks', () => {
     expect(code).toContain('controller_just_pressed(10, Button.A)');
     expect(code).toContain('controller_rumble(150, 2)');
     expect(code).toContain('controller_pressed(Button.UP)');
+    expect(code).toContain('print("lt:", controller_value(4))');
     // Each helper is defined once.
     expect(code.match(/def read_controller\(\)/g)).toHaveLength(1);
+    expect(controls.at(-1)).toEqual({
+      control: 'Menu ☰',
+      action: 'stops the program',
+      fingers: ['right thumb'],
+    });
+    await expectCompiles(code);
+  });
+
+  it('runs several motors from one reading, each its own way', async () => {
+    const { code, problems, controls, controller } = generate([
+      { type: 'mp_ctrl_use', fields: { CONTROLLER: 'XBOX' } },
+      forever([
+        { type: 'mp_ctrl_motor', fields: { SOURCE: 'LEFT_Y', MOTORS: 'B-A+' } },
+        { type: 'mp_ctrl_motor', fields: { SOURCE: 'X_Y', MOTORS: 'D-' } },
+      ]),
+    ]);
+    expect(problems).toEqual([]);
+    expect(controller).toBe('XBOX');
+    expect(code).toContain(
+      [
+        'controller_power = controller_value(1)',
+        'run_motor_with_controller(0, motor_a, motor_a_speed, controller_power)',
+        'run_motor_with_controller(1, motor_b, motor_b_speed, -controller_power)',
+        'run_motor_with_controller(2, motor_d, motor_d_speed, -(controller_pair(Button.X, Button.Y)))',
+      ].join('\n        '),
+    );
+    expect(controls.map((control) => `${control.control}: ${control.action}`)).toEqual([
+      'left stick ↕: runs motors A ↻  B ↺',
+      'X ↻ and Y ↺: runs motor D ↺',
+      'Menu ☰: stops the program',
+    ]);
     await expectCompiles(code);
   });
 
@@ -167,7 +202,7 @@ describe('controller blocks', () => {
     const { problems } = generate([
       forever([
         { type: 'mp_ctrl_drive', fields: { STYLE: 'ONE_STICK' } },
-        { type: 'mp_ctrl_motor', fields: { PORT: 'A', SOURCE: 'A_B' } },
+        { type: 'mp_ctrl_motor', fields: { SOURCE: 'A_B', MOTORS: 'A+' } },
       ]),
     ]);
     expect(problems.map((problem) => problem.message)).toEqual([
@@ -176,15 +211,58 @@ describe('controller blocks', () => {
   });
 });
 
+describe('saved programs', () => {
+  it('opens a motor block saved before motor sets, on motor C', () => {
+    const workspace = new Blockly.Workspace();
+    try {
+      loadWorkspace(workspace, {
+        blocks: {
+          languageVersion: 0,
+          blocks: [{ type: 'mp_ctrl_motor', fields: { PORT: 'A', SOURCE: 'X_Y' } }],
+        },
+      });
+      const [block] = workspace.getBlocksByType('mp_ctrl_motor', false);
+      expect(block?.getFieldValue('SOURCE')).toBe('X_Y');
+      expect(block?.getFieldValue('MOTORS')).toBe('C+');
+    } finally {
+      workspace.dispose();
+    }
+  });
+});
+
+describe('motor sets', () => {
+  it('reads, orders and describes motors with their directions', () => {
+    expect(parseMotorSet('B-A+')).toEqual([
+      { port: 'A', reverse: false },
+      { port: 'B', reverse: true },
+    ]);
+    expect(parseMotorSet('A+A-')).toEqual([{ port: 'A', reverse: true }]);
+    expect(parseMotorSet('')).toEqual([]);
+    expect(parseMotorSet('G+')).toEqual([]);
+    expect(describeMotorSet('C+D-')).toBe('C ↻  D ↺');
+  });
+
+  it('keeps a valid value and refuses an empty or broken one', () => {
+    const field = new FieldMotorSet('B-A+');
+    expect(field.getValue()).toBe('A+B-');
+    field.setValue('');
+    expect(field.getValue()).toBe('A+B-');
+    field.setValue('x');
+    expect(field.getValue()).toBe('A+B-');
+  });
+});
+
 describe('controllerFlyout', () => {
   it('starts with a ready-made driving loop, and its motor avoids the wheels', () => {
     const flyout = controllerFlyout({ hints: {}, movement: null });
     const first = flyout.find((item) => item.kind === 'block') as State;
-    expect(first.type).toBe('mp_forever');
-    expect(JSON.stringify(first)).toContain('"PORT":"C"');
+    expect(first.type).toBe('mp_ctrl_use');
+    expect(JSON.stringify(first)).toContain('"type":"mp_forever"');
+    expect(JSON.stringify(first)).toContain('"MOTORS":"C+"');
     const types = flyout.flatMap((item) => (item.kind === 'block' ? [item.type] : []));
     expect(types).toEqual(
       expect.arrayContaining([
+        'mp_ctrl_use',
         'mp_ctrl_drive',
         'mp_ctrl_motor',
         'mp_ctrl_pressed',

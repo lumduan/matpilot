@@ -425,3 +425,148 @@ export class FieldPortPair extends Blockly.FieldDropdown {
     hub.tabs.get(left)?.focus();
   }
 }
+
+/** One motor of a motor set, and whether it turns the other way. */
+export interface MotorChoice {
+  readonly port: PortName;
+  readonly reverse: boolean;
+}
+
+const MOTOR_SET = /^(?:[A-F][+-])+$/;
+
+/** `"A+B-"`: motor A ↻ and motor B ↺, in port order, each port once. */
+export function parseMotorSet(value: string): MotorChoice[] {
+  if (!MOTOR_SET.test(value)) return [];
+  const choices = new Map<PortName, boolean>();
+  for (let index = 0; index < value.length; index += 2) {
+    choices.set(value[index] as PortName, value[index + 1] === '-');
+  }
+  return PORTS.filter((port) => choices.has(port)).map((port) => ({
+    port,
+    reverse: choices.get(port) ?? false,
+  }));
+}
+
+export function formatMotorSet(choices: readonly MotorChoice[]): string {
+  return choices.map((choice) => `${choice.port}${choice.reverse ? '-' : '+'}`).join('');
+}
+
+export function describeMotorSet(value: string): string {
+  const choices = parseMotorSet(value);
+  return choices.length === 0
+    ? 'none'
+    : choices.map((choice) => `${choice.port} ${choice.reverse ? '↺' : '↻'}`).join('  ');
+}
+
+/**
+ * One or more motors, each turning ↻ or the other way (↺), picked on the hub: tap a port to add
+ * it, again to turn it the other way, a third time to take it off. Two motors that face each
+ * other (a robot's wheels, a two-sided lift) need opposite signs to work together. JSON:
+ * `{ type: 'field_mp_motor_set', name, value: 'C+' }`.
+ */
+export class FieldMotorSet extends Blockly.FieldTextInput {
+  constructor(value: string = 'C+') {
+    super(value);
+  }
+
+  static override fromJson(
+    options: Blockly.FieldTextInputFromJsonConfig & Record<string, unknown>,
+  ) {
+    return new FieldMotorSet(typeof options.value === 'string' ? options.value : 'C+');
+  }
+
+  protected override doClassValidation_(value?: unknown): string | null {
+    if (typeof value !== 'string') return null;
+    const choices = parseMotorSet(value);
+    return choices.length > 0 ? formatMotorSet(choices) : null;
+  }
+
+  protected override getText_(): string {
+    return describeMotorSet(this.getValue() ?? '');
+  }
+
+  override repositionForWindowResize(): boolean {
+    return false;
+  }
+
+  protected override showEditor_(): void {
+    let choices = parseMotorSet(this.getValue() ?? 'C+');
+    const hints = getPortHints();
+    const root = htmlEl('div', { class: 'mp-picker mp-port-picker' });
+    htmlEl('p', { class: 'mp-picker-title' }, root, 'Tap the motors to run');
+    const layout: HubLayout = { width: 380, height: 220, hubX: 144 };
+    const svg = svgEl('svg', {
+      viewBox: `0 0 ${layout.width} ${layout.height}`,
+      width: layout.width,
+      height: layout.height,
+    });
+    root.appendChild(svg);
+    const readout = htmlEl('p', { class: 'mp-picker-readout' }, root);
+    htmlEl(
+      'p',
+      { class: 'mp-picker-note' },
+      root,
+      'Tap again to turn it the other way (↺), a third time to take it off. Motors that face each other need opposite arrows.',
+    );
+    const row = htmlEl('div', { class: 'mp-picker-row' }, root);
+    button(row, 'Done', () => closePicker(this));
+    htmlEl('p', { class: 'mp-picker-note' }, root, hintSentence(hints, 'motor'));
+
+    const hub = drawHub(svg, layout, {
+      hints,
+      want: 'motor',
+      label: (port) => {
+        const choice = choices.find((each) => each.port === port);
+        const state = choice ? (choice.reverse ? ', runs ↺' : ', runs ↻') : '';
+        return `${describePort(hints, port)}${state}`;
+      },
+      isSelected: (port) => choices.some((choice) => choice.port === port),
+      onPick: (port) => {
+        const choice = choices.find((each) => each.port === port);
+        if (!choice) choices = [...choices, { port, reverse: false }];
+        else if (!choice.reverse) {
+          choices = choices.map((each) => (each.port === port ? { port, reverse: true } : each));
+        } else if (choices.length > 1) {
+          choices = choices.filter((each) => each.port !== port);
+        } else {
+          // The last motor stays; it turns back to ↻.
+          choices = [{ port, reverse: false }];
+        }
+        this.setValue(formatMotorSet(choices));
+        choices = parseMotorSet(this.getValue() ?? '');
+        update();
+      },
+    });
+    // ↻ or ↺ on the hub, just inside each chosen port (the captions are outside), drawn after
+    // the hub so it stays on top.
+    const arrows = new Map(
+      PORTS.map((port) => {
+        const { x, y, left } = portGeometry(layout, port);
+        const arrow = svgEl(
+          'text',
+          {
+            x: left ? x + TAB_WIDTH + 11 : x - 11,
+            y: y + TAB_HEIGHT / 2 + 7,
+            'text-anchor': 'middle',
+            'font-size': 19,
+            'font-weight': 700,
+            fill: '#15181c',
+          },
+          svg,
+        );
+        return [port, arrow] as const;
+      }),
+    );
+    const update = () => {
+      hub.refresh();
+      for (const [port, arrow] of arrows) {
+        const choice = choices.find((each) => each.port === port);
+        arrow.textContent = choice ? (choice.reverse ? '↺' : '↻') : '';
+      }
+      readout.textContent = describeMotorSet(this.getValue() ?? '');
+    };
+    update();
+    openPicker(this, root);
+    hub.tabs.get(choices[0]?.port ?? 'C')?.focus({ preventScroll: true });
+  }
+}

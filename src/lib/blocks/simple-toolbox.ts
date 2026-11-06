@@ -132,16 +132,26 @@ export function sensorsFlyout(state: SimpleToolboxState): FlyoutItem[] {
 export function controllerFlyout(state: SimpleToolboxState): FlyoutItem[] {
   // The drive block uses the wheels, so a motor block here avoids them even before it is placed.
   const PORT = defaultMotorPort({ ...state, movement: state.movement ?? ['A', 'B'] });
+  const use = { type: 'mp_ctrl_use', fields: { CONTROLLER: 'XBOX' } };
   const drive = { type: 'mp_ctrl_drive', fields: { STYLE: 'ONE_STICK' } };
-  const motor = { type: 'mp_ctrl_motor', fields: { PORT, SOURCE: 'A_B' } };
+  const motor = { type: 'mp_ctrl_motor', fields: { SOURCE: 'A_B', MOTORS: `${PORT}+` } };
   return [
-    label('Drive with an Xbox controller. Menu (☰) stops the program.'),
-    block('mp_forever', { inputs: { DO: { block: { ...drive, next: { block: motor } } } } }),
-    label('One block at a time, inside “repeat forever”'),
+    label('Drive with a controller. Menu (☰) stops the program.'),
+    block(use.type, {
+      fields: use.fields,
+      next: {
+        block: {
+          type: 'mp_forever',
+          inputs: { DO: { block: { ...drive, next: { block: motor } } } },
+        },
+      },
+    }),
+    label('One block at a time; put them inside “repeat forever”'),
+    block(use.type, { fields: use.fields }),
     block(drive.type, { fields: drive.fields }),
     block(motor.type, { fields: motor.fields }),
     block('mp_ctrl_rumble', { fields: { KIND: 'SHORT' } }),
-    label('Buttons, sticks and triggers'),
+    label('Buttons, sticks and triggers: tap one to see it on the controller'),
     block('mp_ctrl_pressed', { fields: { BUTTON: 'A' } }),
     block('mp_ctrl_clicked', { fields: { BUTTON: 'A' } }),
     block('mp_ctrl_value', { fields: { VALUE: 'LEFT_Y' } }),

@@ -11,26 +11,31 @@
  */
 import type * as Blockly from 'blockly/core';
 import { Order, pythonGenerator } from 'blockly/python';
-import { CONTROLLER_LINE_PREFIX, XBOX_BUTTONS } from '../controller/xbox';
 import {
-  CONTROLLER_VALUES,
-  MOTOR_SOURCES,
-  RUMBLES,
-  type ControllerValueName,
-  type MotorSourceName,
-} from './controller-definitions';
+  DRIVE_FINGERS,
+  XBOX_PROFILE,
+  buttonFinger,
+  inputFingers,
+  inputOption,
+  type ControllerInput,
+} from '../controller/layout';
+import { CONTROLLER_LINE_PREFIX, XBOX_BUTTONS, type XboxButtonName } from '../controller/xbox';
+import { RUMBLES } from './controller-definitions';
+import { describeMotorSet, parseMotorSet } from './fields/port';
 import {
   CONTROLLER as C,
   INDENT,
   ROBOT,
+  addControl,
+  chooseController,
   controllerSlot,
   helper,
   hubName,
-  motorSpeed,
-  need,
-  portDevice,
-  robotName,
   markControllerUse,
+  motorSpeedAt,
+  need,
+  portDeviceAt,
+  robotName,
 } from './generator-context';
 
 /** How long one attempt to find the controller lasts, in ms (SPIKE Prime tries twice: ./pybricks.ts). */
@@ -165,7 +170,47 @@ export function controllerSetup(): string[] {
   ];
 }
 
-const valueIndex = (name: string) => CONTROLLER_VALUES[name as ControllerValueName].index;
+/** Where each stick axis and trigger is in the values `read_controller()` returns. */
+const VALUE_INDEX = {
+  'left x': 0,
+  'left y': 1,
+  'right x': 2,
+  'right y': 3,
+  'left trigger': 4,
+  'right trigger': 5,
+} as const;
+
+/** The Python number for an input: ±100 for a button pair, else the stick or trigger value. */
+function inputCode(input: ControllerInput): string {
+  const value = helper('controller_value', VALUE);
+  switch (input.kind) {
+    case 'pair':
+      return `${helper('controller_pair', PAIR)}(Button.${input.forward}, Button.${input.backward})`;
+    case 'axis':
+      return `${value}(${VALUE_INDEX[`${input.side} ${input.axis}`]})`;
+    case 'triggers':
+      return `${value}(${VALUE_INDEX['right trigger']}) - ${value}(${VALUE_INDEX['left trigger']})`;
+    case 'trigger':
+      return `${value}(${VALUE_INDEX[`${input.side} trigger`]})`;
+  }
+}
+
+const buttonLabel = (name: string) =>
+  XBOX_BUTTONS.find((entry) => entry.python === name)?.label ?? name;
+
+/** What "drive with the controller" does with each control, by style. */
+const DRIVE_CONTROLS: Readonly<Record<string, readonly (readonly [string, string])[]>> = {
+  ONE_STICK: [['left stick', 'drives and turns the robot']],
+  TANK: [
+    ['left stick ↕', 'drives the left side'],
+    ['right stick ↕', 'drives the right side'],
+  ],
+  RACING: [
+    ['RT', 'drives forward'],
+    ['LT', 'backs up'],
+    ['left stick ↔', 'steers'],
+  ],
+};
 
 let registered = false;
 
@@ -174,38 +219,61 @@ export function registerControllerGenerators(): void {
   registered = true;
   const forBlock = pythonGenerator.forBlock;
 
+  forBlock['mp_ctrl_use'] = (block) => {
+    controller(block);
+    chooseController(block, block.getFieldValue('CONTROLLER') as string);
+    return '';
+  };
+
   forBlock['mp_ctrl_drive'] = (block) => {
     controller(block);
     robotName(block);
-    const style = { ONE_STICK: 'one stick', TANK: 'tank', RACING: 'racing' }[
-      block.getFieldValue('STYLE') as string
-    ];
+    const styleName = block.getFieldValue('STYLE') as string;
+    const style = { ONE_STICK: 'one stick', TANK: 'tank', RACING: 'racing' }[styleName];
+    const fingers = DRIVE_FINGERS[styleName] ?? [];
+    for (const [control, action] of DRIVE_CONTROLS[styleName] ?? []) {
+      addControl({ control, action, fingers });
+    }
     return `${helper('drive_with_controller', DRIVE)}("${style ?? 'one stick'}")\n`;
   };
 
   forBlock['mp_ctrl_motor'] = (block) => {
     controller(block);
-    const motor = portDevice(block, 'PORT', 'Motor');
-    const speed = motorSpeed(block, 'PORT');
-    const source =
-      MOTOR_SOURCES[block.getFieldValue('SOURCE') as MotorSourceName] ?? MOTOR_SOURCES.A_B;
-    let power: string;
-    if ('buttons' in source) {
-      const [forward, backward] = source.buttons;
-      power = `${helper('controller_pair', PAIR)}(Button.${forward}, Button.${backward})`;
-    } else if (source.value === 'TRIGGERS') {
-      const value = helper('controller_value', VALUE);
-      power = `${value}(${CONTROLLER_VALUES.RT.index}) - ${value}(${CONTROLLER_VALUES.LT.index})`;
-    } else {
-      power = `${helper('controller_value', VALUE)}(${valueIndex(source.value)})`;
-    }
-    return `${helper('run_motor_with_controller', RUN_MOTOR)}(${controllerSlot()}, ${motor}, ${speed}, ${power})\n`;
+    const option = inputOption(block.getFieldValue('SOURCE') as string) ?? inputOption('A_B')!;
+    const motors = parseMotorSet(block.getFieldValue('MOTORS') as string);
+    const power = inputCode(option.input);
+    addControl({
+      control: option.label,
+      action: `runs motor${motors.length > 1 ? 's' : ''} ${describeMotorSet(block.getFieldValue('MOTORS') as string)}`,
+      fingers: inputFingers(XBOX_PROFILE, option.input),
+    });
+    const run = helper('run_motor_with_controller', RUN_MOTOR);
+    // One reading for every motor, so they move together.
+    const shared = motors.length > 1 ? 'controller_power' : power;
+    const lines = motors.map((motor) => {
+      const name = portDeviceAt(block, motor.port, 'Motor');
+      const speed = motorSpeedAt(block, motor.port);
+      const signed = motor.reverse ? `-${motors.length > 1 ? shared : `(${shared})`}` : shared;
+      return `${run}(${controllerSlot()}, ${name}, ${speed}, ${signed})`;
+    });
+    return `${motors.length > 1 ? `controller_power = ${power}\n` : ''}${lines.join('\n')}\n`;
+  };
+
+  const button = (block: Blockly.Block) => {
+    const name = block.getFieldValue('BUTTON') as XboxButtonName;
+    const finger = buttonFinger(XBOX_PROFILE, name);
+    addControl({
+      control: buttonLabel(name),
+      action: 'is checked by your blocks',
+      fingers: finger ? [finger] : [],
+    });
+    return name;
   };
 
   forBlock['mp_ctrl_pressed'] = (block) => {
     controller(block);
     return [
-      `${helper('controller_pressed', PRESSED)}(Button.${block.getFieldValue('BUTTON') as string})`,
+      `${helper('controller_pressed', PRESSED)}(Button.${button(block)})`,
       Order.FUNCTION_CALL,
     ];
   };
@@ -213,17 +281,22 @@ export function registerControllerGenerators(): void {
   forBlock['mp_ctrl_clicked'] = (block) => {
     controller(block);
     return [
-      `${helper('controller_just_pressed', JUST_PRESSED)}(${controllerSlot()}, Button.${block.getFieldValue('BUTTON') as string})`,
+      `${helper('controller_just_pressed', JUST_PRESSED)}(${controllerSlot()}, Button.${button(block)})`,
       Order.FUNCTION_CALL,
     ];
   };
 
   forBlock['mp_ctrl_value'] = (block) => {
     controller(block);
-    return [
-      `${helper('controller_value', VALUE)}(${valueIndex(block.getFieldValue('VALUE') as string)})`,
-      Order.FUNCTION_CALL,
-    ];
+    const option = inputOption(block.getFieldValue('VALUE') as string) ?? inputOption('LEFT_Y')!;
+    addControl({
+      control: option.label,
+      action: 'is read as a number',
+      fingers: inputFingers(XBOX_PROFILE, option.input),
+    });
+    // A pair is not a number; the field never offers one, but a saved file could.
+    const code = option.input.kind === 'pair' ? '0' : inputCode(option.input);
+    return [code, code.includes(' - ') ? Order.ADDITIVE : Order.FUNCTION_CALL];
   };
 
   forBlock['mp_ctrl_rumble'] = (block) => {

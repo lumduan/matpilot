@@ -503,7 +503,13 @@ export function BlocksApp() {
               onClear={runner.clearPlot}
             />
           )}
-          {controllerOpen && <ControllerPanel controller={monitor.controller} />}
+          {controllerOpen && (
+            <ControllerPanel
+              controller={monitor.controller}
+              profileId={editor.program?.controller ?? null}
+              controls={editor.program?.controls ?? []}
+            />
+          )}
         </div>
       )}
 

@@ -149,6 +149,10 @@ blocks instead, for children: sticks drive, buttons run motors, and it can be wa
   - rumble.
   - The program reports the controller in `@xbx` lines, which the page draws in a Controller
     pane, not in the Monitor. Menu stops the program; a lost controller stops every motor.
+  - After the maintainer's review (same day): a "use the controller" choice with the
+    controller's picture (Xbox only for now), buttons and sticks picked on the controller with the
+    finger that reaches them, one block for several motors with a direction each, and a "Your
+    controls" list in the pane.
   - [Checks](compatibility.md#controller-blocks-checks-milestone-5).
 - **Next:** the hardware checks; then "when button pressed" hat blocks with Tasks (milestone 4's
   `await`-aware generator); reconnecting after the controller is lost.
