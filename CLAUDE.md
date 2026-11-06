@@ -81,8 +81,9 @@ entry in [NOTICE](NOTICE).
   - `src/lib/monitor/`: stdout line splitting, the monitor log, and the plotter's parser and scale
   - `src/lib/program/`: example programs for the Program and Monitor page (each cited)
   - `src/lib/blocks/`: the block editor ([ADR 0008](docs/adr/0008-block-editor.md),
-    [ADR 0010](docs/adr/0010-simple-blocks.md)): Blockly block definitions (the detailed blocks in
-    `definitions.ts`, the simple blocks in `simple-definitions.ts`), their picture fields
+    [ADR 0010](docs/adr/0010-simple-blocks.md), [ADR 0012](docs/adr/0012-controller-blocks.md)):
+    Blockly block definitions (the detailed blocks in `definitions.ts`, the simple blocks in
+    `simple-definitions.ts`, the Controller blocks in `controller-definitions.ts`), their picture fields
     (`fields/`), toolbox, themes, and the Python generator. Every Pybricks name a block generates
     is cited in `src/lib/blocks/pybricks.ts`; add the citation there before adding a block.
     Blockly is browser-loaded lazily (`editor.ts`); the generator also runs headless in tests,
@@ -95,6 +96,10 @@ entry in [NOTICE](NOTICE).
     light, sound or display.
   - `src/lib/hwtest/`: the hardware test page's session, steps, and report (the steps mirror
     docs/compatibility.md; it reuses the read-only hub probe and adds no Bluetooth code)
+  - `src/lib/controller/`: the Xbox controller as block programs report it
+    ([ADR 0012](docs/adr/0012-controller-blocks.md)): the `@xbx` lines, their button order (the
+    generator writes the same list), and the state the Controller pane shows. The hub reads the
+    controller; the page only displays it.
   - `src/lib/github/`: saving and loading block programs in a GitHub repository
     ([ADR 0011](docs/adr/0011-save-load-github.md)): the REST client (the only code that talks to
     another origin), repository and folder names, and the save rule that never silently replaces

@@ -26,8 +26,10 @@ What works today:
   make opens beside them or fills the window, and every motor stops when the program ends or is
   stopped. A bar above the blocks shows what is plugged into each port, with live values. Undo and
   redo buttons take changes back. **Save** and **Load** keep programs in a file on your computer, or
-  in a GitHub repository that a team shares, without replacing a teammate's newer version. Built
-  with Blockly.
+  in a GitHub repository that a team shares, without replacing a teammate's newer version.
+  **Controller** blocks drive the robot and run motors from an Xbox controller connected to the
+  hub, and a Controller panel shows the sticks and buttons live while the program runs. Built with
+  Blockly.
 - **Program & Monitor** (`/program`): write MicroPython, run it on the hub, and watch its output as
   text (like Arduino's Serial Monitor) and as a live graph (like its Serial Plotter). The program is
   compiled in the browser.
@@ -35,8 +37,7 @@ What works today:
   hub, records the results in the browser, and produces a report for the
   [compatibility table](docs/compatibility.md).
 
-More blocks (tasks that run at the same time), gamepad control, offline use, and mat profiles are
-planned. See the [roadmap](docs/roadmap.md).
+More blocks (tasks that run at the same time), offline use, and mat profiles are planned. See the [roadmap](docs/roadmap.md).
 
 Tested firmware baseline: **Pybricks v4.0.1** on LEGO SPIKE Prime. This is the version MatPilot is
 tested against, not a hard requirement.
