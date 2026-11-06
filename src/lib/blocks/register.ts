@@ -10,6 +10,7 @@ import { BLOCK_DEFINITIONS } from './definitions';
 import { registerFields } from './fields';
 import { registerFunctionBlocks } from './functions';
 import { registerGenerators } from './generator';
+import { registerSharedBlocks } from './shared';
 import { SIMPLE_BLOCK_DEFINITIONS } from './simple-definitions';
 
 let registered = false;
@@ -26,6 +27,7 @@ export function registerBlocks(): void {
   ].filter((definition) => !Blockly.Blocks[definition.type]);
   Blockly.common.defineBlocksWithJsonArray(missing);
   registerFunctionBlocks();
+  registerSharedBlocks();
   registerGenerators();
 }
 

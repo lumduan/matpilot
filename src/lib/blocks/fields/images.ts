@@ -49,6 +49,10 @@ export const ICONS = {
   function: svg(
     '<rect x="3.5" y="4" width="8" height="6" rx="1.5"/><rect x="12.5" y="14" width="8" height="6" rx="1.5"/><path d="M7.5 10v4.5a2.5 2.5 0 0 0 2.5 2.5h2.5"/>',
   ),
+  /** A globe: a shared variable, which every tab can use. */
+  shared: svg(
+    '<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.4 2.4 3.6 5.2 3.6 8.5s-1.2 6.1-3.6 8.5M12 3.5C9.6 5.9 8.4 8.7 8.4 12s1.2 6.1 3.6 8.5"/>',
+  ),
   controller: svg(
     '<path d="M7.5 6.5h9a5 5 0 0 1 4.8 6.4l-1.1 4a2.4 2.4 0 0 1-4.1.9l-1.8-2.3h-4.6l-1.8 2.3a2.4 2.4 0 0 1-4.1-.9l-1.1-4a5 5 0 0 1 4.8-6.4z"/><path d="M7.5 9.5v3.5M5.8 11.2h3.5"/><path d="M15.5 10h.01M17.5 12.3h.01" stroke-width="2.6"/>',
   ),

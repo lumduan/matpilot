@@ -5,13 +5,14 @@
  * `moves.square(200)` when the function is in the tab "moves".
  *
  * A call block finds its function by the define block's id, so renaming a function or moving it
- * to another tab ("Move to tab") keeps every call working. Call and input blocks also keep the
- * function's name and inputs in their saved state, so a tab loads on its own; the editor brings
- * them up to date after every change (syncFunctionBlocks).
+ * to another tab ("Move to tab") keeps every call working. When that define block is gone (cut
+ * and pasted, it gets a new id), the call finds the function by its name. Call and input blocks
+ * also keep the function's name and inputs in their saved state, so a tab loads on its own; the
+ * editor brings them up to date after every change (syncFunctionBlocks).
  *
  * Function and input names are Python names (English letters, numbers and _), so the Python reads
  * like the blocks. Variables belong to their tab, like a Python module's; a value goes into a
- * function through its inputs.
+ * function through its inputs (or, when it must, a shared variable: ./shared.ts).
  */
 import * as Blockly from 'blockly/core';
 import { Order, pythonGenerator } from 'blockly/python';
@@ -447,6 +448,10 @@ export function registerFunctionBlocks(): void {
  * Brings every call block's name and inputs, and every input block's name, in line with the
  * define blocks, in all tabs. Not recorded for Undo: the define block's own change is, and this
  * follows it both ways. Returns whether anything changed.
+ *
+ * A call whose define block is gone runs the function of the same name, if there is exactly one:
+ * a define block that is cut and pasted, in its own tab or another, gets a new id, and its calls
+ * still work (decision 10 of the ADR).
  */
 export function syncFunctionBlocks(tabs: readonly ProgramTab[]): boolean {
   const functions = collectFunctions(tabs);
@@ -457,8 +462,16 @@ export function syncFunctionBlocks(tabs: readonly ProgramTab[]): boolean {
     for (const tab of tabs) {
       for (const block of tab.workspace.getBlocksByType(FUNCTION_BLOCKS.call, false)) {
         const call = block as CallBlock;
-        const info = functions.get(call.getFieldValue('FUNC') as string);
-        if (!info || (call as unknown as Partial<Blockly.BlockSvg>).isDragging?.()) continue;
+        if ((call as unknown as Partial<Blockly.BlockSvg>).isDragging?.()) continue;
+        let info = functions.get(call.getFieldValue('FUNC') as string);
+        if (!info) {
+          const named = [...functions.values()].filter((each) => each.name === call.func_.name);
+          if (named.length !== 1) continue;
+          info = named[0]!;
+          call.setFieldValue(info.id, 'FUNC');
+          call.getField('FUNC')?.forceRerender();
+          changed = true;
+        }
         if (info.name === call.func_.name && sameInputs(info.inputs, call.func_.inputs)) continue;
         call.func_ = { name: info.name, inputs: [...info.inputs] };
         call.updateShape_(true);

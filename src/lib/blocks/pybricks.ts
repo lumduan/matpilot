@@ -125,6 +125,10 @@
  * - `from module import name` copies the name's value from the module once: MP py/runtime.c
  *   #L1559-L1575. So a tab changes a motor's speed through its module
  *   (`setup.motor_a_speed = ...`), and every tab sees the new value.
+ * - `module.name = value` stores into the module's own names unless the module's dict is fixed
+ *   (a built-in module): MP py/objmodule.c#L85-L111; a program module gets a new dict
+ *   (#L134). So `setup.score += 1` changes a shared variable for every tab (./shared.ts), and
+ *   `setup.motor_a_speed = ...` works the same way.
  */
 
 export type Option = readonly [label: string, value: string];

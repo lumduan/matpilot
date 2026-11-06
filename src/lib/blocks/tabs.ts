@@ -150,6 +150,11 @@ export type ProgramTabs = () => readonly ProgramTab[];
 export interface TabActions {
   /** Moves a block (a function) to another tab, keeping its id so its calls keep working. */
   moveToTab(block: Blockly.Block, tabId: string): void;
+  /**
+   * Deletes a shared variable and the blocks that use it in every tab, as a change to the program
+   * as a whole (./shared.ts).
+   */
+  deleteSharedVariable(id: string): void;
 }
 
 interface LinkedProgram {

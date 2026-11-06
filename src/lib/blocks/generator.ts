@@ -10,9 +10,9 @@
  *   (rule 1). Stop raises SystemExit in the program, so `finally` runs (./pybricks.ts).
  *
  * A program in tabs (ADR 0013) becomes several files when a tab other than main holds functions:
- * setup.py has the Config, Setup and Helpers sections, every tab is a module of its own, and
- * main.py imports them and runs the Main section. A program with functions in main only stays
- * one file, with a Functions section before Main.
+ * setup.py has the Config, Setup, Shared variables and Helpers sections, every tab is a module of
+ * its own, and main.py imports them and runs the Main section. A program with functions in main
+ * only stays one file, with a Functions section before Main.
  *
  * The Pybricks calls each block produces are cited in ./pybricks.ts.
  */
@@ -49,6 +49,7 @@ import {
   type FunctionInfo,
 } from './functions';
 import { DEVICES, PORTS, isDeviceType, type DeviceType, type PortName } from './pybricks';
+import { registerSharedGenerators, sharedProblems, usedSharedVariables } from './shared';
 import { SETUP_MODULE, programTabsOf, type ProgramTab } from './tabs';
 import { DEFAULT_CONTROLLER, controllerProfile, type ControllerId } from '../controller/layout';
 import {
@@ -159,6 +160,7 @@ export function registerGenerators(): void {
   registerSimpleGenerators();
   registerControllerGenerators();
   registerFunctionGenerators();
+  registerSharedGenerators();
 
   // Set-up blocks become the Config and Setup sections (generateProgram), not statements.
   for (const type of [
@@ -613,13 +615,14 @@ const enabledDefinitions = (tab: ProgramTab) =>
 
 /**
  * Generates one tab: `g.init`, then `generateMore` (the main tab's program), then its functions.
- * The tab's variables start at 0. Motor speeds are module names too when the program is one file,
- * so a function that changes one says `global`.
+ * The tab's variables start at 0. `globals` are the file's other module names a function may
+ * change, so it says `global` for them: when the program is one file, the motor speeds and the
+ * shared variables.
  */
 function generateTab(
   tab: ProgramTab,
   functions: ReadonlyMap<string, FunctionInfo>,
-  multi: boolean,
+  globals: readonly string[],
   generateMore: () => void = () => undefined,
 ): TabCode {
   const g = pythonGenerator;
@@ -632,7 +635,7 @@ function generateTab(
   beginFunctionGeneration({
     functions,
     tab,
-    moduleNames: [...variableNames, ...(multi ? [] : PORTS.map(motorSpeedName))],
+    moduleNames: [...variableNames, ...globals],
     imports,
   });
   try {
@@ -719,7 +722,21 @@ export function generateTabs(tabs: readonly ProgramTab[]): GeneratedProgram {
     // Tabs with functions become modules; with none, the program stays one file.
     const moduleTabs = others.filter((tab) => enabledDefinitions(tab).length > 0);
     const multi = moduleTabs.length > 0;
-    needs.qualifySpeeds = multi;
+    needs.qualifySetup = multi;
+
+    // Shared variables: named once, in main's names (./shared.ts).
+    const shared = usedSharedVariables(tabs);
+    g.init(main.workspace);
+    for (const variable of shared) {
+      needs.sharedNames.set(
+        variable.id,
+        main.workspace.getVariableMap().getVariableById(variable.id)
+          ? g.getVariableName(variable.id)
+          : g.nameDB_!.getDistinctName(variable.name, Blockly.Names.NameType.VARIABLE),
+      );
+    }
+    const sharedLines = [...needs.sharedNames.values()].map((name) => `${name} = 0`);
+    const globals = multi ? [] : [...PORTS.map(motorSpeedName), ...needs.sharedNames.values()];
 
     // Blocks that belong in main only.
     for (const tab of others) {
@@ -771,14 +788,15 @@ export function generateTabs(tabs: readonly ProgramTab[]): GeneratedProgram {
     const movement = movementSettings(roots, problems);
     let body = '';
     const deviceNames = new Map<string, string>();
-    const mainCode = generateTab(main, functions, multi, () => {
+    const mainCode = generateTab(main, functions, globals, () => {
       if (program) body = g.blockToCode(program) as string;
       for (const device of unique) {
         deviceNames.set(device.variableId, g.getVariableName(device.variableId));
       }
     });
-    const tabCodes = moduleTabs.map((tab) => generateTab(tab, functions, multi));
+    const tabCodes = moduleTabs.map((tab) => generateTab(tab, functions, globals));
     problems.push(...functionProblems(tabs, functions));
+    problems.push(...sharedProblems(tabs, functions, needs.sharedNames));
 
     const robot = needs.robotUses.length > 0;
     const ports = portProblems(
@@ -893,7 +911,7 @@ export function generateTabs(tabs: readonly ProgramTab[]): GeneratedProgram {
     const moduleNames = moduleTabs.map((tab) => tab.name);
     if (!multi) {
       // One file, as before tabs: Config, Setup (with the variables), Helpers, Functions, Main.
-      setup.push(...mainCode.variables);
+      setup.push(...mainCode.variables, ...sharedLines);
       const code = joinSections([
         ['# Generated by MatPilot from blocks.', ...importLines(needs, mainCode.blocklyImports)],
         configSection,
@@ -909,6 +927,7 @@ export function generateTabs(tabs: readonly ProgramTab[]): GeneratedProgram {
       const setupBody = joinSections([
         configSection,
         setup.length > 0 ? [rule('Setup'), ...setup] : [],
+        sharedLines.length > 0 ? [rule('Shared variables'), ...sharedLines] : [],
         helperSection,
       ]);
       const setupNames = topLevelNames(setupBody);
@@ -918,7 +937,9 @@ export function generateTabs(tabs: readonly ProgramTab[]): GeneratedProgram {
         tabId: null,
         code: joinSections([
           [
-            '# Generated by MatPilot from blocks: the ports, devices and helpers every tab uses.',
+            sharedLines.length > 0
+              ? '# Generated by MatPilot from blocks: the ports, devices, helpers and shared variables every tab uses.'
+              : '# Generated by MatPilot from blocks: the ports, devices and helpers every tab uses.',
             ...fileImports(setupBody, needs, [], null, []),
           ],
           [setupBody.trimEnd()],
@@ -960,7 +981,7 @@ export function generateTabs(tabs: readonly ProgramTab[]): GeneratedProgram {
         });
         problems.push(...nameClashes(code, moduleNames));
       }
-      // A program with no ports, devices or helpers needs no setup.py.
+      // A program with no ports, devices, helpers or shared variables needs no setup.py.
       if (setupBody.trim() !== '') files.push(setupFile);
     }
 

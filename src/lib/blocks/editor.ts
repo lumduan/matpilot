@@ -5,12 +5,15 @@
  *
  * Every tab is its own workspace, so each keeps its own Undo history, scroll and zoom; only the
  * open tab is shown. Changes that touch the program as a whole (opening a file, starting over,
- * closing a tab, moving a function to another tab) are not in a tab's history: the editor keeps
- * the program from before the change, and `undoProgramChange()` puts it back.
+ * closing a tab, moving a function to another tab, deleting a shared variable that other tabs
+ * use) are not in a tab's history: the editor keeps the program from before the change, and
+ * `undoProgramChange()` puts it back. Ctrl+V and the Paste menu item paste into the open tab,
+ * wherever the blocks were copied (./clipboard.ts).
  *
  * Browser-only: import it lazily (src/hooks/useBlocksEditor.ts).
  */
 import * as Blockly from 'blockly/core';
+import { registerClipboard } from './clipboard';
 import { getPortHints, setPortHints, type PortHints } from './fields/hints';
 import { splitPair } from './fields/port';
 import {
@@ -29,6 +32,12 @@ import type { ProgramTabState } from './program-file';
 import { NEW_PROGRAM_META, sameMeta, type ProgramMeta } from './program-meta';
 import { DEVICE_TYPES, type DeviceType, type PortName } from './pybricks';
 import { ensureRequiredBlocks, registerBlocks } from './register';
+import {
+  deleteSharedVariable as deleteShared,
+  syncSharedVariables,
+  variablesFlyout,
+  watchSharedVariables,
+} from './shared';
 import {
   controllerFlyout,
   motorsFlyout,
@@ -273,6 +282,7 @@ function cleanTabNames(tabs: readonly ProgramTabState[]): ProgramTabState[] {
 
 export function createEditor(options: EditorOptions): EditorHandle {
   registerBlocks();
+  registerClipboard();
   const themes = getThemes();
   let dark = options.dark;
   let tabs: Tab[] = [];
@@ -322,6 +332,7 @@ export function createEditor(options: EditorOptions): EditorHandle {
 
   const update = () => {
     syncDeviceVariables(tabs);
+    syncSharedVariables(programTabs);
     syncFunctionBlocks(programTabs);
     const program = generateTabs(programTabs);
     const byBlock = new Map<string, { tab: Tab; messages: string[] }>();
@@ -420,6 +431,22 @@ export function createEditor(options: EditorOptions): EditorHandle {
           : `Moved the blocks to the tab “${to.name}”.`,
       );
     },
+    deleteSharedVariable(id: string) {
+      const variable = tabs
+        .map((tab) => tab.workspace.getVariableMap().getVariableById(id))
+        .find((each) => each !== null);
+      if (!variable) return;
+      previous = { program: save(), meta };
+      hidePopups();
+      const blocks = deleteShared(programTabs, id);
+      // Each tab's history may name the variable or the blocks that used it.
+      for (const tab of tabs) tab.workspace.clearUndo();
+      reportHistory();
+      schedule();
+      options.onProgramChange(
+        `Deleted the shared variable “${variable.getName()}” and the ${blocks} block${blocks === 1 ? '' : 's'} that used it, in every tab.`,
+      );
+    },
   };
 
   const createTab = (id: string, name: string): Tab => {
@@ -466,7 +493,12 @@ export function createEditor(options: EditorOptions): EditorHandle {
       'MP_FUNCTIONS',
       (ws) => functionsFlyout(ws) as unknown as Blockly.utils.toolbox.FlyoutDefinition,
     );
+    workspace.registerToolboxCategoryCallback(
+      'MP_VARIABLES',
+      (ws) => variablesFlyout(ws) as unknown as Blockly.utils.toolbox.FlyoutDefinition,
+    );
     linkTab(workspace, () => programTabs, actions);
+    watchSharedVariables(workspace);
     workspace.addChangeListener(Blockly.Events.disableOrphans);
     workspace.addChangeListener((event) => {
       if (!event.isUiEvent) schedule();
@@ -509,6 +541,7 @@ export function createEditor(options: EditorOptions): EditorHandle {
       Blockly.Events.enable();
     }
     syncDeviceVariables(tabs);
+    syncSharedVariables(programTabs);
     syncFunctionBlocks(programTabs);
     active = tabs.find((tab) => tab.name === program.active) ?? tabs[0]!;
     show(active, true);
@@ -597,6 +630,7 @@ export function createEditor(options: EditorOptions): EditorHandle {
       tabs.push(tab);
       listTabs();
       syncDeviceVariables(tabs);
+      syncSharedVariables(programTabs);
       selectTab(tab.id);
       return { ok: true, tab: { id: tab.id, name: tab.name } };
     },
