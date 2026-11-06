@@ -5,7 +5,9 @@ MatPilot is a block-based programming and control web app for LEGO SPIKE Prime h
 (WRO and other open or school-run events), with or without a gamepad.
 
 MatPilot runs entirely in your browser. There is no backend, no account, and no telemetry: the app
-is a set of static files, and it talks to the hub directly over Web Bluetooth.
+is a set of static files, and it talks to the hub directly over Web Bluetooth. The one exception is
+optional: if you save or load block programs on GitHub, the page talks to GitHub's API with a token
+you give it ([ADR 0011](docs/adr/0011-save-load-github.md)).
 
 ## Project status
 
@@ -22,7 +24,9 @@ What works today:
   hub's lights with pictures: a dial, a steering path, a lever, a 5×5 grid. The detailed blocks,
   one Pybricks command each with devices set up by name, fold under **Advanced**. The Python they
   make opens beside them or fills the window, and every motor stops when the program ends or is
-  stopped. A bar above the blocks shows what is plugged into each port, with live values. Built
+  stopped. A bar above the blocks shows what is plugged into each port, with live values. Undo and
+  redo buttons take changes back. **Save** and **Load** keep programs in a file on your computer, or
+  in a GitHub repository that a team shares, without replacing a teammate's newer version. Built
   with Blockly.
 - **Program & Monitor** (`/program`): write MicroPython, run it on the hub, and watch its output as
   text (like Arduino's Serial Monitor) and as a live graph (like its Serial Plotter). The program is

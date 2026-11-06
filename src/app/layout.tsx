@@ -17,11 +17,13 @@ export const viewport: Viewport = {
 };
 
 /**
- * Production builds carry a Content Security Policy that only allows this page's own origin.
- * It enforces the "no runtime requests to third-party origins" rule in the browser itself.
- * 'unsafe-inline' is required for scripts because a static export inlines Next.js bootstrap
- * scripts and cannot use per-request nonces. Skipped in development, where Next.js needs eval
- * and a WebSocket for hot reloading.
+ * Production builds carry a Content Security Policy that only allows this page's own origin, with
+ * one exception: requests to GitHub's API, which the page makes only when the user saves or loads
+ * a program on GitHub (ADR 0011). It enforces the "no runtime requests to third-party origins"
+ * rule in the browser itself; scripts/verify-export.mjs fails the build if any other origin
+ * appears here. 'unsafe-inline' is required for scripts because a static export inlines Next.js
+ * bootstrap scripts and cannot use per-request nonces. Skipped in development, where Next.js
+ * needs eval and a WebSocket for hot reloading.
  */
 const CONTENT_SECURITY_POLICY = [
   "default-src 'self'",
@@ -31,7 +33,8 @@ const CONTENT_SECURITY_POLICY = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data:",
   "font-src 'self'",
-  "connect-src 'self'",
+  // GitHub's REST API, for Save and Load on GitHub only (ADR 0011).
+  "connect-src 'self' https://api.github.com",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'none'",

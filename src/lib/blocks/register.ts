@@ -33,14 +33,18 @@ export function loadWorkspace(workspace: Blockly.Workspace, state: object): void
 /**
  * Every program has one "when the program starts" block, which cannot be deleted. The "set up"
  * block is only needed for the detailed blocks, so it may be deleted; older saved workspaces
- * stored it as undeletable (ADR 0010).
+ * stored it as undeletable (ADR 0010). `recordUndo` makes an added block part of the current undo
+ * step (when a program is opened as one step).
  */
-export function ensureRequiredBlocks(workspace: Blockly.Workspace): void {
+export function ensureRequiredBlocks(
+  workspace: Blockly.Workspace,
+  { recordUndo = false }: { readonly recordUndo?: boolean } = {},
+): void {
   const existing = workspace.getBlocksByType('mp_program', false);
   const program =
     existing[0] ??
     Blockly.serialization.blocks.append({ type: 'mp_program', x: 24, y: 24 }, workspace, {
-      recordUndo: false,
+      recordUndo,
     });
   program.setDeletable(false);
   // A second one is a problem to fix (./generator.ts), so it must be deletable.

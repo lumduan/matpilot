@@ -268,11 +268,38 @@ These check the full-window layout and the device bar ([ADR 0009](adr/0009-live-
    hub's centre button: the starter program runs on the hub (live values did not replace it).
 9. Switch **Live** off: the values disappear. Switch it on: they return.
 
+### Undo, Save and Load checks (milestone 4)
+
+These check undo and redo, and saving and loading programs
+([ADR 0011](adr/0011-save-load-github.md)). Checks 1 to 4 need no hub and no account. Checks 5 to
+8 need a GitHub account and a repository you can change (a private one is fine); they can wait.
+
+1. Change something: tap a motor block's **A** and pick **C**. Press **↶** (top right of the
+   blocks): it is **A** again. Press **↷**: **C** again.
+2. Press **Save**, type the name `Test 1`, and press **Save to this computer**. The file
+   `Test 1.matpilot.json` appears in Downloads.
+3. Press **Start over**, then **↶**: your blocks come back, and **Save** shows the name `Test 1`
+   again.
+4. Press **Load**, **Choose a file…**, and pick `Test 1.matpilot.json`. The blocks open, and a
+   green notice says "Opened “Test 1”". Press **Undo** in the notice: the blocks you had before
+   return.
+5. Press **Save**, then **Set up GitHub…**. Open **How to get a token**, make a token with the link
+   there (choose **Only select repositories** and your repository), and fill in the repository,
+   your name and the token. **Check and save** says "Connected to …".
+6. Type a note and press **Save to GitHub**. On github.com the file is in the `matpilot` folder,
+   and its commit message ends "(saved by <your name>)".
+7. On github.com, edit that file (any small change, for example in `savedBy`) and commit. Back on
+   `/blocks`, press **Save to GitHub** again. The page says someone saved it after you opened it,
+   and writes nothing. Press **Save mine as a new program**: `Test 1 2` appears on GitHub, and
+   the edited file is unchanged.
+8. Press **Load**: under **From GitHub**, both programs are listed. Open `Test 1 2`.
+
 ### Blocks results
 
-| Date       | Browser    | OS           | Hub         | Firmware | Result                                         |
-| ---------- | ---------- | ------------ | ----------- | -------- | ---------------------------------------------- |
-| 2026-11-05 | Chrome 156 | macOS 27.0.1 | SPIKE Prime | 4.0.1    | Checks 1 and 2 passed; 3 to 9 not yet reported |
+| Date       | Browser    | OS           | Hub         | Firmware | Result                                                                                   |
+| ---------- | ---------- | ------------ | ----------- | -------- | ---------------------------------------------------------------------------------------- |
+| 2026-11-05 | Chrome 156 | macOS 27.0.1 | SPIKE Prime | 4.0.1    | Checks 1 and 2 passed; 3 to 9 not yet reported                                           |
+| 2026-11-06 | Chrome 156 | macOS 27.0.1 | SPIKE Prime | 4.0.1    | All passed: simple 1 to 10, advanced 1 to 4, layout and live values 1 to 9 (notes below) |
 
 The 2026-11-05 row uses the numbering of the list before it was reorganised (see the start of this
 section): its checks 1 and 2 are simple-block checks 1 and 2 today, run then with the earlier
@@ -289,6 +316,18 @@ those of the earlier runs.
   that the maintainer asked for after this run (a larger block area, a Python panel that opens and
   closes, and live device values), and after the simple blocks were added
   ([ADR 0010](adr/0010-simple-blocks.md)): see the simple-block and advanced checks above.
+
+Notes on the 2026-11-06 run (the maintainer's bench, over the HTTPS tunnel; reported in
+conversation, without screenshots). The browser and OS were again not restated; they are assumed to
+be those of the earlier runs.
+
+- **All three lists passed:** the maintainer tested every check and reported no failures.
+- **A beginner tried it:** the maintainer's child used the simple blocks and liked them; what they
+  knew from the LEGO SPIKE app carried over directly ([ADR 0010](adr/0010-simple-blocks.md)).
+- **Still open, simple check 8:** which way the drawn "up" arrow points on the hub's light matrix
+  was not reported. Until it is, the orientation of the 5×5 picture on the hub is unverified.
+- **Optional robot check: not run.** No two-wheel robot was built yet. From the motor turns in
+  checks 5 to 7, the maintainer expects the movement blocks to be right once the wheel sizes are.
 
 ## Keeping this file current
 

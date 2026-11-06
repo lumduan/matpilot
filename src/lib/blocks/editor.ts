@@ -1,6 +1,7 @@
 /**
  * The block editor in the browser: creates the Blockly workspace, keeps the generated program
- * and its problems up to date, and saves the workspace on every change (ADR 0008).
+ * and its problems up to date, and saves the workspace on every change (ADR 0008). It also keeps
+ * the program's name and GitHub file (ADR 0011), and offers undo and redo.
  *
  * Browser-only: import it lazily (src/hooks/useBlocksEditor.ts).
  */
@@ -13,6 +14,7 @@ import {
   listSetUpDevices,
   type GeneratedProgram,
 } from './generator';
+import { NEW_PROGRAM_META, replaceProgram, sameMeta, type ProgramMeta } from './program-meta';
 import { DEVICE_TYPES, type DeviceType, type PortName } from './pybricks';
 import { ensureRequiredBlocks, loadWorkspace, registerBlocks } from './register';
 import {
@@ -33,8 +35,19 @@ export interface EditorOptions {
   readonly dark: boolean;
   /** A saved workspace, or `null` for the starter program. */
   readonly saved: object | null;
+  /** The saved program's name and GitHub file. */
+  readonly meta: ProgramMeta;
   /** Called after every change with the program and the workspace to save. */
   readonly onChange: (program: GeneratedProgram, state: object) => void;
+  /** Called when the program's name or GitHub file changes, Undo and Redo included. */
+  readonly onMeta: (meta: ProgramMeta) => void;
+  /** Called when there is, or stops being, something to undo or redo. */
+  readonly onHistory: (history: EditorHistory) => void;
+}
+
+export interface EditorHistory {
+  readonly canUndo: boolean;
+  readonly canRedo: boolean;
 }
 
 export interface EditorHandle {
@@ -43,8 +56,19 @@ export interface EditorHandle {
   setDark(dark: boolean): void;
   /** What the hub says is plugged into each port, for the port pickers and new blocks. */
   setPortHints(hints: PortHints): void;
-  /** Replaces everything with the starter program. */
+  undo(): void;
+  redo(): void;
+  /** Replaces everything with the starter program, as a new program; Undo brings it back. */
   reset(): void;
+  /**
+   * Opens a saved program as one undoable step. Throws, changing nothing, when the blocks
+   * cannot be loaded (unknown blocks, or a file from a newer MatPilot).
+   */
+  open(state: object, meta: ProgramMeta): void;
+  /** The workspace now, to save in a file. */
+  save(): object;
+  /** Changes the name or GitHub file without an undo step (after saving). */
+  setMeta(meta: ProgramMeta): void;
   dispose(): void;
 }
 
@@ -116,6 +140,13 @@ export function createEditor(options: EditorOptions): EditorHandle {
     );
   }
 
+  let meta = options.meta;
+  const applyMeta = (next: ProgramMeta) => {
+    if (sameMeta(meta, next)) return;
+    meta = next;
+    options.onMeta(next);
+  };
+
   let restoredStarter = false;
   Blockly.Events.disable();
   try {
@@ -129,6 +160,7 @@ export function createEditor(options: EditorOptions): EditorHandle {
   } finally {
     Blockly.Events.enable();
   }
+  if (restoredStarter || options.saved === null) applyMeta(NEW_PROGRAM_META);
 
   const markedBlocks = new Set<string>();
   const update = () => {
@@ -164,6 +196,37 @@ export function createEditor(options: EditorOptions): EditorHandle {
     if (!event.isUiEvent) schedule();
   });
 
+  let history: EditorHistory = { canUndo: false, canRedo: false };
+  const reportHistory = () => {
+    const next = {
+      canUndo: workspace.getUndoStack().length > 0,
+      canRedo: workspace.getRedoStack().length > 0,
+    };
+    if (next.canUndo === history.canUndo && next.canRedo === history.canRedo) return;
+    history = next;
+    options.onHistory(next);
+  };
+  workspace.addChangeListener(reportHistory);
+
+  const undo = (redo: boolean) => {
+    workspace.hideChaff();
+    workspace.undo(redo);
+    // Undo itself records nothing, and its events may all be filtered away.
+    setTimeout(reportHistory, 0);
+  };
+
+  const replace = (state: object, next: ProgramMeta) => {
+    workspace.hideChaff();
+    replaceProgram(workspace, state, { before: meta, after: next }, applyMeta, (ws) =>
+      ensureRequiredBlocks(ws, { recordUndo: true }),
+    );
+    // Show "when the program starts" if it is out of view; otherwise leave the view alone.
+    const program = workspace.getBlocksByType('mp_program', false)[0] as
+      Blockly.BlockSvg | undefined;
+    if (program) workspace.scrollBoundsIntoView(program.getBoundingRectangle(), 24);
+    schedule();
+  };
+
   const observer = new ResizeObserver(() => Blockly.svgResize(workspace));
   observer.observe(options.host);
   update();
@@ -176,12 +239,16 @@ export function createEditor(options: EditorOptions): EditorHandle {
     setPortHints(hints) {
       setPortHints(hints);
     },
+    undo: () => undo(false),
+    redo: () => undo(true),
     reset() {
-      workspace.clear();
-      loadWorkspace(workspace, STARTER_WORKSPACE);
-      ensureRequiredBlocks(workspace);
-      schedule();
+      replace(STARTER_WORKSPACE, NEW_PROGRAM_META);
     },
+    open(state, next) {
+      replace(state, next);
+    },
+    save: () => Blockly.serialization.workspaces.save(workspace),
+    setMeta: applyMeta,
     dispose() {
       setPortHints({});
       cancelAnimationFrame(frame);

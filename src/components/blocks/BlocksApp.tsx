@@ -9,18 +9,30 @@ import { MonitorPanel } from '@/components/hub/MonitorPanel';
 import { PlotterCard } from '@/components/hub/PlotterCard';
 import { linkSummary, programSummary } from '@/components/hub/status';
 import { useBlocksEditor } from '@/hooks/useBlocksEditor';
+import { useGitHub } from '@/hooks/useGitHub';
 import { useHubRunner } from '@/hooks/useHubRunner';
+import { useMounted } from '@/hooks/useMounted';
 import { saveProgramForEditor } from '@/hooks/useProgramRunner';
 import { useStoredState } from '@/hooks/useStoredState';
 import { hintsFromKey, hintsKey } from '@/lib/blocks/fields/hints';
 import { PROJECT_NAME, PROJECT_STATUS, TRADEMARK_DISCLAIMER } from '@/lib/project';
 import { CodeView } from './CodeView';
+import { GitHubSettingsDialog } from './GitHubSettingsDialog';
+import { LoadDialog } from './LoadDialog';
+import { SaveDialog } from './SaveDialog';
 
 /** How long the page's introduction stays open after the page loads. */
 const INTRO_OPEN_MS = 5000;
 
+/** How long the "Opened …" notice stays after a program is loaded. */
+const OPENED_NOTICE_MS = 12_000;
+
 const VIEWS = ['blocks', 'python'] as const;
 const OPEN_CLOSED = ['open', 'closed'] as const;
+
+type DialogName = 'save' | 'load' | 'github';
+
+const isMac = () => /Mac|iPhone|iPad/.test(navigator.platform);
 
 /**
  * Client-side root of /blocks: a full-window editor. The block area takes the space; the Python
@@ -35,6 +47,13 @@ export function BlocksApp() {
   const portKey = hintsKey(runner.live.snapshot.reading);
   const portHints = useMemo(() => hintsFromKey(portKey), [portKey]);
   const editor = useBlocksEditor(host, portHints);
+  const github = useGitHub();
+  const [dialog, setDialog] = useState<{
+    readonly name: DialogName;
+    /** The dialog to go back to when GitHub settings close. */
+    readonly back: DialogName | null;
+  } | null>(null);
+  const [openedNotice, setOpenedNotice] = useState<string | null>(null);
   const [copied, setCopied] = useState<'idle' | 'ok' | 'failed'>('idle');
   const [view, setView] = useStoredState('matpilot.blocks.view.v1', 'blocks', VIEWS);
   const [pythonPanel, setPythonPanel] = useStoredState(
@@ -73,6 +92,41 @@ export function BlocksApp() {
   const monitorOpen = monitorPane === 'open';
   const plotterOpen = plotterPane === 'open';
   const pythonOpen = view === 'blocks' && pythonPanel === 'open';
+  const editorReady = editor.status === 'ready';
+  // Shortcut names in tooltips; the server render cannot know the platform.
+  const mac = useMounted() && isMac();
+  const mod = mac ? '⌘' : 'Ctrl+';
+
+  const openDialog = (name: DialogName) => setDialog({ name, back: null });
+  const openGitHubSettings = () =>
+    setDialog((current) => ({ name: 'github', back: current?.name ?? null }));
+  const closeDialog = () =>
+    setDialog((current) =>
+      current?.name === 'github' && current.back ? { name: current.back, back: null } : null,
+    );
+
+  // The "Opened …" notice folds away by itself.
+  useEffect(() => {
+    if (!openedNotice) return;
+    const timer = setTimeout(() => setOpenedNotice(null), OPENED_NOTICE_MS);
+    return () => clearTimeout(timer);
+  }, [openedNotice]);
+
+  // Ctrl+S (⌘S) saves and Ctrl+O (⌘O) loads, as in other editors. Blockly already handles
+  // Ctrl+Z / Ctrl+Shift+Z when the blocks have focus.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (!(event.ctrlKey || event.metaKey) || event.altKey || event.shiftKey) return;
+      const key = event.key.toLowerCase();
+      if (key !== 's' && key !== 'o') return;
+      event.preventDefault();
+      if (!editorReady || document.querySelector('dialog[open]')) return;
+      if (key === 's') setDialog({ name: 'save', back: null });
+      else if (!running) setDialog({ name: 'load', back: null });
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [editorReady, running]);
 
   const toggleMonitor = () => {
     if (monitorOpen) setSeenLineId(latestLineId);
@@ -172,13 +226,45 @@ export function BlocksApp() {
         <div className="studio-actions">
           <button
             type="button"
-            className="button button-small"
-            onClick={() => {
-              if (window.confirm('Replace all blocks with the starter program?')) editor.reset();
-            }}
-            disabled={editor.status !== 'ready' || running}
+            className="button button-small button-file"
+            onClick={() => openDialog('load')}
+            disabled={!editorReady || running}
+            title={`Load a program (${mod}O)`}
+            data-testid="load"
           >
-            Start over
+            <FolderIcon />
+            <span className="button-text">Load</span>
+          </button>
+          <button
+            type="button"
+            className="button button-small button-file"
+            onClick={() => openDialog('save')}
+            disabled={!editorReady}
+            title={`Save your program (${mod}S)`}
+            data-testid="save"
+          >
+            <SaveIcon />
+            <span className="button-text">Save</span>
+          </button>
+          <button
+            type="button"
+            className="button button-small button-file"
+            onClick={() => {
+              if (
+                window.confirm(
+                  'Start a new program from the starter blocks? (Undo brings yours back.)',
+                )
+              ) {
+                editor.reset();
+                setOpenedNotice(null);
+              }
+            }}
+            disabled={!editorReady || running}
+            title="Start a new program from the starter blocks"
+            data-testid="start-over"
+          >
+            <NewIcon />
+            <span className="button-text">Start over</span>
           </button>
           {running ? (
             <button type="button" className="button button-stop button-run" onClick={runner.stop}>
@@ -216,9 +302,11 @@ export function BlocksApp() {
       >
         <div className="studio-intro-inner">
           <p>
-            Snap blocks together to program your hub. Put your motors and sensors in “set up”, build
-            the program under “when the program starts”, and press <strong>Run</strong>. Each block
-            is one Pybricks command; press <strong>Python</strong> to see the code it makes.
+            Snap blocks together under “when the program starts” and press <strong>Run</strong>. Tap
+            a block’s picture to choose a port, a turn, a speed or a light picture; press{' '}
+            <strong>Python</strong> to see the code it makes. <strong>Undo</strong> (↶) takes back a
+            change, and <strong>Save</strong> and <strong>Load</strong> keep programs in a file or
+            in your team’s GitHub repository.
           </p>
           <p className="muted">
             <strong>Stop</strong> ends the program, and every motor stops with it. Leaving or
@@ -228,7 +316,8 @@ export function BlocksApp() {
           </p>
           <p className="studio-intro-legal">
             {TRADEMARK_DISCLAIMER} {PROJECT_NAME} is open-source software released under the MIT
-            License. It runs entirely in your browser and sends nothing to any server.
+            License. It runs entirely in your browser and sends nothing to any server, except to
+            GitHub when you save or load a program there.
           </p>
         </div>
       </div>
@@ -241,8 +330,37 @@ export function BlocksApp() {
         connection.flags.batteryLow ||
         editor.status === 'failed' ||
         editor.restoredStarter ||
+        openedNotice ||
         copied === 'failed') && (
         <div className="studio-notices">
+          {openedNotice && (
+            <p
+              className="notice notice-ok notice-actions"
+              role="status"
+              data-testid="opened-notice"
+            >
+              <span>{openedNotice}</span>
+              <button
+                type="button"
+                className="button button-small"
+                onClick={() => {
+                  editor.undo();
+                  setOpenedNotice(null);
+                }}
+              >
+                Undo
+              </button>
+              <button
+                type="button"
+                className="icon-button"
+                onClick={() => setOpenedNotice(null)}
+                title="Hide"
+              >
+                <CloseIcon />
+                <span className="visually-hidden">Hide</span>
+              </button>
+            </p>
+          )}
           {linkNotice && (
             <p
               className={
@@ -291,6 +409,32 @@ export function BlocksApp() {
             data-status={editor.status}
             inert={view === 'python'}
           />
+          {view === 'blocks' && editorReady && (
+            <div className="history-buttons" role="group" aria-label="Undo and redo">
+              <button
+                type="button"
+                className="history-button"
+                onClick={editor.undo}
+                disabled={!editor.history.canUndo}
+                title={`Undo (${mod}Z)`}
+                data-testid="undo"
+              >
+                <UndoIcon />
+                <span className="visually-hidden">Undo</span>
+              </button>
+              <button
+                type="button"
+                className="history-button"
+                onClick={editor.redo}
+                disabled={!editor.history.canRedo}
+                title={`Redo (${mod}${mac ? '⇧Z' : 'Y'})`}
+                data-testid="redo"
+              >
+                <UndoIcon redo />
+                <span className="visually-hidden">Redo</span>
+              </button>
+            </div>
+          )}
           {view === 'python' && (
             <section className="studio-python-full" aria-labelledby="python-full-heading">
               <div className="studio-panel-header">
@@ -367,6 +511,28 @@ export function BlocksApp() {
           )}
         </div>
       )}
+
+      {dialog?.name === 'save' && (
+        <SaveDialog
+          editor={editor}
+          github={github}
+          onClose={closeDialog}
+          onSetUpGitHub={openGitHubSettings}
+        />
+      )}
+      {dialog?.name === 'load' && (
+        <LoadDialog
+          editor={editor}
+          github={github}
+          onClose={closeDialog}
+          onOpened={(message) => {
+            setDialog(null);
+            setOpenedNotice(message);
+          }}
+          onSetUpGitHub={openGitHubSettings}
+        />
+      )}
+      {dialog?.name === 'github' && <GitHubSettingsDialog github={github} onClose={closeDialog} />}
 
       <footer className="studio-status">
         <p className="studio-status-text" data-testid="program-status" aria-live="polite">
@@ -467,6 +633,93 @@ function CloseIcon() {
         stroke="currentColor"
         strokeWidth="1.8"
         strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function FolderIcon() {
+  return (
+    <svg
+      className="button-icon"
+      viewBox="0 0 16 16"
+      width="16"
+      height="16"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path
+        d="M1.75 4.25v8a1 1 0 0 0 1 1h10.5a1 1 0 0 0 1-1v-6a1 1 0 0 0-1-1H8L6.5 3.25H2.75a1 1 0 0 0-1 1z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function SaveIcon() {
+  return (
+    <svg
+      className="button-icon"
+      viewBox="0 0 16 16"
+      width="16"
+      height="16"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path
+        d="M8 2v7.5M4.75 6.5 8 9.75l3.25-3.25M2.5 10.5v2a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-2"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function NewIcon() {
+  return (
+    <svg
+      className="button-icon"
+      viewBox="0 0 16 16"
+      width="16"
+      height="16"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path
+        d="M9.5 1.75H4a1 1 0 0 0-1 1v10.5a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V5.25zM9.5 1.75v3.5H13M8 7.5v4M6 9.5h4"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function UndoIcon({ redo = false }: { redo?: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="22"
+      height="22"
+      aria-hidden="true"
+      focusable="false"
+      style={redo ? { transform: 'scaleX(-1)' } : undefined}
+    >
+      <path
+        d="M9 14 4 9l5-5M4 9h10.5a5.5 5.5 0 0 1 0 11H11"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
     </svg>
   );
