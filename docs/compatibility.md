@@ -270,9 +270,10 @@ These check the full-window layout and the device bar ([ADR 0009](adr/0009-live-
 
 ### Blocks results
 
-| Date       | Browser    | OS           | Hub         | Firmware | Result                                         |
-| ---------- | ---------- | ------------ | ----------- | -------- | ---------------------------------------------- |
-| 2026-11-05 | Chrome 156 | macOS 27.0.1 | SPIKE Prime | 4.0.1    | Checks 1 and 2 passed; 3 to 9 not yet reported |
+| Date       | Browser    | OS           | Hub         | Firmware | Result                                                                                   |
+| ---------- | ---------- | ------------ | ----------- | -------- | ---------------------------------------------------------------------------------------- |
+| 2026-11-05 | Chrome 156 | macOS 27.0.1 | SPIKE Prime | 4.0.1    | Checks 1 and 2 passed; 3 to 9 not yet reported                                           |
+| 2026-11-06 | Chrome 156 | macOS 27.0.1 | SPIKE Prime | 4.0.1    | All passed: simple 1 to 10, advanced 1 to 4, layout and live values 1 to 9 (notes below) |
 
 The 2026-11-05 row uses the numbering of the list before it was reorganised (see the start of this
 section): its checks 1 and 2 are simple-block checks 1 and 2 today, run then with the earlier
@@ -289,6 +290,18 @@ those of the earlier runs.
   that the maintainer asked for after this run (a larger block area, a Python panel that opens and
   closes, and live device values), and after the simple blocks were added
   ([ADR 0010](adr/0010-simple-blocks.md)): see the simple-block and advanced checks above.
+
+Notes on the 2026-11-06 run (the maintainer's bench, over the HTTPS tunnel; reported in
+conversation, without screenshots). The browser and OS were again not restated; they are assumed to
+be those of the earlier runs.
+
+- **All three lists passed:** the maintainer tested every check and reported no failures.
+- **A beginner tried it:** the maintainer's child used the simple blocks and liked them; what they
+  knew from the LEGO SPIKE app carried over directly ([ADR 0010](adr/0010-simple-blocks.md)).
+- **Still open, simple check 8:** which way the drawn "up" arrow points on the hub's light matrix
+  was not reported. Until it is, the orientation of the 5×5 picture on the hub is unverified.
+- **Optional robot check: not run.** No two-wheel robot was built yet. From the motor turns in
+  checks 5 to 7, the maintainer expects the movement blocks to be right once the wheel sizes are.
 
 ## Keeping this file current
 
