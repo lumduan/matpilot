@@ -9,8 +9,8 @@ import {
 } from '@/lib/ble/hub-connection';
 import { formatLog } from '@/lib/monitor/log';
 import { EMPTY_MONITOR_SNAPSHOT, MonitorStore, type MonitorSnapshot } from '@/lib/monitor/store';
-import { compilePython, type CompileError } from '@/lib/pybricks/compiler';
-import { MAIN_MODULE_NAME, packMultiMpy } from '@/lib/pybricks/mpy';
+import { DEFAULT_SOURCE_NAME, compilePython, type CompileError } from '@/lib/pybricks/compiler';
+import { MAIN_MODULE_NAME, packMultiMpy, type ProgramModule } from '@/lib/pybricks/mpy';
 import { useLiveDevices, type LiveDevices } from './useLiveDevices';
 
 /**
@@ -39,16 +39,31 @@ function describeRunError(error: RunError): string {
 const getServerConnection = () => INITIAL_CONNECTION_SNAPSHOT;
 const getServerMonitor = () => EMPTY_MONITOR_SNAPSHOT;
 
+/** A Python file of a program in several files (ADR 0013); `module` is how the hub imports it. */
+export interface SourceFile {
+  readonly name: string;
+  readonly module: string;
+  readonly code: string;
+}
+
+/** A compile error, and the file it is in when the program has several. */
+export type RunnerCompileError = CompileError & { readonly file: string | null };
+
 export interface HubRunner {
   readonly connection: ConnectionSnapshot;
   readonly monitor: MonitorSnapshot;
   readonly compiling: boolean;
-  readonly compileError: CompileError | null;
+  readonly compileError: RunnerCompileError | null;
   /** Call from a click handler: the browser only opens its device picker on a user gesture. */
   readonly connect: () => void;
   readonly disconnect: () => void;
   /** Compiles the program, sends it to the hub, and starts it. */
   readonly runSource: (source: string) => void;
+  /**
+   * Compiles every file, sends them to the hub as one program, and starts it. The first file is
+   * the one the hub runs (`__main__`).
+   */
+  readonly runFiles: (files: readonly SourceFile[]) => void;
   readonly stop: () => void;
   readonly sendInput: (text: string) => void;
   readonly clearText: () => void;
@@ -69,7 +84,7 @@ export function useHubRunner(options: { liveDevices?: boolean } = {}): HubRunner
   const connection = useSyncExternalStore(hub.subscribe, hub.getSnapshot, getServerConnection);
   const monitor = useSyncExternalStore(store.subscribe, store.getSnapshot, getServerMonitor);
   const [compiling, setCompiling] = useState(false);
-  const [compileError, setCompileError] = useState<CompileError | null>(null);
+  const [compileError, setCompileError] = useState<RunnerCompileError | null>(null);
 
   useEffect(() => {
     const offOutput = hub.onOutput((bytes) => store.pushOutput(bytes));
@@ -111,25 +126,39 @@ export function useHubRunner(options: { liveDevices?: boolean } = {}): HubRunner
     };
   }, [hub, store]);
 
-  const runSource = useCallback(
-    (source: string) => {
+  const runFiles = useCallback(
+    (files: readonly SourceFile[]) => {
       void (async () => {
         setCompileError(null);
         setCompiling(true);
-        const outcome = await compilePython(source);
-        setCompiling(false);
-        if (!outcome.ok) {
-          setCompileError(outcome.error);
-          const where = outcome.error.line === null ? '' : ` (near line ${outcome.error.line})`;
-          store.note('error', `${outcome.error.message}${where}`);
-          return;
+        const modules: ProgramModule[] = [];
+        for (const file of files) {
+          const outcome = await compilePython(file.code, { sourceName: file.name });
+          if (!outcome.ok) {
+            setCompiling(false);
+            const several = files.length > 1;
+            setCompileError({ ...outcome.error, file: several ? file.name : null });
+            const where = outcome.error.line === null ? '' : ` (near line ${outcome.error.line})`;
+            store.note(
+              'error',
+              `${several ? `${file.name}: ` : ''}${outcome.error.message}${where}`,
+            );
+            return;
+          }
+          modules.push({ name: file.module, mpy: outcome.mpy });
         }
-        const program = packMultiMpy([{ name: MAIN_MODULE_NAME, mpy: outcome.mpy }]);
-        const result = await hub.run(program);
+        setCompiling(false);
+        const result = await hub.run(packMultiMpy(modules));
         if (!result.ok) store.note('error', describeRunError(result.error));
       })();
     },
     [hub, store],
+  );
+
+  const runSource = useCallback(
+    (source: string) =>
+      runFiles([{ name: DEFAULT_SOURCE_NAME, module: MAIN_MODULE_NAME, code: source }]),
+    [runFiles],
   );
 
   const connect = useCallback(() => {
@@ -165,6 +194,7 @@ export function useHubRunner(options: { liveDevices?: boolean } = {}): HubRunner
     connect,
     disconnect,
     runSource,
+    runFiles,
     stop,
     sendInput,
     clearText,

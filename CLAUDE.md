@@ -81,10 +81,13 @@ entry in [NOTICE](NOTICE).
   - `src/lib/monitor/`: stdout line splitting, the monitor log, and the plotter's parser and scale
   - `src/lib/program/`: example programs for the Program and Monitor page (each cited)
   - `src/lib/blocks/`: the block editor ([ADR 0008](docs/adr/0008-block-editor.md),
-    [ADR 0010](docs/adr/0010-simple-blocks.md), [ADR 0012](docs/adr/0012-controller-blocks.md)):
+    [ADR 0010](docs/adr/0010-simple-blocks.md), [ADR 0012](docs/adr/0012-controller-blocks.md),
+    [ADR 0013](docs/adr/0013-block-tabs.md)):
     Blockly block definitions (the detailed blocks in `definitions.ts`, the simple blocks in
-    `simple-definitions.ts`, the Controller blocks in `controller-definitions.ts`), their picture fields
-    (`fields/`), toolbox, themes, and the Python generator. Every Pybricks name a block generates
+    `simple-definitions.ts`, the Controller blocks in `controller-definitions.ts`, the function
+    blocks in `functions.ts`), their picture fields (`fields/`), toolbox, themes, tabs
+    (`tabs.ts`: tab names, and the registry that lets a block see the other tabs), and the Python
+    generator, which makes one file per tab with functions plus `setup.py`. Every Pybricks name a block generates
     is cited in `src/lib/blocks/pybricks.ts`; add the citation there before adding a block.
     Blockly is browser-loaded lazily (`editor.ts`); the generator also runs headless in tests,
     where every test program must compile with the real compiler. Keep the detailed blocks: the

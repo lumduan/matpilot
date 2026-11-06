@@ -110,6 +110,21 @@
  * - print() never blocks the program for a missing link: without a connected computer the text
  *   is dropped: FW bricks/_common/mphalport.c#L60-L82, FW lib/pbio/sys/host.c#L148-L185
  * - Motor.hold(): pb_type_motor.c#L490; dict.get(key, default): MP py/objdict.c#L339 #L599
+ *
+ * A program in tabs (ADR 0013, ./generator.ts, ./functions.ts) is several modules in one upload:
+ * - The upload is a list of (size, name, .mpy); the hub runs the first as __main__ and imports
+ *   the others by name: FW bricks/_common/micropython.c#L142-L181 #L242-L246 (and
+ *   ../pybricks/mpy.ts).
+ * - `import name` looks in this order: modules already loaded, the hub's built-in modules, then
+ *   the program's modules; relative imports are refused: FW bricks/_common/micropython.c
+ *   #L450-L488, #L511. So a tab may not take a built-in module's name (./tabs.ts).
+ * - A program module is made and registered as loaded before its code runs:
+ *   FW bricks/_common/micropython.c#L479-L484, MP py/objmodule.c#L122-L144. So two tabs that
+ *   import each other get each other's module, and `other.function()` works once both have run;
+ *   the generator writes calls between tabs that way, never `from tab import name`.
+ * - `from module import name` copies the name's value from the module once: MP py/runtime.c
+ *   #L1559-L1575. So a tab changes a motor's speed through its module
+ *   (`setup.motor_a_speed = ...`), and every tab sees the new value.
  */
 
 export type Option = readonly [label: string, value: string];

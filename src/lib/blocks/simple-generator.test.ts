@@ -301,6 +301,7 @@ finally:
     expect(problems).toEqual([
       {
         blockId: expect.any(String),
+        tabId: 'main',
         message:
           'Port A drives the robot’s left wheel (movement motors A + B). Choose another port for this motor, or change “set movement motors”.',
       },
@@ -364,6 +365,7 @@ describe('simple block problems', () => {
     expect(problems).toEqual([
       {
         blockId: 'colour-on-c',
+        tabId: 'main',
         message: 'Port C is used for a motor in another block. One port holds one device.',
       },
     ]);
@@ -392,6 +394,7 @@ describe('simple block problems', () => {
     expect(problems).toEqual([
       {
         blockId: 'simple-a',
+        tabId: 'main',
         message:
           'Port A is set up as “arm” in the “set up” block. Use the “arm” blocks, or choose another port.',
       },
@@ -421,6 +424,7 @@ describe('simple block problems', () => {
     expect(problems).toEqual([
       {
         blockId: 'wheels',
+        tabId: 'main',
         message:
           'Port D is set up as “floor”, so it cannot also drive the right wheel. Choose other movement motors.',
       },

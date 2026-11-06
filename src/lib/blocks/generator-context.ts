@@ -115,6 +115,11 @@ export interface Needs {
   readonly controllerControls: ControllerControl[];
   /** Controller blocks that remember something between runs of a loop, numbered from 0. */
   controllerSlots: number;
+  /**
+   * The program is in several files (ADR 0013), so a motor's speed lives in setup.py and every
+   * tab reads and changes it there: `setup.motor_a_speed`.
+   */
+  qualifySpeeds: boolean;
 }
 
 let needs: Needs | null = null;
@@ -133,6 +138,7 @@ export function beginNeeds(): Needs {
     controllerChoices: [],
     controllerControls: [],
     controllerSlots: 0,
+    qualifySpeeds: false,
   };
   return needs;
 }
@@ -179,7 +185,7 @@ export function portDevice(block: Blockly.Block, field: string, kind: PortDevice
 export function motorSpeedAt(block: Blockly.Block, port: PortName): string {
   portDeviceAt(block, port, 'Motor');
   needs?.speeds.add(port);
-  return motorSpeedName(port);
+  return needs?.qualifySpeeds ? `setup.${motorSpeedName(port)}` : motorSpeedName(port);
 }
 
 /** The speed variable of the motor on the block's port; registers the motor too. */

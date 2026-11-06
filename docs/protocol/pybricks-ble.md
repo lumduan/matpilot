@@ -125,6 +125,10 @@ The uploaded program is a concatenation of modules. For each module:
 - The firmware reads the same layout, as `mpy_info_t` ([FW bricks/_common/micropython.c#L142-L149][fw-mpyinfo]).
   It finds modules by name ([FW micropython.c#L176-L181][fw-find]) and runs `__main__`
   ([FW micropython.c#L228-L244][fw-main]).
+- `import` looks for a module among those already loaded, then the built-in modules, then the
+  program's own ([FW micropython.c#L450-L488][fw-import]). MatPilot uploads one module per file of
+  a block program in tabs ([ADR 0013](../adr/0013-block-tabs.md)); the import rules it relies on
+  are cited in `src/lib/blocks/pybricks.ts`.
 - The `.mpy` files must use MicroPython's format version 6. The v4.0.1 firmware defines
   `MPY_VERSION 6` and `MPY_SUB_VERSION 3`
   ([pybricks/micropython py/persistentcode.h#L37-L38][mpy-version]).
@@ -244,6 +248,7 @@ firmware baseline moves. Re-cite every link at the new commit; do not mix versio
 [mpy-check]: https://github.com/pybricks/micropython/blob/13580b6ad057173f62e8b2363e01d6851bcc6699/py/persistentcode.c#L465-L473
 [dev-download]: https://github.com/pybricks/pybricksdev/blob/65210a23f53cc62a4b32c0599eac398aeea0c282/pybricksdev/connections/pybricks.py#L442-L535
 [dev-stdin]: https://github.com/pybricks/pybricksdev/blob/65210a23f53cc62a4b32c0599eac398aeea0c282/pybricksdev/connections/pybricks.py#L378-L412
+[fw-import]: https://github.com/pybricks/pybricks-micropython/blob/4104553405decb0384bcfb030fbfcb4b5a9854cc/bricks/_common/micropython.c#L450-L488
 [fw-xbox]: https://github.com/pybricks/pybricks-micropython/blob/4104553405decb0384bcfb030fbfcb4b5a9854cc/pybricks/iodevices/pb_module_iodevices.c#L92
 [fw-xbox-prime]: https://github.com/pybricks/pybricks-micropython/blob/4104553405decb0384bcfb030fbfcb4b5a9854cc/bricks/primehub/mpconfigport.h#L41
 [fw-appdata]: https://github.com/pybricks/pybricks-micropython/blob/4104553405decb0384bcfb030fbfcb4b5a9854cc/pybricks/tools/pb_module_tools.c#L305

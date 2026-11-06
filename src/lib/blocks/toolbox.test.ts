@@ -147,6 +147,7 @@ describe('the toolbox', () => {
       'Controller',
       'Operators',
       'Variables',
+      'Functions',
       'sep',
       'Advanced',
     ]);

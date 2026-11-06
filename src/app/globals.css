@@ -898,8 +898,17 @@ code {
 
 .studio-canvas {
   position: relative;
+  display: flex;
   flex: 1;
+  flex-direction: column;
   min-width: 0;
+}
+
+/* The blocks under the tabs. Each tab is a Blockly workspace; only the open one shows. */
+.blocks-area {
+  position: relative;
+  flex: 1;
+  min-height: 0;
 }
 
 .blocks-workspace {
@@ -907,6 +916,193 @@ code {
   inset: 0;
   overflow: hidden;
   background: var(--bg);
+}
+
+.blocks-tab {
+  position: absolute;
+  inset: 0;
+}
+
+.blocks-tab[data-active='false'] {
+  visibility: hidden;
+}
+
+/* The program's tabs, like a browser's (ADR 0013). */
+.block-tabs-bar {
+  flex: none;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.block-tabs {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.25rem;
+  padding: 0.35rem 0.5rem 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.block-tab {
+  display: flex;
+  flex: none;
+  align-items: center;
+  margin-bottom: -1px;
+  border: 1px solid transparent;
+  border-bottom: 0;
+  border-radius: 0.5rem 0.5rem 0 0;
+}
+
+.block-tab[data-active='true'] {
+  background: var(--bg);
+  border-color: var(--border);
+}
+
+.block-tab-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 2.4rem;
+  padding: 0 0.85rem;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.92rem;
+  cursor: pointer;
+}
+
+.block-tab[data-active='true'] .block-tab-name {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.block-tab-name:hover {
+  color: var(--text);
+}
+
+.block-tab-name:focus-visible,
+.block-tab-icon:focus-visible,
+.block-tab-add:focus-visible,
+.python-file:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: -3px;
+  border-radius: 0.4rem;
+}
+
+.block-tab-problem {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--warn-border);
+}
+
+.block-tab-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 0;
+  border-radius: 0.4rem;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.block-tab-icon:last-child {
+  margin-right: 0.25rem;
+}
+
+.block-tab-icon:hover:not(:disabled) {
+  background: var(--neutral-bg);
+  color: var(--text);
+}
+
+.block-tab-icon:disabled,
+.block-tab-add:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+
+.block-tab-input {
+  width: 10rem;
+  min-height: 2rem;
+  margin: 0.2rem 0.35rem;
+  padding: 0 0.5rem;
+  border: 2px solid var(--accent);
+  border-radius: 0.35rem;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.92rem;
+}
+
+.block-tab-add {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  margin: 0 0 0.2rem 0.25rem;
+  padding: 0;
+  border: 1px dashed var(--neutral-border);
+  border-radius: 50%;
+  background: none;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.block-tab-add:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.block-tabs-error {
+  margin: 0;
+  padding: 0.3rem 0.75rem;
+  background: var(--warn-bg);
+  color: var(--warn-text);
+  font-size: 0.85rem;
+  border-top: 1px solid var(--warn-border);
+}
+
+/* The Python files, when the program has several (ADR 0013). */
+.python-files {
+  display: flex;
+  flex: none;
+  gap: 0.25rem;
+  padding: 0.3rem 0.6rem;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--border);
+}
+
+.python-file {
+  flex: none;
+  min-height: 2rem;
+  padding: 0 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: none;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.python-file[aria-selected='true'] {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+.python-note {
+  flex: none;
+  margin: 0;
+  padding: 0.4rem 0.9rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+  border-bottom: 1px solid var(--border);
 }
 
 .studio-side {
@@ -1172,6 +1368,19 @@ code {
 .studio-problems ul {
   margin: 0.2rem 0 0;
   padding-left: 1.2rem;
+}
+
+/* A problem's text; tapping it shows the block, in its tab. */
+.problem-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-decoration: underline dotted;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
 }
 
 .studio-status {

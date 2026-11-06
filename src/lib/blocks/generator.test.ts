@@ -393,6 +393,7 @@ describe('problems', () => {
     expect(problems).toEqual([
       {
         blockId: 'run-right',
+        tabId: 'main',
         message: '“right motor” is not set up. Add a motor for it in the “set up” block.',
       },
     ]);
@@ -412,10 +413,12 @@ describe('problems', () => {
     expect(problems).toEqual([
       {
         blockId: 'colour-on-a',
+        tabId: 'main',
         message: 'Port A is already used by “left motor”. Choose another port.',
       },
       {
         blockId: 'twice',
+        tabId: 'main',
         message: '“left motor” is set up twice. Remove one of the two set-up blocks.',
       },
     ]);
