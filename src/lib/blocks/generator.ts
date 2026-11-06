@@ -34,6 +34,11 @@ import {
   type PortUse,
 } from './generator-context';
 import { DEVICES, isDeviceType, type DeviceType, type PortName } from './pybricks';
+import {
+  controllerConfig,
+  controllerSetup,
+  registerControllerGenerators,
+} from './controller-generator';
 import { registerSimpleGenerators } from './simple-generator';
 
 export interface Problem {
@@ -46,6 +51,8 @@ export interface GeneratedProgram {
   readonly code: string;
   /** Anything that must be fixed before the program can run. */
   readonly problems: readonly Problem[];
+  /** The program reads the Xbox controller, so the page offers its live view (ADR 0012). */
+  readonly usesController: boolean;
 }
 
 export interface SetUpDevice {
@@ -108,6 +115,7 @@ export function registerGenerators(): void {
   g.addReservedWords(RESERVED.join(','));
   const forBlock = g.forBlock;
   registerSimpleGenerators();
+  registerControllerGenerators();
 
   // Set-up blocks become the Config and Setup sections (generateProgram), not statements.
   for (const type of [
@@ -545,6 +553,11 @@ export function generateProgram(workspace: Blockly.Workspace): GeneratedProgram 
       motors.push(ROBOT.left, ROBOT.right);
     }
     if (needs.timer) setup.push('timer = StopWatch()');
+    // The Xbox controller last: if it is not found, nothing has moved yet (ADR 0012).
+    if (needs.controllerUses.length > 0) {
+      config.push(...controllerConfig());
+      setup.push(...controllerSetup());
+    }
     setup.push(...variables);
 
     const main = body.trimEnd() === '' ? 'pass' : body.trimEnd();
@@ -567,7 +580,7 @@ export function generateProgram(workspace: Blockly.Workspace): GeneratedProgram 
       [rule('Main'), ...mainLines],
     ].filter((section) => section.length > 0);
     const code = `${sections.map((section) => section.join('\n')).join('\n\n')}\n`;
-    return { code, problems };
+    return { code, problems, usesController: needs.controllerUses.length > 0 };
   } finally {
     endNeeds();
   }

@@ -197,6 +197,12 @@ export const TOOLBOX = {
     },
     {
       kind: 'category',
+      name: 'Controller',
+      categorystyle: 'mp_controller_category',
+      custom: 'MP_CONTROLLER',
+    },
+    {
+      kind: 'category',
       name: 'Operators',
       categorystyle: 'math_category',
       contents: OPERATOR_CONTENTS,

@@ -969,6 +969,122 @@ code {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 }
 
+.studio-drawer[data-panes='3'] {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+}
+
+/* The controller view (ADR 0012): a drawing that follows the controller, and its numbers. */
+.controller-pane {
+  overflow: auto;
+}
+
+.controller-status {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.05rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--neutral-border);
+  background: var(--neutral-bg);
+  color: var(--neutral-text);
+}
+
+.controller-status[data-status='live'] {
+  border-color: var(--ok-border);
+  background: var(--ok-bg);
+  color: var(--ok-text);
+}
+
+.controller-status[data-status='lost'],
+.controller-status[data-status='notfound'] {
+  border-color: var(--error-border);
+  background: var(--error-bg);
+  color: var(--error-text);
+}
+
+.controller-message {
+  margin: 0 0 0.4rem;
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+
+.controller-body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+}
+
+.controller-drawing {
+  flex: 1 1 14rem;
+  max-width: 22rem;
+  min-width: 0;
+  height: auto;
+}
+
+.controller-body[data-live='false'] .controller-drawing {
+  opacity: 0.55;
+}
+
+.pad-body {
+  fill: var(--bg);
+  stroke: var(--border);
+  stroke-width: 2;
+}
+
+.pad-well {
+  fill: var(--surface);
+  stroke: var(--neutral-border);
+  stroke-width: 1.5;
+}
+
+.pad-stick,
+.pad-key {
+  fill: var(--neutral-bg);
+  stroke: var(--neutral-border);
+  stroke-width: 1.5;
+}
+
+.pad-lit,
+.pad-fill {
+  fill: var(--accent);
+  stroke: var(--accent);
+}
+
+.pad-label,
+.pad-face-label {
+  font-family: var(--font-sans);
+  font-size: 9px;
+  font-weight: 700;
+  text-anchor: middle;
+  fill: var(--text);
+  pointer-events: none;
+}
+
+.pad-face-label {
+  font-size: 11px;
+}
+
+.controller-numbers {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(7rem, auto));
+  gap: 0.3rem 1rem;
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.controller-numbers dt {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.controller-numbers dd {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
 .pane {
   display: flex;
   flex-direction: column;
@@ -1451,6 +1567,30 @@ code {
   .studio-drawer[data-panes='2'] {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  /* Three panes do not fit in the drawer's height: each keeps a usable height and the drawer
+     scrolls. */
+  .studio-drawer[data-panes='3'] {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: repeat(3, minmax(15rem, auto));
+    overflow-y: auto;
+  }
+
+  /* Four panel buttons fit beside the status on a phone. */
+  .studio-status {
+    gap: 0.5rem;
+    padding: 0.35rem 0.6rem;
+  }
+
+  .studio-toggles {
+    flex: 0 1 auto;
+    min-width: 0;
+    gap: 0.25rem;
+  }
+
+  .toggle-button {
+    padding: 0.25rem 0.5rem;
   }
 
   .pane + .pane {

@@ -1,10 +1,13 @@
 /**
- * Monitor state for one page: the hub's output as text lines and as plot series.
+ * Monitor state for one page: the hub's output as text lines and as plot series, and the Xbox
+ * controller as the program's `@xbx` lines report it (src/lib/controller/xbox.ts, ADR 0012).
+ * Those lines go to the controller only, not to the text monitor or the plotter.
  *
  * Output can arrive hundreds of times a second, so subscribers are notified at most once per
  * scheduled tick (an animation frame in the browser) and read a cached snapshot.
  */
 
+import { ControllerTracker, IDLE_CONTROLLER, type ControllerSnapshot } from '../controller/xbox';
 import { LineSplitter } from './lines';
 import { MonitorLog, type LogKind, type LogLine } from './log';
 import { PlotBuffer, type SeriesData } from './plot';
@@ -16,6 +19,7 @@ export interface MonitorSnapshot {
   readonly partial: string;
   readonly series: readonly SeriesData[];
   readonly plotPaused: boolean;
+  readonly controller: ControllerSnapshot;
 }
 
 export type Scheduler = (callback: () => void) => void;
@@ -31,12 +35,14 @@ export const EMPTY_MONITOR_SNAPSHOT: MonitorSnapshot = Object.freeze({
   partial: '',
   series: [],
   plotPaused: false,
+  controller: IDLE_CONTROLLER,
 });
 
 export class MonitorStore {
   readonly #splitter = new LineSplitter();
   readonly #log: MonitorLog;
   readonly #plot: PlotBuffer;
+  readonly #controller = new ControllerTracker();
   readonly #listeners = new Set<() => void>();
   readonly #schedule: Scheduler;
   readonly #now: () => number;
@@ -68,6 +74,7 @@ export class MonitorStore {
         partial: this.#splitter.partial,
         series: this.#plot.snapshot(),
         plotPaused: this.#plotPaused,
+        controller: this.#controller.snapshot,
       };
     }
     return this.#snapshot;
@@ -91,6 +98,7 @@ export class MonitorStore {
   endOutput(): void {
     const time = this.#now();
     for (const line of this.#splitter.flush()) this.#addOut(line, time);
+    this.#controller.end();
     this.#changed();
   }
 
@@ -116,6 +124,7 @@ export class MonitorStore {
   }
 
   #addOut(text: string, time: number): void {
+    if (this.#controller.push(text, time)) return;
     this.#log.add('out', text, time);
     if (!this.#plotPaused) this.#plot.addLine(text, time);
   }

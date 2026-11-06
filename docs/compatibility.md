@@ -300,6 +300,7 @@ These check undo and redo, and saving and loading programs
 | ---------- | ---------- | ------------ | ----------- | -------- | ---------------------------------------------------------------------------------------- |
 | 2026-11-05 | Chrome 156 | macOS 27.0.1 | SPIKE Prime | 4.0.1    | Checks 1 and 2 passed; 3 to 9 not yet reported                                           |
 | 2026-11-06 | Chrome 156 | macOS 27.0.1 | SPIKE Prime | 4.0.1    | All passed: simple 1 to 10, advanced 1 to 4, layout and live values 1 to 9 (notes below) |
+| 2026-11-06 | Chrome 156 | macOS 27.0.1 | (none)      | —        | Undo, Save and Load checks 1 to 8 passed, GitHub ones included (notes below)             |
 
 The 2026-11-05 row uses the numbering of the list before it was reorganised (see the start of this
 section): its checks 1 and 2 are simple-block checks 1 and 2 today, run then with the earlier
@@ -329,6 +330,10 @@ be those of the earlier runs.
 - **Optional robot check: not run.** No two-wheel robot was built yet. From the motor turns in
   checks 5 to 7, the maintainer expects the movement blocks to be right once the wheel sizes are.
 
+Notes on the undo, save and load run (2026-11-06, reported in conversation; browser and OS
+assumed as above). Checks 1 to 4 were reported as working, and checks 5 to 8, with a GitHub
+organisation, a repository and a token, as working too. No hub is needed for these checks.
+
 ## Xbox controller check (milestone 5)
 
 The first question of milestone 5 ([roadmap](roadmap.md#5--xbox-test-panel-with-live-telemetry)):
@@ -354,6 +359,50 @@ hub's lights are (simple check 8). Nothing needs to be plugged in; no motor move
 
 Report: the side of the top row (step 3), what the page showed (step 4), and the direction and
 sign (step 5).
+
+### Xbox controller check results
+
+| Date       | Browser    | OS           | Hub         | Firmware | Controller | Result                                                                                      |
+| ---------- | ---------- | ------------ | ----------- | -------- | ---------- | ------------------------------------------------------------------------------------------- |
+| 2026-11-06 | Chrome 156 | macOS 27.0.1 | SPIKE Prime | 4.0.1    | Xbox       | Connected; the hub's Bluetooth light stayed blue (link kept, see notes); steps 3 and 5 open |
+
+Notes (2026-11-06; a photo instead of the report; browser and OS assumed as above, controller
+model not stated):
+
+- The program connected the controller: the Xbox button lit, the hub's centre button turned
+  green, and one light sat in the middle of the 5×5 lights (a centred stick).
+- The hub's Bluetooth ring was blue. In Pybricks v4.0.1 a steady blue ring means a computer is
+  connected; while advertising it gives two short blinks and a long pause, and otherwise it is off
+  ([ADR 0012](adr/0012-controller-blocks.md) cites the source). So the link to the page most
+  likely held while the controller was connected. A photo cannot tell steady from blinking, and
+  whether output kept arriving (step 4) was not reported.
+- Not reported: the side of the lit top row (step 3) and the sign of "stick up" (step 5). The
+  controller blocks' checks below show both on the page.
+
+## Controller blocks checks (milestone 5)
+
+These check the **Controller** blocks and the live controller view on `/blocks`
+([ADR 0012](adr/0012-controller-blocks.md)). Bench layout as before: motors A and B stand in for a
+robot's wheels, C for an arm.
+
+1. Open **Controller** in the toolbox and drag the first group ("repeat forever" with "drive with
+   the controller" and "motor C runs with A ↻ and B ↺") under "when the program starts".
+2. Turn the controller on and hold its pair button until the Xbox button flashes fast. Connect the
+   hub and press **Run**. The **Controller** panel opens at the bottom: "Looking for the
+   controller…" and a blue hub light, then **LIVE** and a green hub light.
+3. Push the left stick away from you. The stick in the drawing moves up and "Left stick ↕" shows a
+   number near **+100**; motors A and B turn the way a robot's wheels turn driving forward
+   (opposite directions). Let go: they stop. Report the number's sign if it is negative.
+4. Push the left stick right: A and B turn the same way (the robot turns right).
+5. Hold **A**: motor C turns ↻. Hold **B**: it turns ↺. Let go: it stops and holds. The drawing
+   lights A and B as you press them, and the triggers fill as you squeeze them.
+6. Open **Monitor**: no `@xbx` lines in it, and the page still says the hub is connected.
+7. Change "one stick" to "two sticks (tank)", then to "racing", and drive with each.
+8. Press **Menu** (☰): the program stops, the panel says Menu was pressed, and every motor stops.
+9. Run again, then switch the controller off (hold the Xbox button for about 6 seconds): the
+   panel says the controller was lost, the hub light turns red, and the motors stop.
+10. With the controller off, press Run: within about 45 seconds (the hub tries twice) the panel
+    says no controller was found.
 
 ## Keeping this file current
 

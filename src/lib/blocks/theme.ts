@@ -19,6 +19,7 @@ export const CATEGORY_COLOURS = {
   movement: '#a21caf',
   light: '#7e22ce',
   sound: '#9f1239',
+  controller: '#3f6212',
 } as const;
 
 const blockStyles = {
@@ -32,6 +33,7 @@ const blockStyles = {
   mp_light_blocks: { colourPrimary: CATEGORY_COLOURS.light },
   mp_sound_blocks: { colourPrimary: CATEGORY_COLOURS.sound },
   mp_sensor_blocks: { colourPrimary: CATEGORY_COLOURS.input },
+  mp_controller_blocks: { colourPrimary: CATEGORY_COLOURS.controller },
   loop_blocks: { colourPrimary: CATEGORY_COLOURS.flow },
   logic_blocks: { colourPrimary: CATEGORY_COLOURS.flow },
   math_blocks: { colourPrimary: CATEGORY_COLOURS.data },
@@ -52,6 +54,7 @@ const categoryStyles = {
   mp_light_category: { colour: CATEGORY_COLOURS.light },
   mp_sound_category: { colour: CATEGORY_COLOURS.sound },
   mp_sensor_category: { colour: CATEGORY_COLOURS.input },
+  mp_controller_category: { colour: CATEGORY_COLOURS.controller },
 };
 
 const fontStyle = { family: 'system-ui, -apple-system, "Segoe UI", sans-serif', size: 12 };

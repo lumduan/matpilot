@@ -17,6 +17,7 @@ import { useStoredState } from '@/hooks/useStoredState';
 import { hintsFromKey, hintsKey } from '@/lib/blocks/fields/hints';
 import { PROJECT_NAME, PROJECT_STATUS, TRADEMARK_DISCLAIMER } from '@/lib/project';
 import { CodeView } from './CodeView';
+import { ControllerPanel } from './ControllerPanel';
 import { GitHubSettingsDialog } from './GitHubSettingsDialog';
 import { LoadDialog } from './LoadDialog';
 import { SaveDialog } from './SaveDialog';
@@ -71,6 +72,11 @@ export function BlocksApp() {
     'closed',
     OPEN_CLOSED,
   );
+  const [controllerPane, setControllerPane] = useStoredState(
+    'matpilot.blocks.controller.v1',
+    'closed',
+    OPEN_CLOSED,
+  );
   const intro = useIntro();
   const { connection, monitor } = runner;
 
@@ -91,6 +97,11 @@ export function BlocksApp() {
   const problems = editor.program?.problems ?? [];
   const monitorOpen = monitorPane === 'open';
   const plotterOpen = plotterPane === 'open';
+  // The controller view is offered while the program uses the controller, or has reported it.
+  const controllerOffered =
+    (editor.program?.usesController ?? false) || monitor.controller.status !== 'idle';
+  const controllerOpen = controllerOffered && controllerPane === 'open';
+  const paneCount = [monitorOpen, plotterOpen, controllerOpen].filter(Boolean).length;
   const pythonOpen = view === 'blocks' && pythonPanel === 'open';
   const editorReady = editor.status === 'ready';
   // Shortcut names in tooltips; the server render cannot know the platform.
@@ -275,7 +286,11 @@ export function BlocksApp() {
             <button
               type="button"
               className="button button-primary button-run"
-              onClick={() => runner.runSource(code)}
+              onClick={() => {
+                // Show the controller live while a controller program runs.
+                if (editor.program?.usesController) setControllerPane('open');
+                runner.runSource(code);
+              }}
               disabled={!ready || runner.compiling || !editor.program || problems.length > 0}
               data-testid="run"
             >
@@ -465,8 +480,8 @@ export function BlocksApp() {
         )}
       </div>
 
-      {(monitorOpen || plotterOpen) && (
-        <div className="studio-drawer" data-panes={monitorOpen && plotterOpen ? 2 : 1}>
+      {paneCount > 0 && (
+        <div className="studio-drawer" data-panes={paneCount}>
           {monitorOpen && (
             <MonitorPanel
               variant="pane"
@@ -488,6 +503,7 @@ export function BlocksApp() {
               onClear={runner.clearPlot}
             />
           )}
+          {controllerOpen && <ControllerPanel controller={monitor.controller} />}
         </div>
       )}
 
@@ -579,6 +595,22 @@ export function BlocksApp() {
               </span>
             )}
           </button>
+          {controllerOffered && (
+            <button
+              type="button"
+              className="toggle-button"
+              aria-pressed={controllerOpen}
+              onClick={() => setControllerPane(controllerOpen ? 'closed' : 'open')}
+              data-testid="toggle-controller"
+            >
+              Controller
+              {!controllerOpen && monitor.controller.status === 'connected' && (
+                <span className="badge-dot">
+                  <span className="visually-hidden"> connected</span>
+                </span>
+              )}
+            </button>
+          )}
         </div>
       </footer>
     </main>

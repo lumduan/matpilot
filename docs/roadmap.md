@@ -14,7 +14,7 @@ flowchart TD
     M2["2 · mpy-cross in the browser<br/>adopt Pybricks build, golden tests<br/>DONE"]
     M3["3 · BLE transport and Program and Monitor page<br/>upload, start, stop, stdout, plotter<br/>DONE"]
     M4["4 · Blockly code generation<br/>with enforced safety rules<br/>ACTIVE — hub checks passed 2026-11-06,<br/>undo, save and load built, Tasks later"]
-    M5["5 · Xbox test panel<br/>with live telemetry<br/>READY — next, chosen by the maintainer"]
+    M5["5 · Xbox controller blocks<br/>with a live controller view<br/>ACTIVE — built, hub checks next"]
     M6["6 · Offline PWA<br/>BLOCKED — needs 2"]
     M7["7 · Mat profiles<br/>with drag-and-drop objects<br/>READY"]
     GOAL["First usable release<br/>for classrooms and competitions<br/>GOAL"]
@@ -38,32 +38,33 @@ flowchart TD
     classDef blocked  fill:#f0f0f0,stroke:#888,color:#555
     classDef goal     fill:#ede0fb,stroke:#8a5cd8,color:#4d2e8f
 
-    class M0,M4 active
+    class M0,M4,M5 active
     class M1,M2,M3 done
-    class M5,M7 ready
+    class M7 ready
     class M6 blocked
     class GOAL goal
 ```
 
-| Milestone                        | Status     | What it is                                                                                                                                                                                            | Blocker                                                                                                                                                                                                                                                                                                      |
-| -------------------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **0 · Bootstrap**                | 🟡 ACTIVE  | Static Next.js app, Docker toolchain, CI, docs, ADRs, compatibility check, read-only hub probe, hardware test page                                                                                    | Hardware verification of the other 6 supported rows (Chrome on macOS verified 2026-11-04; [checklist](compatibility.md#how-to-verify-a-row-on-hardware))                                                                                                                                                     |
-| **1 · Pybricks protocol docs**   | ✅ DONE    | [`docs/protocol/pybricks-ble.md`](protocol/pybricks-ble.md): capabilities, commands, events, program format and upload sequence, every statement cited to an upstream commit                          | —                                                                                                                                                                                                                                                                                                            |
-| **2 · mpy-cross in the browser** | ✅ DONE    | Adopt Pybricks' `@pybricks/mpy-cross-v6` WebAssembly build ([ADR 0006](adr/0006-adopt-pybricks-mpy-cross.md)); golden tests prove byte-for-byte identical output to `pybricksdev` for the same source | — (goldens byte-identical; the `.wasm` loads from this site under the CSP)                                                                                                                                                                                                                                   |
-| **3 · BLE transport**            | ✅ DONE    | Upload a compiled program, start and stop it, stream stdout, in `src/lib/ble/`; Program and Monitor page with text monitor and plotter                                                                | — (9 of 9 [hardware checks](compatibility.md#program-and-monitor-results) passed 2026-11-05)                                                                                                                                                                                                                 |
-| **4 · Blockly code generation**  | 🟡 ACTIVE  | `/blocks` ([ADR 0008](adr/0008-block-editor.md)): Blockly editor that generates Pybricks MicroPython and enforces the hub code rules (`try`/`finally` motor stop, config block, no hardcoded ports)   | Hardware checks passed 2026-11-06 ([results](compatibility.md#blocks-results)). Left: the undo, save and load checks; then Tasks (an `await`-aware generator), after milestone 5 by the maintainer's choice                                                                                                  |
-| **5 · Xbox test panel**          | 🔵 READY   | Ships a hub program that reads an Xbox controller (hub-direct, [ADR 0003](adr/0003-hub-direct-gamepad.md)) and shows its live telemetry in the browser; then controller blocks                        | Next (the maintainer, 2026-11-06). First a hardware check: does the hub keep its link to the browser while it uses the controller? The maintainer's own run in 2026-08 says no. The check program is built; waiting for its run ([checklist](compatibility.md#xbox-controller-check-milestone-5)). Xbox only |
-| **6 · Offline PWA**              | ⬜ BLOCKED | Service worker and manifest so the app, including the WebAssembly compiler, works without a network                                                                                                   | Needs 2 (the compiler must be cacheable to compile offline)                                                                                                                                                                                                                                                  |
-| **7 · Mat profiles**             | 🔵 READY   | Mat profiles with drag-and-drop objects, all in millimetres ([ADR 0004](adr/0004-millimetre-units.md))                                                                                                | None technically; scheduled last by priority                                                                                                                                                                                                                                                                 |
-| **Goal: first usable release**   | 🟪 GOAL    | Students program a robot with blocks, run it on a hub, drive it with a controller, and use the app offline                                                                                            | Needs 4, 5, 6 and 7                                                                                                                                                                                                                                                                                          |
+| Milestone                        | Status     | What it is                                                                                                                                                                                            | Blocker                                                                                                                                                                                                        |
+| -------------------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **0 · Bootstrap**                | 🟡 ACTIVE  | Static Next.js app, Docker toolchain, CI, docs, ADRs, compatibility check, read-only hub probe, hardware test page                                                                                    | Hardware verification of the other 6 supported rows (Chrome on macOS verified 2026-11-04; [checklist](compatibility.md#how-to-verify-a-row-on-hardware))                                                       |
+| **1 · Pybricks protocol docs**   | ✅ DONE    | [`docs/protocol/pybricks-ble.md`](protocol/pybricks-ble.md): capabilities, commands, events, program format and upload sequence, every statement cited to an upstream commit                          | —                                                                                                                                                                                                              |
+| **2 · mpy-cross in the browser** | ✅ DONE    | Adopt Pybricks' `@pybricks/mpy-cross-v6` WebAssembly build ([ADR 0006](adr/0006-adopt-pybricks-mpy-cross.md)); golden tests prove byte-for-byte identical output to `pybricksdev` for the same source | — (goldens byte-identical; the `.wasm` loads from this site under the CSP)                                                                                                                                     |
+| **3 · BLE transport**            | ✅ DONE    | Upload a compiled program, start and stop it, stream stdout, in `src/lib/ble/`; Program and Monitor page with text monitor and plotter                                                                | — (9 of 9 [hardware checks](compatibility.md#program-and-monitor-results) passed 2026-11-05)                                                                                                                   |
+| **4 · Blockly code generation**  | 🟡 ACTIVE  | `/blocks` ([ADR 0008](adr/0008-block-editor.md)): Blockly editor that generates Pybricks MicroPython and enforces the hub code rules (`try`/`finally` motor stop, config block, no hardcoded ports)   | Hardware checks passed 2026-11-06, and the undo, save and load checks too ([results](compatibility.md#blocks-results)). Left: Tasks (an `await`-aware generator), after milestone 5 by the maintainer's choice |
+| **5 · Xbox controller**          | 🟡 ACTIVE  | Controller blocks: the hub reads an Xbox controller (hub-direct, [ADR 0003](adr/0003-hub-direct-gamepad.md)) and the page shows it live ([ADR 0012](adr/0012-controller-blocks.md))                   | The [controller blocks checks](compatibility.md#controller-blocks-checks-milestone-5) on a hub. The first check (2026-11-06) suggests the link to the page holds. Xbox only                                    |
+| **6 · Offline PWA**              | ⬜ BLOCKED | Service worker and manifest so the app, including the WebAssembly compiler, works without a network                                                                                                   | Needs 2 (the compiler must be cacheable to compile offline)                                                                                                                                                    |
+| **7 · Mat profiles**             | 🔵 READY   | Mat profiles with drag-and-drop objects, all in millimetres ([ADR 0004](adr/0004-millimetre-units.md))                                                                                                | None technically; scheduled last by priority                                                                                                                                                                   |
+| **Goal: first usable release**   | 🟪 GOAL    | Students program a robot with blocks, run it on a hub, drive it with a controller, and use the app offline                                                                                            | Needs 4, 5, 6 and 7                                                                                                                                                                                            |
 
 **The real bottleneck is hardware access.** Hardware verification (a real SPIKE Prime hub on each
 supported browser and platform) gates milestone 0 and every BLE feature; it cannot be replaced by
 unit tests. Milestone 3, the only join on the critical path, is done (verified on a hub
 2026-11-05). Milestone 4's blocks, layout and live values passed their hardware checks on
-2026-11-06; undo, save and load are built. Milestone 5 is next by the maintainer's choice, and its
-first question is a hardware one: whether the hub keeps its Bluetooth link to the browser while
-it talks to an Xbox controller.
+2026-11-06; undo, save and load are built and passed their checks. Milestone 5, next by the
+maintainer's choice, has its controller blocks and live view built; they wait for their hardware
+checks. The first controller check suggests the hub keeps its link to the page while it uses the
+controller.
 
 ## Milestones in planned order
 
@@ -125,17 +126,32 @@ program cannot omit them.
   Save and Load as a file on this computer, or in a GitHub repository a team shares, without
   silently replacing a teammate's newer version; opening a program and Start over are one undo
   step each ([ADR 0011](adr/0011-save-load-github.md),
-  [checks](compatibility.md#undo-save-and-load-checks-milestone-4)).
+  [checks](compatibility.md#undo-save-and-load-checks-milestone-4), all passed 2026-11-06).
 - **Next:** milestone 5 comes first, by the maintainer's choice (2026-11-06). Then Tasks
   (`multitask`), which need an `await`-aware generator, and with them event blocks such as "when
   the colour sensor sees red"; then examples.
 - **Later:** live values while the user's program runs. The reader cannot run beside the user's
   program; the program would report them itself, which needs the same `await`-aware generator.
 
-### 5 · Xbox test panel with live telemetry
+### 5 · Xbox controller blocks with a live controller view
 
-A panel that uploads a controller test program and shows what the hub reports in real time. The
-browser displays telemetry only; it is not in the control loop.
+The hub reads an Xbox controller, and the page shows what it reads while the program runs. The
+browser displays only; it is not in the control loop ([ADR 0003](adr/0003-hub-direct-gamepad.md)).
+First planned as a test panel; the maintainer asked on 2026-11-06 for the controller in the
+blocks instead, for children: sticks drive, buttons run motors, and it can be watched.
+
+- **Controller blocks and the live view (built 2026-11-06,
+  [ADR 0012](adr/0012-controller-blocks.md)):**
+  - drive with the controller (one stick, tank, racing);
+  - a motor runs with a button pair, a stick or the triggers;
+  - button is pressed / was just pressed;
+  - stick and trigger values;
+  - rumble.
+  - The program reports the controller in `@xbx` lines, which the page draws in a Controller
+    pane, not in the Monitor. Menu stops the program; a lost controller stops every motor.
+  - [Checks](compatibility.md#controller-blocks-checks-milestone-5).
+- **Next:** the hardware checks; then "when button pressed" hat blocks with Tasks (milestone 4's
+  `await`-aware generator); reconnecting after the controller is lost.
 
 **Controller choice (requested 2026-11-04).** The maintainer wants a choice of controller, for
 example Xbox or PS4. **Answered 2026-11-05: the maintainer has an Xbox controller, and PS4 is not
@@ -176,8 +192,12 @@ from Python before, in
   a constant because the documentation does not say.
   - **Built 2026-11-06:** the example **Xbox controller check (no motors)** on `/program`, and its
     [checklist](compatibility.md#xbox-controller-check-milestone-5). Its lights also show which
-    way up the hub's 5×5 lights are, the question simple check 8 left open. Waiting for the
-    maintainer's run.
+    way up the hub's 5×5 lights are, the question simple check 8 left open.
+  - **Run 2026-11-06 ([results](compatibility.md#xbox-controller-check-results)):** the controller
+    connected, and the hub's Bluetooth light stayed blue, which in Pybricks v4.0.1 means a
+    computer is connected. So the link most likely held, unlike the 2026-08 `pybricksdev` run.
+    The stick sign and the lights' top side were not reported; the controller blocks' checks
+    show both.
 - If the link drops, the "live telemetry in the browser" part of this milestone, and
   [ADR 0003](adr/0003-hub-direct-gamepad.md)'s note that the browser displays telemetry, need a
   new decision by the maintainer. The hub would still drive from the controller on its own.

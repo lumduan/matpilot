@@ -5,6 +5,7 @@
  */
 import * as Blockly from 'blockly/core';
 import * as En from 'blockly/msg/en';
+import { CONTROLLER_BLOCK_DEFINITIONS } from './controller-definitions';
 import { BLOCK_DEFINITIONS } from './definitions';
 import { registerFields } from './fields';
 import { registerGenerators } from './generator';
@@ -17,9 +18,11 @@ export function registerBlocks(): void {
   registered = true;
   Blockly.setLocale(En as unknown as Record<string, string>);
   registerFields();
-  const missing = [...BLOCK_DEFINITIONS, ...SIMPLE_BLOCK_DEFINITIONS].filter(
-    (definition) => !Blockly.Blocks[definition.type],
-  );
+  const missing = [
+    ...BLOCK_DEFINITIONS,
+    ...SIMPLE_BLOCK_DEFINITIONS,
+    ...CONTROLLER_BLOCK_DEFINITIONS,
+  ].filter((definition) => !Blockly.Blocks[definition.type]);
   Blockly.common.defineBlocksWithJsonArray(missing);
   registerGenerators();
 }
