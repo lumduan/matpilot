@@ -329,6 +329,32 @@ be those of the earlier runs.
 - **Optional robot check: not run.** No two-wheel robot was built yet. From the motor turns in
   checks 5 to 7, the maintainer expects the movement blocks to be right once the wheel sizes are.
 
+## Xbox controller check (milestone 5)
+
+The first question of milestone 5 ([roadmap](roadmap.md#5--xbox-test-panel-with-live-telemetry)):
+does the hub keep its Bluetooth link to the page while it talks to an Xbox controller? The
+maintainer's earlier `pybricksdev` run (2026-08-28) says the link dropped. This check uses
+MatPilot's own connection, and also answers which way "stick up" points and which way up the
+hub's lights are (simple check 8). Nothing needs to be plugged in; no motor moves.
+
+1. Turn the Xbox controller on, then hold its pair button until the Xbox logo flashes fast.
+2. On **Program & Monitor** (`/program`), connect the hub, pick the example **Xbox controller
+   check (no motors)**, open nothing else, and press **Run**.
+3. While it searches: the hub light is blue and one row of the 5×5 lights is lit. That row is the
+   lights' top. Note which side of the hub it is on (for example, "the side with ports A and B").
+4. When the controller connects, the hub light turns green. Note what the page shows:
+   - does the status still say the hub is connected?
+   - do `left_x: … left_y: …` lines keep arriving in the monitor, and does the plotter draw them?
+   - or does the page say "Connection lost"? (The program keeps running on the hub.)
+5. Push the left stick away from you and hold it. One light follows the stick. Note whether it
+   moves towards the side of the top row, and, if lines arrive, whether `left_y` is positive or
+   negative.
+6. Press the controller's **Menu** button (☰): the program ends and the lights go off. If the page
+   lost the connection, press the hub's centre button instead, or Menu.
+
+Report: the side of the top row (step 3), what the page showed (step 4), and the direction and
+sign (step 5).
+
 ## Keeping this file current
 
 The supported and unsupported lists also live in `README.md` (copied matrix) and
