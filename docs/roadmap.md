@@ -62,7 +62,7 @@ supported browser and platform) gates milestone 0 and every BLE feature; it cann
 unit tests. Milestone 3, the only join on the critical path, is done (verified on a hub
 2026-11-05). Milestone 4's blocks, layout and live values passed their hardware checks on
 2026-11-06; undo, save and load are built and passed their checks. Tabs and functions (a program
-in several Python files) are built; the maintainer tried the first checks without a hub, and copy
+in several Python files) are built; the maintainer tried the checks that need no hub, and copy
 and paste between tabs and shared variables were added from that. The checks that run such a
 program on a hub for the first time wait for the hardware. Milestone 5 has its controller blocks and live view built; they wait for
 their hardware checks. The first controller check suggests the hub keeps its link to the page while it uses the
@@ -133,8 +133,8 @@ program cannot omit them.
   hardware):** blocks of your own (define, call, inputs) and tabs like a browser's; each tab with
   functions becomes a Python file that main imports, with the ports and devices in `setup.py`
   ([ADR 0013](adr/0013-block-tabs.md),
-  [checks](compatibility.md#tabs-and-functions-checks-milestone-4): 1 to 5 tried by the
-  maintainer without a hub; the hub ones wait). Opening a program, Start over, closing a tab and
+  [checks](compatibility.md#tabs-and-functions-checks-milestone-4): 1 to 5 and 11 to 13 tried
+  by the maintainer without a hub; the hub ones wait). Opening a program, Start over, closing a tab and
   moving a function are undone from the notice that appears, no longer with ↶ (this replaces part
   of ADR 0011). After the first try, the same day: copy and paste between tabs, a cut and pasted
   function that keeps its calls, and shared variables (🌐) for a value every tab needs (ADR 0013

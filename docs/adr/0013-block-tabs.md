@@ -1,7 +1,8 @@
 # ADR 0013: Tabs and functions in the block editor
 
 - Status: Accepted
-- Date: 2026-11-06 (decisions 10 and 11 added the same day, after the maintainer's first try)
+- Date: 2026-11-06 (decisions 10 and 11 added the same day, after the maintainer's first try;
+  decision 11 extended after the second)
 - Builds on: [ADR 0008](0008-block-editor.md) (block editor), [ADR 0010](0010-simple-blocks.md)
   (simple blocks)
 - Amends: [ADR 0011](0011-save-load-github.md) decisions 2 and 3 (how opening a program is undone;
@@ -43,6 +44,12 @@ After trying checks 1 to 5 the same day, the maintainer asked for three more thi
 - variables belonging to their tab is right ("private"), but there should also be global
   variables, just in case. Good code gives a function its values through its inputs, so they
   should rarely be needed.
+
+After trying checks 11 to 13, the maintainer asked for two more:
+
+- a way to delete a shared variable with a right-click, as a plain one is deleted. It could
+  only be deleted from its block's list (▾), which was not found;
+- a colour of their own for the 🌐 blocks: they had the plain variable blocks' colour.
 
 ## Decision
 
@@ -134,6 +141,17 @@ After trying checks 1 to 5 the same day, the maintainer asked for three more thi
     - Deleting it from one tab deletes it in every tab. When other tabs have blocks that use it,
       that is a change to the program as a whole (decision 7): the notice says how many blocks went
       and has **Undo**. Undo and Redo inside one tab never take blocks from another tab.
+    - Right-click a 🌐 block in the Variables category: **Delete the '…' variable** and **Rename
+      the '…' variable** come first in the menu, as Blockly offers on the plain variable block
+      there; the block's list (▾) has the same two. Both take Blockly's own steps: Rename asks for
+      the name, and Delete asks first when blocks in the open tab use the variable. Then the rules
+      above apply. On the blocks of a tab the right-click menu stays Blockly's own, as for the
+      plain blocks.
+    - The 🌐 blocks are a brighter pink than the plain variable blocks (`#e10089`, the plain ones
+      `#be185d`): the same family, so both read as variables, told apart at a glance. Their OKLab
+      distance is 9.3, at least 14 from every other block colour, and white text on them has a
+      contrast of 4.6:1 (`src/lib/blocks/theme.ts`, which a test holds to 4.5:1 for every block
+      colour). The 🌐 and the word "shared" still say it without colour.
     - Python: in a program of one file, a module variable in the Setup section (`laps = 0`), and a
       function that changes it says `global`. In a program of several files, setup.py's **Shared
       variables** section, and every file uses it as `setup.laps`, never `from setup import laps`,

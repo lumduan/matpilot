@@ -887,6 +887,41 @@ score = 0
     expect(tabs[0]!.workspace.getBlocksByType(SHARED_BLOCKS.set, false)).toHaveLength(1);
   });
 
+  it('can be deleted or renamed by right-clicking a 🌐 block in the Variables category', () => {
+    const tabs = openProgram([
+      { name: 'main', variables: SCORE },
+      { name: 'game', variables: SCORE },
+    ]);
+    for (const tab of tabs) watchSharedVariables(tab.workspace);
+    const twin = (tab: ProgramTab) => tab.workspace.getVariableMap().getVariableById('s-score');
+    type Option = { text: string; callback: () => void };
+    const block = tabs[1]!.workspace.newBlock(SHARED_BLOCKS.get) as Blockly.Block & {
+      customContextMenu?: (options: Option[]) => void;
+    };
+    block.setFieldValue('s-score', 'VAR');
+    const menu = () => {
+      const options: Option[] = [];
+      block.customContextMenu?.(options);
+      return options;
+    };
+    // On the blocks of a tab, the menu stays Blockly's own.
+    expect(menu()).toEqual([]);
+    // In the Variables category, as for the plain variable block there.
+    (block as unknown as { isInFlyout: boolean }).isInFlyout = true;
+    expect(menu().map((option) => option.text)).toEqual([
+      "Delete the 'score' variable",
+      "Rename the 'score' variable",
+    ]);
+
+    Blockly.dialog.setPrompt((_message, _default, answer) => answer('laps'));
+    menu()[1]!.callback();
+    expect(tabs.map((tab) => twin(tab)?.getName())).toEqual(['laps', 'laps']);
+
+    // Only the block that was right-clicked uses it: deleted at once, in every tab.
+    menu()[0]!.callback();
+    expect(tabs.map((tab) => twin(tab) ?? null)).toEqual([null, null]);
+  });
+
   it('are kept out of the plain variable blocks', () => {
     const [main] = openProgram([{ name: 'main', variables: SCORE }]);
     const block = main!.workspace.newBlock('variables_get');

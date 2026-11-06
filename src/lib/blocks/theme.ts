@@ -1,10 +1,14 @@
 /**
  * Light and dark Blockly themes in MatPilot's colours (src/app/globals.css). Block colours are
  * the same in both: each is dark enough for Blockly's white block text (contrast of at least
- * 4.5:1; the lowest, Flow and Data, is 5.0). Built-in block styles are mapped onto MatPilot's
+ * 4.5:1; the lowest, shared variables, is 4.6). Built-in block styles are mapped onto MatPilot's
  * categories: conditions and loops are Flow (Control), numbers and text are Data (Operators).
  * The simple blocks' categories (ADR 0010) share colours with the detailed ones that do the same
  * job: Motors with Output, Sensors with Input.
+ *
+ * The 🌐 blocks of shared variables (ADR 0013, decision 11) are a brighter pink than the plain
+ * variable blocks: the same family, so both read as variables, but told apart at a glance
+ * (OKLab distance 9.3 from Variables, and at least 14 from every other colour here).
  */
 import * as Blockly from 'blockly/core';
 
@@ -15,6 +19,7 @@ export const CATEGORY_COLOURS = {
   flow: '#b45309',
   data: '#15803d',
   variables: '#be185d',
+  sharedVariables: '#e10089',
   other: '#6d28d9',
   movement: '#a21caf',
   light: '#7e22ce',
@@ -42,6 +47,7 @@ const blockStyles = {
   math_blocks: { colourPrimary: CATEGORY_COLOURS.data },
   text_blocks: { colourPrimary: CATEGORY_COLOURS.data },
   variable_blocks: { colourPrimary: CATEGORY_COLOURS.variables },
+  mp_shared_variable_blocks: { colourPrimary: CATEGORY_COLOURS.sharedVariables },
 };
 
 const categoryStyles = {
