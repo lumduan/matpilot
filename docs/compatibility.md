@@ -278,8 +278,9 @@ These check undo and redo, and saving and loading programs
    blocks): it is **A** again. Press **↷**: **C** again.
 2. Press **Save**, type the name `Test 1`, and press **Save to this computer**. The file
    `Test 1.matpilot.json` appears in Downloads.
-3. Press **Start over**, then **↶**: your blocks come back, and **Save** shows the name `Test 1`
-   again.
+3. Press **Start over**, then **Undo** in the green notice: your blocks come back, and **Save**
+   shows the name `Test 1` again. (Before tabs, 2026-11-06, this was **↶**; see
+   [ADR 0013](adr/0013-block-tabs.md), decision 7.)
 4. Press **Load**, **Choose a file…**, and pick `Test 1.matpilot.json`. The blocks open, and a
    green notice says "Opened “Test 1”". Press **Undo** in the notice: the blocks you had before
    return.
@@ -293,6 +294,34 @@ These check undo and redo, and saving and loading programs
    and writes nothing. Press **Save mine as a new program**: `Test 1 2` appears on GitHub, and
    the edited file is unchanged.
 8. Press **Load**: under **From GitHub**, both programs are listed. Open `Test 1 2`.
+
+### Tabs and functions checks (milestone 4)
+
+These check tabs and functions ([ADR 0013](adr/0013-block-tabs.md)). Checks 1 to 5 and 8 to 10
+need no hub; checks 6 and 7 run a program of several files on the hub, which has not been tried
+yet. Use the bench layout (motors A and B as wheels).
+
+1. Press **+** next to the tabs. A tab `tab2` opens with its name selected: type `moves` and press
+   Enter. Try the name `math`: the page says it is already a name, and the tab keeps its name.
+2. In `moves`, open **Functions** and drag **define my_function** onto the blocks. Tap its name and
+   type `square`. Press **⊕**: an input `x` appears; tap it and type `side`.
+3. Inside **define square**, put **repeat 4 times** with **move forward for … mm** and **turn
+   right 90°**. From **Functions**, drag the **side** block into the move block's number.
+4. Open the **main** tab. In **Functions**, under "From the tab “moves”", drag **square side 0**
+   under "when the program starts" and set it to 200.
+5. Open the **Python** panel: there are buttons for `main.py`, `moves.py` and `setup.py`. `main.py`
+   has `import moves` and `moves.square(200)`; open the `moves` tab and the panel shows
+   `moves.py`, with `def square(side):`.
+6. Connect the hub and press **Run**: the robot drives a square and stops, and the Monitor shows
+   no error. (A program of several files on the hub.)
+7. In `moves`, right-click **define square** and choose **Move to the tab “main”**. The main tab
+   opens with the function in it, and the Python is one file again. Run: the same square. Press
+   **Undo** in the green notice: the function is back in `moves`.
+8. In `moves`, press **×** on the tab. The notice says the tab was closed, main's **square** block
+   says the function is gone, and **Run** is off. Press **Undo** in the notice: the tab is back.
+9. Press **Save**, save to this computer, press **Start over**, then **Load** that file: both tabs
+   come back.
+10. Reload the page: the tabs are still there, and the tab you had open is open.
 
 ### Blocks results
 

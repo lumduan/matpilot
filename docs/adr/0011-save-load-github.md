@@ -71,13 +71,16 @@ Facts checked on 2026-11-06:
    Blockly's.
 2. **Opening a program, and Start over, are one undo step each.** The blocks are replaced with
    `recordUndo` in one event group.
+   ➡️ **Replaced on 2026-11-06 by [ADR 0013](0013-block-tabs.md), decision 7:** with tabs, these
+   changes are undone from the notice that appears, and the `mp_program_meta` event below is gone.
    - A custom Blockly event (`mp_program_meta`) in the same group carries the program's name and
      its GitHub file. Undo puts back both the old blocks and the old name and file, so Undo never
      leaves a teammate's GitHub file attached to your own blocks.
    - A file is first loaded into a scratch workspace. A file with unknown blocks changes nothing
      and shows a message.
    - After loading, "when the program starts" is scrolled into view if it is out of view.
-3. **The program file is JSON**, named `<program name>.matpilot.json`:
+3. **The program file is JSON**, named `<program name>.matpilot.json` (➡️ version 2, with tabs,
+   since 2026-11-06: [ADR 0013](0013-block-tabs.md), decision 8; version 1 files still open):
    `format: "matpilot-blocks"`, `version: 1`, `name`, `savedBy`, `savedAt`, `python` (the
    generated code as a list of lines, so it reads well on GitHub; ignored when loading), and
    `workspace` (Blockly's serialization).

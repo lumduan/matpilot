@@ -57,14 +57,20 @@ Hub-direct gamepad path (planned)
    [ADR 0010](adr/0010-simple-blocks.md)): the user builds a program from blocks. The simple
    blocks choose devices by port and set values with pictures (`src/lib/blocks/fields/`); the
    detailed blocks, under Advanced, are one Pybricks call each, with a "set up" block that names
-   each device and its port. The Python program written directly on `/program` skips steps 1
-   and 2.
+   each device and its port. A program may have tabs of functions
+   ([ADR 0013](adr/0013-block-tabs.md)); each tab is a Blockly workspace. The Python program
+   written directly on `/program` skips steps 1 and 2.
 2. **Python code generation** (`src/lib/blocks/generator.ts`): blocks become Pybricks
    MicroPython source with a fixed shape that enforces the hub code rules in
    [CLAUDE.md](../CLAUDE.md):
    - ports in one Config section, and no hardcoded ports inside logic;
    - devices created once in Setup, one per port the simple blocks use, plus the drive base;
    - the main program in `try`/`finally`, stopping every motor.
+
+   Once a tab other than main has functions, the program is several files: `main.py` runs,
+   each such tab is a module it imports, and `setup.py` holds the Config, Setup and Helpers
+   sections ([ADR 0013](adr/0013-block-tabs.md)). They are compiled one by one and uploaded as
+   one program, main first.
 
    With the Controller blocks ([ADR 0012](adr/0012-controller-blocks.md)), every controller read
    goes through one helper that catches `OSError` (a lost controller) and stops the program, so
@@ -107,10 +113,10 @@ pane on `/blocks` ([ADR 0012](adr/0012-controller-blocks.md)). They never reach 
 | Hub connection      | `src/lib/ble/hub-connection.ts`                     | Upload, start, stop, stdin, stdout, REPL sessions; the only module that writes ([ADR 0007](adr/0007-ble-transport-writes.md))                                                                                                                          |
 | Compiler            | `src/lib/pybricks/compiler.ts`, `mpy.ts`            | Pybricks' mpy-cross WebAssembly build, self-hosted ([ADR 0006](adr/0006-adopt-pybricks-mpy-cross.md))                                                                                                                                                  |
 | Monitor and plotter | `src/lib/monitor/`                                  | Stream decoding, bounded log, Arduino-style plot parsing                                                                                                                                                                                               |
-| Block editor        | `src/lib/blocks/`                                   | Blockly blocks, picture fields, toolbox, themes, and the Python generator (ADRs [0008](adr/0008-block-editor.md), [0010](adr/0010-simple-blocks.md))                                                                                                   |
+| Block editor        | `src/lib/blocks/`                                   | Blockly blocks, picture fields, toolbox, themes, the Python generator, and tabs of functions (`tabs.ts`, `functions.ts`) (ADRs [0008](adr/0008-block-editor.md), [0010](adr/0010-simple-blocks.md), [0013](adr/0013-block-tabs.md))                    |
 | Live device values  | `src/lib/devices/`                                  | The reader pasted into the hub's REPL, and its line parser ([ADR 0009](adr/0009-live-device-values.md))                                                                                                                                                |
 | Pybricks constants  | `src/lib/pybricks/`                                 | UUIDs and version parsing, each cited to an upstream commit                                                                                                                                                                                            |
-| Program files       | `src/lib/blocks/program-file.ts`, `program-meta.ts` | The `.matpilot.json` file format; the program's name and GitHub file, undone with the blocks ([ADR 0011](adr/0011-save-load-github.md))                                                                                                                |
+| Program files       | `src/lib/blocks/program-file.ts`, `program-meta.ts` | The `.matpilot.json` file format, version 2 with tabs ([ADR 0013](adr/0013-block-tabs.md)); the program's name and GitHub file ([ADR 0011](adr/0011-save-load-github.md))                                                                              |
 | Controller view     | `src/lib/controller/`                               | Controller profiles and their drawing (`layout.ts`, shared by the block pickers and the pane); the `@xbx` lines a controller program prints: button order, parser, and the state the Controller pane shows ([ADR 0012](adr/0012-controller-blocks.md)) |
 | GitHub storage      | `src/lib/github/`                                   | REST client for one repository folder, and the save rule that never silently replaces a teammate's file ([ADR 0011](adr/0011-save-load-github.md))                                                                                                     |
 | Export guard        | `scripts/verify-export.mjs`                         | Fails the build without `out/index.html`, with third-party loads, or with a CSP that allows another origin                                                                                                                                             |
