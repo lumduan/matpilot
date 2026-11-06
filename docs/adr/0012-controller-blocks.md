@@ -111,3 +111,44 @@ The firmware facts this design relies on are cited in `src/lib/blocks/pybricks.t
 - About 10 printed lines a second (one value line every 100 ms, and a status line now and then)
   is little next to the Bluetooth link's capacity. The Monitor stays readable because these lines
   never reach it.
+
+## Amendment: the maintainer's review (2026-11-06)
+
+The maintainer reviewed the blocks the same day, without a hub, and asked for three changes:
+
+- do not tie the blocks to the Xbox controller: choose the controller, and show its layout;
+- drop the motor block's single port: choose the motors, more than one if needed, as "set
+  movement motors" does;
+- when choosing a button, show where it is on the controller, as a controller's settings page
+  does, so a child can tell whether it is comfortable to use.
+
+Decided:
+
+10. **"use the controller [Xbox]"**, the first block in the category and the first block of the
+    ready-made group, chooses the controller. Its picker shows each controller's drawing, name and
+    how to pair it. Only the Xbox controller is offered, because only it connects to a SPIKE Prime
+    hub (roadmap, milestone 5). Without the block, the program uses the Xbox controller. Two such
+    blocks naming different controllers are a problem to fix.
+    - Each controller is one profile in `src/lib/controller/layout.ts`: its name, how to pair it,
+      and its drawing (body, sticks, triggers, keys and which finger reaches each). The block
+      pickers and the Controller pane draw from it. Another controller later is another profile.
+11. **The motor block reads "[control] runs motors [motors]".** The control comes first, picked on
+    the controller. The motors are picked on the hub drawing: a tap adds a motor (↻), a second
+    tap turns it the other way (↺), a third removes it, and at least one stays. Motors that face
+    each other need opposite arrows, or a robot spins instead of driving.
+    - All the chosen motors move from one reading (`controller_power`), each with its own sign.
+    - A chosen motor on a wheel port is the usual port problem.
+    - A motor block saved before this change opens with motor C ↻: Blockly drops the old `PORT`
+      field, with a warning in the browser console.
+12. **Buttons, sticks and triggers are picked on the controller.**
+    - The button picker: tap a button on the drawing. It names the button and the finger that
+      presses it.
+    - The control picker: tap a stick (tap again for ↕ or ↔), a trigger or a button pair, or
+      choose from the list beside the drawing. The chosen parts light up, with ↻ and ↺ beside
+      them, and a sentence says what to do ("Hold A for ↻, B for ↺").
+    - Both pickers warn when the finger is already busy with "drive with the controller" (for
+      example the left thumb with one stick), and mark such controls with a dashed ring.
+    - Menu is shown but cannot be picked: it always stops the program.
+13. **The Controller pane names the controller and lists "Your controls"**: what each control
+    does in this program and which finger uses it, from the generator (for example "left stick
+    drives and turns the robot · left thumb", "Menu ☰ stops the program").

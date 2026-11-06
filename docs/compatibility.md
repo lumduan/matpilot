@@ -382,26 +382,32 @@ model not stated):
 ## Controller blocks checks (milestone 5)
 
 These check the **Controller** blocks and the live controller view on `/blocks`
-([ADR 0012](adr/0012-controller-blocks.md)). Bench layout as before: motors A and B stand in for a
-robot's wheels, C for an arm.
+([ADR 0012](adr/0012-controller-blocks.md), with its amendment). Bench layout as before: motors A
+and B stand in for a robot's wheels, C for an arm.
 
-1. Open **Controller** in the toolbox and drag the first group ("repeat forever" with "drive with
-   the controller" and "motor C runs with A ↻ and B ↺") under "when the program starts".
+1. Open **Controller** in the toolbox and drag the first group ("use the controller Xbox", then
+   "repeat forever" with "drive with the controller" and "A ↻ and B ↺ runs motors C ↻") under
+   "when the program starts". Tap **Xbox**: the controller's picture, name and how to pair it.
 2. Turn the controller on and hold its pair button until the Xbox button flashes fast. Connect the
-   hub and press **Run**. The **Controller** panel opens at the bottom: "Looking for the
-   controller…" and a blue hub light, then **LIVE** and a green hub light.
+   hub and press **Run**. The **Controller · Xbox** panel opens at the bottom: "Looking for the
+   controller…" and a blue hub light, then **LIVE** and a green hub light. "Your controls" lists
+   the left stick, A and B, and Menu.
 3. Push the left stick away from you. The stick in the drawing moves up and "Left stick ↕" shows a
    number near **+100**; motors A and B turn the way a robot's wheels turn driving forward
    (opposite directions). Let go: they stop. Report the number's sign if it is negative.
 4. Push the left stick right: A and B turn the same way (the robot turns right).
 5. Hold **A**: motor C turns ↻. Hold **B**: it turns ↺. Let go: it stops and holds. The drawing
    lights A and B as you press them, and the triggers fill as you squeeze them.
-6. Open **Monitor**: no `@xbx` lines in it, and the page still says the hub is connected.
-7. Change "one stick" to "two sticks (tank)", then to "racing", and drive with each.
-8. Press **Menu** (☰): the program stops, the panel says Menu was pressed, and every motor stops.
-9. Run again, then switch the controller off (hold the Xbox button for about 6 seconds): the
-   panel says the controller was lost, the hub light turns red, and the motors stop.
-10. With the controller off, press Run: within about 45 seconds (the hub tries twice) the panel
+6. Stop. Tap "A ↻ and B ↺", then the right stick on the picture: the block says "right stick ↕".
+   Tap "C ↻" and tap **D**, then **C** twice more until it reads "C ↻ D ↺" (any two motors that
+   are not A or B work). Run: the right stick turns both motors, in opposite directions, faster
+   the further you push.
+7. Open **Monitor**: no `@xbx` lines in it, and the page still says the hub is connected.
+8. Change "one stick" to "two sticks (tank)", then to "racing", and drive with each.
+9. Press **Menu** (☰): the program stops, the panel says Menu was pressed, and every motor stops.
+10. Run again, then switch the controller off (hold the Xbox button for about 6 seconds): the
+    panel says the controller was lost, the hub light turns red, and the motors stop.
+11. With the controller off, press Run: within about 45 seconds (the hub tries twice) the panel
     says no controller was found.
 
 ## Keeping this file current

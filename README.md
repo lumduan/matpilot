@@ -27,8 +27,9 @@ What works today:
   stopped. A bar above the blocks shows what is plugged into each port, with live values. Undo and
   redo buttons take changes back. **Save** and **Load** keep programs in a file on your computer, or
   in a GitHub repository that a team shares, without replacing a teammate's newer version.
-  **Controller** blocks drive the robot and run motors from an Xbox controller connected to the
-  hub, and a Controller panel shows the sticks and buttons live while the program runs. Built with
+  **Controller** blocks drive the robot and run motors from a controller connected to the hub
+  (the Xbox controller for now); buttons and sticks are picked on a picture of the controller, and
+  a Controller panel shows them live while the program runs. Built with
   Blockly.
 - **Program & Monitor** (`/program`): write MicroPython, run it on the hub, and watch its output as
   text (like Arduino's Serial Monitor) and as a live graph (like its Serial Plotter). The program is
