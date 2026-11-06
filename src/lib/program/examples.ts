@@ -17,6 +17,25 @@
  * - ForceSensor.force: FW pybricks/pupdevices/pb_type_pupdevices_forcesensor.c#L119
  * - pybricks.tools wait, StopWatch: FW pybricks/tools/pb_module_tools.c#L301 #L311;
  *   StopWatch.time: FW pybricks/tools/pb_type_stopwatch.c#L79
+ *
+ * The Xbox controller check (milestone 5's first hardware question, docs/roadmap.md) also uses:
+ * - pybricks.hubs.PrimeHub: FW pybricks/hubs/pb_module_hubs.c#L14-L21
+ * - hub.light.on(color): FW pybricks/common/pb_type_colorlight_internal.c#L35-L55;
+ *   Color members: FW pybricks/parameters/pb_type_color.c#L118-L135
+ * - hub.display.off(), pixel(row, column, brightness=100): FW pybricks/common/pb_type_lightmatrix.c
+ *   #L349 #L352, arguments #L271-L282
+ * - pybricks.parameters Button, Color: FW pybricks/parameters/pb_module_parameters.c#L11-L32;
+ *   Button.MENU: FW pybricks/parameters/pb_type_button.c#L46
+ * - pybricks.iodevices.XboxController, enabled on SPIKE Prime: FW
+ *   pybricks/iodevices/pb_module_iodevices.c#L91-L92, FW bricks/primehub/mpconfigport.h#L41
+ * - XboxController(joystick_deadzone=10, name=None, timeout=10000, connect=True), timeout in ms:
+ *   FW pybricks/iodevices/pb_type_iodevices_xbox_controller.c#L425-L435, #L451
+ * - joystick_left() returns (x, y), each -100 to 100: same file #L539-L563; buttons.pressed()
+ *   returns a set of Button: #L674-L677 (the buttons attribute), FW
+ *   pybricks/common/pb_type_keypad.c#L25-L29
+ * - a read after the controller disconnects raises OSError: same file #L168-L177
+ * - round(x) with one argument returns an int, so it can index a pixel: MP py/modbuiltins.c
+ *   #L499-L500, MP = https://github.com/pybricks/micropython/blob/13580b6ad057173f62e8b2363e01d6851bcc6699/
  */
 
 export interface ExampleProgram {
@@ -142,6 +161,54 @@ force = ForceSensor(FORCE_PORT)
 while True:
     print("reflection:", color.reflection(), "force:", force.force())
     wait(SAMPLE_MS)
+`,
+  },
+  {
+    id: 'xbox-check',
+    title: 'Xbox controller check (no motors)',
+    description:
+      'Nothing plugged in. Turn the controller on and hold its pair button until the Xbox logo flashes fast, then Run. While it searches, the hub light is blue and the top row of lights is lit. Connected: green, and one light follows the left stick. Menu ends it.',
+    source: `from pybricks.hubs import PrimeHub
+from pybricks.iodevices import XboxController
+from pybricks.parameters import Button, Color
+from pybricks.tools import wait
+
+# --- Config ---------------------------------------------------------------
+SEARCH_TIMEOUT_MS = 30000
+SAMPLE_MS = 100
+
+# --- Setup ----------------------------------------------------------------
+hub = PrimeHub()
+hub.light.on(Color.BLUE)
+# The top row (row 0) shows which side of the hub is "up" on its lights.
+for column in range(5):
+    hub.display.pixel(0, column)
+print("Searching for the Xbox controller...")
+controller = XboxController(timeout=SEARCH_TIMEOUT_MS)
+hub.light.on(Color.GREEN)
+print("Connected. Push the left stick; press Menu to end.")
+
+# --- Main -----------------------------------------------------------------
+try:
+    while True:
+        try:
+            x, y = controller.joystick_left()
+            pressed = controller.buttons.pressed()
+        except OSError:
+            # The controller was switched off or went out of range.
+            hub.light.on(Color.RED)
+            print("The controller disconnected.")
+            break
+        if Button.MENU in pressed:
+            break
+        print("left_x:", x, "left_y:", y)
+        # One light follows the stick: if pushing the stick up moves it towards
+        # the side the top row was on, "up" is a positive y.
+        hub.display.off()
+        hub.display.pixel(2 - round(y / 50), 2 + round(x / 50))
+        wait(SAMPLE_MS)
+finally:
+    hub.display.off()
 `,
   },
 ];
