@@ -7,6 +7,7 @@
 import * as Blockly from 'blockly/core';
 import { Order, pythonGenerator } from 'blockly/python';
 import { PORTS, type PortName } from './pybricks';
+import { SETUP_MODULE } from './tabs';
 
 export const INDENT = '    ';
 
@@ -116,10 +117,12 @@ export interface Needs {
   /** Controller blocks that remember something between runs of a loop, numbered from 0. */
   controllerSlots: number;
   /**
-   * The program is in several files (ADR 0013), so a motor's speed lives in setup.py and every
-   * tab reads and changes it there: `setup.motor_a_speed`.
+   * The program is in several files (ADR 0013), so motor speeds and shared variables live in
+   * setup.py and every file reads and changes them there: `setup.motor_a_speed`, `setup.score`.
    */
-  qualifySpeeds: boolean;
+  qualifySetup: boolean;
+  /** The Python name of each shared variable the program uses, by variable id (./shared.ts). */
+  readonly sharedNames: Map<string, string>;
 }
 
 let needs: Needs | null = null;
@@ -138,7 +141,8 @@ export function beginNeeds(): Needs {
     controllerChoices: [],
     controllerControls: [],
     controllerSlots: 0,
-    qualifySpeeds: false,
+    qualifySetup: false,
+    sharedNames: new Map(),
   };
   return needs;
 }
@@ -185,7 +189,13 @@ export function portDevice(block: Blockly.Block, field: string, kind: PortDevice
 export function motorSpeedAt(block: Blockly.Block, port: PortName): string {
   portDeviceAt(block, port, 'Motor');
   needs?.speeds.add(port);
-  return needs?.qualifySpeeds ? `setup.${motorSpeedName(port)}` : motorSpeedName(port);
+  return needs?.qualifySetup ? `${SETUP_MODULE}.${motorSpeedName(port)}` : motorSpeedName(port);
+}
+
+/** A shared variable's Python name: `score`, or `setup.score` in a program of several files. */
+export function sharedVariableName(id: string): string {
+  const name = needs?.sharedNames.get(id) ?? pythonGenerator.getVariableName(id);
+  return needs?.qualifySetup ? `${SETUP_MODULE}.${name}` : name;
 }
 
 /** The speed variable of the motor on the block's port; registers the motor too. */

@@ -15,7 +15,9 @@ import {
   SOUND_CONTENTS,
 } from './simple-toolbox';
 
-export type FlyoutItem = Record<string, unknown> & { readonly kind: 'block' | 'label' | 'sep' };
+export type FlyoutItem = Record<string, unknown> & {
+  readonly kind: 'block' | 'label' | 'sep' | 'button';
+};
 
 /** What the dynamic categories need to know about the workspace. */
 export interface ToolboxState {
@@ -207,7 +209,12 @@ export const TOOLBOX = {
       categorystyle: 'math_category',
       contents: OPERATOR_CONTENTS,
     },
-    { kind: 'category', name: 'Variables', categorystyle: 'variable_category', custom: 'VARIABLE' },
+    {
+      kind: 'category',
+      name: 'Variables',
+      categorystyle: 'variable_category',
+      custom: 'MP_VARIABLES',
+    },
     {
       kind: 'category',
       name: 'Functions',
