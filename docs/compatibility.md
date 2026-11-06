@@ -268,6 +268,32 @@ These check the full-window layout and the device bar ([ADR 0009](adr/0009-live-
    hub's centre button: the starter program runs on the hub (live values did not replace it).
 9. Switch **Live** off: the values disappear. Switch it on: they return.
 
+### Undo, Save and Load checks (milestone 4)
+
+These check undo and redo, and saving and loading programs
+([ADR 0011](adr/0011-save-load-github.md)). Checks 1 to 4 need no hub and no account. Checks 5 to
+8 need a GitHub account and a repository you can change (a private one is fine); they can wait.
+
+1. Change something: tap a motor block's **A** and pick **C**. Press **↶** (top right of the
+   blocks): it is **A** again. Press **↷**: **C** again.
+2. Press **Save**, type the name `Test 1`, and press **Save to this computer**. The file
+   `Test 1.matpilot.json` appears in Downloads.
+3. Press **Start over**, then **↶**: your blocks come back, and **Save** shows the name `Test 1`
+   again.
+4. Press **Load**, **Choose a file…**, and pick `Test 1.matpilot.json`. The blocks open, and a
+   green notice says "Opened “Test 1”". Press **Undo** in the notice: the blocks you had before
+   return.
+5. Press **Save**, then **Set up GitHub…**. Open **How to get a token**, make a token with the link
+   there (choose **Only select repositories** and your repository), and fill in the repository,
+   your name and the token. **Check and save** says "Connected to …".
+6. Type a note and press **Save to GitHub**. On github.com the file is in the `matpilot` folder,
+   and its commit message ends "(saved by <your name>)".
+7. On github.com, edit that file (any small change, for example in `savedBy`) and commit. Back on
+   `/blocks`, press **Save to GitHub** again. The page says someone saved it after you opened it,
+   and writes nothing. Press **Save mine as a new program**: `Test 1 2` appears on GitHub, and
+   the edited file is unchanged.
+8. Press **Load**: under **From GitHub**, both programs are listed. Open `Test 1 2`.
+
 ### Blocks results
 
 | Date       | Browser    | OS           | Hub         | Firmware | Result                                                                                   |

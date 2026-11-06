@@ -94,20 +94,22 @@ telemetry, but it is never in the control loop.
 
 ## What exists today
 
-| Component           | Location                                 | Notes                                                                                                                                                |
-| ------------------- | ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| UI shell            | `src/app/`, `src/components/`            | Static pages; `(site)` pages have the site header and footer, `(studio)` pages (`/blocks`) fill the window                                           |
-| React bindings      | `src/hooks/`                             | The only place React touches `src/lib/`                                                                                                              |
-| Compatibility check | `src/lib/compat/`                        | Pure evaluation plus a collector for browser globals                                                                                                 |
-| Hub probe           | `src/lib/ble/`                           | Framework-agnostic state machine; read-only by its types                                                                                             |
-| Hardware test       | `src/lib/hwtest/`                        | Session recorder, step logic, and plain-text report; no new BLE                                                                                      |
-| Hub connection      | `src/lib/ble/hub-connection.ts`          | Upload, start, stop, stdin, stdout, REPL sessions; the only module that writes ([ADR 0007](adr/0007-ble-transport-writes.md))                        |
-| Compiler            | `src/lib/pybricks/compiler.ts`, `mpy.ts` | Pybricks' mpy-cross WebAssembly build, self-hosted ([ADR 0006](adr/0006-adopt-pybricks-mpy-cross.md))                                                |
-| Monitor and plotter | `src/lib/monitor/`                       | Stream decoding, bounded log, Arduino-style plot parsing                                                                                             |
-| Block editor        | `src/lib/blocks/`                        | Blockly blocks, picture fields, toolbox, themes, and the Python generator (ADRs [0008](adr/0008-block-editor.md), [0010](adr/0010-simple-blocks.md)) |
-| Live device values  | `src/lib/devices/`                       | The reader pasted into the hub's REPL, and its line parser ([ADR 0009](adr/0009-live-device-values.md))                                              |
-| Pybricks constants  | `src/lib/pybricks/`                      | UUIDs and version parsing, each cited to an upstream commit                                                                                          |
-| Export guard        | `scripts/verify-export.mjs`              | Fails the build without `out/index.html` or with third-party loads                                                                                   |
+| Component           | Location                                            | Notes                                                                                                                                                |
+| ------------------- | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| UI shell            | `src/app/`, `src/components/`                       | Static pages; `(site)` pages have the site header and footer, `(studio)` pages (`/blocks`) fill the window                                           |
+| React bindings      | `src/hooks/`                                        | The only place React touches `src/lib/`                                                                                                              |
+| Compatibility check | `src/lib/compat/`                                   | Pure evaluation plus a collector for browser globals                                                                                                 |
+| Hub probe           | `src/lib/ble/`                                      | Framework-agnostic state machine; read-only by its types                                                                                             |
+| Hardware test       | `src/lib/hwtest/`                                   | Session recorder, step logic, and plain-text report; no new BLE                                                                                      |
+| Hub connection      | `src/lib/ble/hub-connection.ts`                     | Upload, start, stop, stdin, stdout, REPL sessions; the only module that writes ([ADR 0007](adr/0007-ble-transport-writes.md))                        |
+| Compiler            | `src/lib/pybricks/compiler.ts`, `mpy.ts`            | Pybricks' mpy-cross WebAssembly build, self-hosted ([ADR 0006](adr/0006-adopt-pybricks-mpy-cross.md))                                                |
+| Monitor and plotter | `src/lib/monitor/`                                  | Stream decoding, bounded log, Arduino-style plot parsing                                                                                             |
+| Block editor        | `src/lib/blocks/`                                   | Blockly blocks, picture fields, toolbox, themes, and the Python generator (ADRs [0008](adr/0008-block-editor.md), [0010](adr/0010-simple-blocks.md)) |
+| Live device values  | `src/lib/devices/`                                  | The reader pasted into the hub's REPL, and its line parser ([ADR 0009](adr/0009-live-device-values.md))                                              |
+| Pybricks constants  | `src/lib/pybricks/`                                 | UUIDs and version parsing, each cited to an upstream commit                                                                                          |
+| Program files       | `src/lib/blocks/program-file.ts`, `program-meta.ts` | The `.matpilot.json` file format; the program's name and GitHub file, undone with the blocks ([ADR 0011](adr/0011-save-load-github.md))              |
+| GitHub storage      | `src/lib/github/`                                   | REST client for one repository folder, and the save rule that never silently replaces a teammate's file ([ADR 0011](adr/0011-save-load-github.md))   |
+| Export guard        | `scripts/verify-export.mjs`                         | Fails the build without `out/index.html`, with third-party loads, or with a CSP that allows another origin                                           |
 
 ### Hub probe flow
 
@@ -132,12 +134,12 @@ does not compile.
 
 ## Boundaries enforced in code
 
-| Rule                                    | Enforcement                                                                                                                  |
-| --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| Static export only                      | `output: 'export'` in `next.config.ts`; `scripts/verify-export.mjs`                                                          |
-| No third-party origins at runtime       | `verify-export.mjs` scans exported HTML/CSS; production pages carry a `Content-Security-Policy` meta tag limited to `'self'` |
-| UI does not call Web Bluetooth directly | ESLint `no-restricted-properties` on `navigator.bluetooth` in `src/app`, `src/components`, `src/hooks`                       |
-| `src/lib/` stays framework-agnostic     | ESLint `no-restricted-imports` bans React and Next.js in `src/lib/`                                                          |
-| Hub probe is read-only                  | GATT types expose only `readValue()`; unit tests assert no writes                                                            |
-| One module writes to the hub            | `HubConnection` only; unit tests check write order, chunk size, one write in flight, and STOP before disconnect              |
-| WebAssembly only from this site         | CSP `script-src` adds `'wasm-unsafe-eval'` (no JS eval); `verify-export.mjs` requires `out/vendor/mpy-cross-v6.wasm`         |
+| Rule                                    | Enforcement                                                                                                                                                                                             |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Static export only                      | `output: 'export'` in `next.config.ts`; `scripts/verify-export.mjs`                                                                                                                                     |
+| No third-party origins at runtime       | `verify-export.mjs` scans exported HTML/CSS and pins each page's CSP: only `'self'`, plus `https://api.github.com` in `connect-src` for GitHub save and load ([ADR 0011](adr/0011-save-load-github.md)) |
+| UI does not call Web Bluetooth directly | ESLint `no-restricted-properties` on `navigator.bluetooth` in `src/app`, `src/components`, `src/hooks`                                                                                                  |
+| `src/lib/` stays framework-agnostic     | ESLint `no-restricted-imports` bans React and Next.js in `src/lib/`                                                                                                                                     |
+| Hub probe is read-only                  | GATT types expose only `readValue()`; unit tests assert no writes                                                                                                                                       |
+| One module writes to the hub            | `HubConnection` only; unit tests check write order, chunk size, one write in flight, and STOP before disconnect                                                                                         |
+| WebAssembly only from this site         | CSP `script-src` adds `'wasm-unsafe-eval'` (no JS eval); `verify-export.mjs` requires `out/vendor/mpy-cross-v6.wasm`                                                                                    |

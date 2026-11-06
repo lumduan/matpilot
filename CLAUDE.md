@@ -42,7 +42,11 @@ CI checks this.
    `true`).
 3. **No runtime requests to third-party origins.** No CDN scripts, remote fonts, analytics, or
    telemetry. Self-host every asset. `scripts/verify-export.mjs` and the production CSP meta tag
-   enforce this; do not weaken either.
+   enforce this; do not weaken either. **One exception, decided in
+   [ADR 0011](docs/adr/0011-save-load-github.md):** `connect-src` allows `https://api.github.com`,
+   which the page calls only when the user saves or loads a block program on GitHub (the
+   GitHub client in `src/lib/github/`). `verify-export.mjs` pins the CSP's sources to exactly
+   that; add no other origin without a new ADR.
 4. **No service worker** until the offline PWA milestone.
 5. **English only** for all code, comments, identifiers, documentation, and commit messages.
 6. **Conventional Commits** for commit messages (`feat(ble): ...`, `fix(compat): ...`, `docs: ...`).
@@ -91,10 +95,14 @@ entry in [NOTICE](NOTICE).
     light, sound or display.
   - `src/lib/hwtest/`: the hardware test page's session, steps, and report (the steps mirror
     docs/compatibility.md; it reuses the read-only hub probe and adds no Bluetooth code)
+  - `src/lib/github/`: saving and loading block programs in a GitHub repository
+    ([ADR 0011](docs/adr/0011-save-load-github.md)): the REST client (the only code that talks to
+    another origin), repository and folder names, and the save rule that never silently replaces
+    a teammate's newer file. The program file format is `src/lib/blocks/program-file.ts`.
 - `src/hooks/`: the only React code that creates or calls `src/lib/` objects with side effects
   (the hub probe, the compatibility check, the hub connection in `useHubRunner`, live device
-  values in `useLiveDevices`, the block editor in `useBlocksEditor`). Components may import types
-  and pure helpers.
+  values in `useLiveDevices`, the block editor in `useBlocksEditor`, GitHub in `useGitHub`).
+  Components may import types and pure helpers.
 - `src/components/`, `src/app/`: UI only. They must not touch `navigator.bluetooth` (ESLint
   enforces this).
 - Pure logic goes behind functions with Vitest unit tests next to the source (`*.test.ts`). Mock
