@@ -297,9 +297,9 @@ These check undo and redo, and saving and loading programs
 
 ### Tabs and functions checks (milestone 4)
 
-These check tabs and functions ([ADR 0013](adr/0013-block-tabs.md)). Checks 1 to 5 and 8 to 13
-need no hub; checks 6, 7 and 14 run a program of several files on the hub, which has not been tried
-yet. Use the bench layout (motors A and B as wheels).
+These check tabs and functions ([ADR 0013](adr/0013-block-tabs.md)). Checks 1 to 5, 8 to 13 and
+15 need no hub; checks 6, 7 and 14 run a program of several files on the hub, which has not been
+tried yet. Use the bench layout (motors A and B as wheels).
 
 1. Press **+** next to the tabs. A tab `tab2` opens with its name selected: type `moves` and press
    Enter. Try the name `math`: the page says it is already a name, and the tab keeps its name.
@@ -314,7 +314,8 @@ yet. Use the bench layout (motors A and B as wheels).
    `moves.py`, with `def square(side):`.
 6. Connect the hub and press **Run**: the robot drives a square and stops, and the Monitor shows
    no error. (A program of several files on the hub.)
-7. In `moves`, right-click **define square** and choose **Move to the tab “main”**. The main tab
+7. In `moves` (in `shapes` if you did check 12 first), right-click **define square** and choose
+   **Move to the tab “main”**. The main tab
    opens with the function in it, and the Python is one file again. Run: the same square. Press
    **Undo** in the green notice: the function is back in `moves`.
 8. In `moves`, press **×** on the tab. The notice says the tab was closed, main's **square** block
@@ -337,7 +338,14 @@ yet. Use the bench layout (motors A and B as wheels).
     `laps`. Rename `laps` from its 🌐 block in `shapes`: the blocks in `main` follow. Delete it
     there: the notice says how many blocks went, in every tab; press **Undo** in the notice.
 14. With the hub: add **print 🌐 laps** at the end of the main program and press **Run**. The
-    Monitor shows `1` after one square.
+    Monitor shows `1` after one square (`4` if **change shared laps by 1** is inside the repeat).
+    If you then do check 7, Run once more: `1` again, from a program of one file.
+15. The 🌐 blocks are a brighter pink than the plain **set**, **change** and variable blocks. In
+    any tab, open **Variables** and right-click the **🌐 laps** block: the menu starts with
+    **Delete the 'laps' variable** and **Rename the 'laps' variable**. Rename it to `rounds`: every
+    tab follows. Delete it: if blocks in this tab use it, the page asks first; if other tabs use it,
+    the notice says how many blocks went, in every tab, and **Undo** in the notice brings them
+    back.
 
 ### Blocks results
 
@@ -347,6 +355,7 @@ yet. Use the bench layout (motors A and B as wheels).
 | 2026-11-06 | Chrome 156 | macOS 27.0.1 | SPIKE Prime | 4.0.1    | All passed: simple 1 to 10, advanced 1 to 4, layout and live values 1 to 9 (notes below) |
 | 2026-11-06 | Chrome 156 | macOS 27.0.1 | (none)      | —        | Undo, Save and Load checks 1 to 8 passed, GitHub ones included (notes below)             |
 | 2026-11-06 | not stated | not stated   | (none)      | —        | Tabs and functions checks 1 to 5 tried; two requests came out of them (notes below)      |
+| 2026-11-06 | not stated | not stated   | (none)      | —        | Tabs and functions checks 11 to 13 passed; two more requests (notes below)               |
 
 The 2026-11-05 row uses the numbering of the list before it was reorganised (see the start of this
 section): its checks 1 and 2 are simple-block checks 1 and 2 today, run then with the earlier
@@ -395,6 +404,16 @@ were tried, and two things came out of them, both built the same day
 The maintainer also agreed that variables belong to their tab, and asked for shared (global)
 variables as well, for when one is really needed (decision 11, check 13). Checks 6 and 7 wait for
 the hub.
+
+Notes on the second tabs and functions run (2026-11-06, the maintainer, reported in conversation
+with a screenshot; browser and OS not stated). Checks 11 to 13 worked. Two requests came out of
+them, both built the same day (decision 11, check 15):
+
+- **A shared variable could not be found to delete.** It had Delete only in its block's list (▾),
+  while a plain variable is also deleted with a right-click in the Variables category. Now a
+  right-click on a 🌐 block there offers Delete and Rename too.
+- **The 🌐 blocks had the plain variable blocks' colour.** Now they are a brighter pink of the same
+  family.
 
 ## Xbox controller check (milestone 5)
 

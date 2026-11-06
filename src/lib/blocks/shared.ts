@@ -12,6 +12,9 @@
  * tab is missing, and `watchSharedVariables` renames or deletes it in every tab when it is renamed
  * or deleted in one.
  *
+ * The 🌐 blocks have a pink of their own (./theme.ts). Right-click one in the Variables category
+ * to delete or rename its variable, as with the plain variable block there.
+ *
  * In Python a shared variable is a module-level name. In a program of one file it is in main.py's
  * Setup section, and a function that changes it says `global`. In a program of several files it
  * is in setup.py's "Shared variables" section, and every file uses it as `setup.score`: an
@@ -37,6 +40,9 @@ export const SHARED_BLOCKS = {
 } as const;
 
 const CREATE_SHARED_VARIABLE = 'MP_CREATE_SHARED_VARIABLE';
+
+/** The 🌐 blocks' block style (./theme.ts). */
+export const SHARED_BLOCK_STYLE = 'mp_shared_variable_blocks';
 
 /** Blockly's own variable blocks: they list the tab's variables (and devices), not shared ones. */
 const PLAIN_VARIABLE_BLOCKS = ['variables_get', 'variables_set', 'math_change'];
@@ -69,7 +75,7 @@ export const SHARED_BLOCK_DEFINITIONS: readonly BlockJson[] = [
     inputsInline: true,
     previousStatement: null,
     nextStatement: null,
-    style: 'variable_blocks',
+    style: SHARED_BLOCK_STYLE,
     tooltip: `Sets a shared variable. ${SHARED_TOOLTIP}`,
   },
   {
@@ -79,7 +85,7 @@ export const SHARED_BLOCK_DEFINITIONS: readonly BlockJson[] = [
     inputsInline: true,
     previousStatement: null,
     nextStatement: null,
-    style: 'variable_blocks',
+    style: SHARED_BLOCK_STYLE,
     tooltip: `Adds a number to a shared variable. ${SHARED_TOOLTIP}`,
   },
   {
@@ -87,10 +93,47 @@ export const SHARED_BLOCK_DEFINITIONS: readonly BlockJson[] = [
     message0: '%1 %2',
     args0: [icon, sharedField],
     output: null,
-    style: 'variable_blocks',
+    style: SHARED_BLOCK_STYLE,
     tooltip: `The value of a shared variable. ${SHARED_TOOLTIP}`,
   },
 ];
+
+type MenuOption =
+  | Blockly.ContextMenuRegistry.ContextMenuOption
+  | Blockly.ContextMenuRegistry.LegacyContextMenuOption;
+
+/**
+ * The right-click menu of a 🌐 block in the Variables category: delete or rename its variable,
+ * first in the menu, as Blockly's plain variable block offers there. Both use Blockly's own steps,
+ * the same as the block's list (▾): Rename asks for the name, and Delete asks first when blocks in
+ * this tab use the variable; watchSharedVariables then does it in every tab.
+ */
+function sharedVariableMenu(this: Blockly.Block, options: MenuOption[]): void {
+  if (!this.isInFlyout) return;
+  const variable = (this.getField('VAR') as Blockly.FieldVariable | null)?.getVariable();
+  if (!variable) return;
+  const workspace = variable.getWorkspace();
+  const flyout = this.workspace;
+  const deleteText = Blockly.Msg['DELETE_VARIABLE'] ?? "Delete the '%1' variable";
+  options.unshift(
+    {
+      text: deleteText.replace('%1', variable.getName()),
+      enabled: true,
+      callback: () => {
+        Blockly.Variables.deleteVariable(workspace, variable, this);
+        if (flyout instanceof Blockly.WorkspaceSvg) flyout.refreshToolboxSelection();
+      },
+    },
+    {
+      text: (Blockly.Msg['RENAME_VARIABLE'] ?? "Rename the '%1' variable").replace(
+        '%1',
+        variable.getName(),
+      ),
+      enabled: true,
+      callback: () => Blockly.Variables.renameVariable(workspace, variable),
+    },
+  );
+}
 
 let registered = false;
 
@@ -101,6 +144,10 @@ export function registerSharedBlocks(): void {
   Blockly.common.defineBlocksWithJsonArray(
     SHARED_BLOCK_DEFINITIONS.filter((definition) => !Blockly.Blocks[definition.type]),
   );
+  for (const type of Object.values(SHARED_BLOCKS)) {
+    const definition = Blockly.Blocks[type] as { customContextMenu?: unknown } | undefined;
+    if (definition) definition.customContextMenu = sharedVariableMenu;
+  }
   for (const type of PLAIN_VARIABLE_BLOCKS) {
     const definition = Blockly.Blocks[type] as
       { init?: (this: Blockly.Block) => void; mpTabOnly?: boolean } | undefined;
