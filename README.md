@@ -26,7 +26,8 @@ What works today:
   make opens beside them or fills the window, and every motor stops when the program ends or is
   stopped. A bar above the blocks shows what is plugged into each port, with live values. Make
   blocks of your own (**Functions**) and keep them in tabs, like a browser's: each tab becomes a
-  Python file that the main tab imports. Undo and redo buttons take changes back. **Save** and **Load** keep programs in a file on your computer, or
+  Python file that the main tab imports. Copy and paste work between tabs, and a shared variable
+  (🌐) is there for a value every tab needs. Undo and redo buttons take changes back. **Save** and **Load** keep programs in a file on your computer, or
   in a GitHub repository that a team shares, without replacing a teammate's newer version.
   **Controller** blocks drive the robot and run motors from a controller connected to the hub
   (the Xbox controller for now); buttons and sticks are picked on a picture of the controller, and

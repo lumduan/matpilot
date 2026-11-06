@@ -1,7 +1,7 @@
 # ADR 0013: Tabs and functions in the block editor
 
 - Status: Accepted
-- Date: 2026-11-06
+- Date: 2026-11-06 (decisions 10 and 11 added the same day, after the maintainer's first try)
 - Builds on: [ADR 0008](0008-block-editor.md) (block editor), [ADR 0010](0010-simple-blocks.md)
   (simple blocks)
 - Amends: [ADR 0011](0011-save-load-github.md) decisions 2 and 3 (how opening a program is undone;
@@ -32,6 +32,17 @@ What the hub does with a program in several modules (Pybricks v4.0.1, cited in
 - A program module is registered as loaded before its code runs. So two modules that import each
   other each get the other's module, and `other.function()` works once both have run.
 - `from module import name` copies the value once; a later change in the module is not seen.
+- `module.name = value` stores into a program module's own names (only a built-in module's are
+  fixed), so every module that uses `module.name` sees the change.
+
+After trying checks 1 to 5 the same day, the maintainer asked for three more things:
+
+- copy and paste between tabs: Blockly pasted into the tab the blocks came from, even when that
+  tab was hidden;
+- a function that is cut and pasted back should work again: its calls still said it was gone;
+- variables belonging to their tab is right ("private"), but there should also be global
+  variables, just in case. Good code gives a function its values through its inputs, so they
+  should rarely be needed.
 
 ## Decision
 
@@ -65,7 +76,8 @@ What the hub does with a program in several modules (Pybricks v4.0.1, cited in
    tab "…"**, which moves the function and keeps its calls.
 4. **Variables belong to their tab**, as a module's names do in Python. A value goes into a
    function through its inputs. A function says `global` for the module names it uses: its tab's
-   variables, and the motor speeds when the program is one file.
+   variables, and the motor speeds and shared variables when the program is one file. Shared
+   variables, which every tab can use, are decision 11.
 5. **Python files.**
    - While no tab but main has a function, the program stays **one file**, exactly as before tabs,
      with a Functions section before Main when main has functions.
@@ -103,14 +115,42 @@ What the hub does with a program in several modules (Pybricks v4.0.1, cited in
    is turned off for a program of several files. **Run** compiles every file and sends them as one
    program, main first.
 
+10. **Copy and paste between tabs.** Ctrl+V (⌘V) pastes into the tab you are in, near the
+    middle of what it shows, also when the blocks were copied in another tab; within one tab,
+    Blockly's own paste is unchanged. The right-click menu gets **Copy** on a block and **Paste**
+    on the empty block area (where it was opened), for touch screens and for children who do not
+    know the keys. A pasted define block gets a new id, so a call whose define block is gone runs
+    the one function with its name, if there is exactly one: a function that is cut and pasted, in
+    its own tab or another, keeps its calls.
+11. **Shared variables** are for a value that really belongs to the whole program. The Variables
+    category has the tab's own variables first, then **Create shared variable...** and the 🌐
+    blocks: **set shared**, **change shared**, and the value. The category says that inputs are
+    the better way to give a function a value.
+    - A shared variable is in every tab, with the same name; renaming it in one tab renames it in
+      all. The plain variable blocks list only the tab's own variables, so a shared one is always
+      shown with the 🌐.
+    - Its name is used by nothing else: making one refuses a name a tab's variable or a device
+      has, and a tab variable or a function with a shared variable's name is a problem.
+    - Deleting it from one tab deletes it in every tab. When other tabs have blocks that use it,
+      that is a change to the program as a whole (decision 7): the notice says how many blocks went
+      and has **Undo**. Undo and Redo inside one tab never take blocks from another tab.
+    - Python: in a program of one file, a module variable in the Setup section (`laps = 0`), and a
+      function that changes it says `global`. In a program of several files, setup.py's **Shared
+      variables** section, and every file uses it as `setup.laps`, never `from setup import laps`,
+      which would copy it once (the context above).
+
 ## Consequences
 
 - A big program can be split into tabs, and its Python reads like a small project of modules.
 - Children meet a real Python rule: a variable belongs to its file. The messages say what to do,
-  and inputs are the way to give a function a value.
+  and inputs are the way to give a function a value. When a value must be shared, the 🌐 blocks
+  make it visible in the blocks, and `setup.laps` in the Python shows where it lives.
 - A function in main cannot be shared with other tabs; **Move to the tab** fixes that in one step.
 - Undo of a whole-program change is in the notice only, for one step, while the notice shows
-  (12 seconds). Before this, ↶ could also undo opening a program.
+  (12 seconds). Before this, ↶ could also undo opening a program. Deleting a shared variable that
+  other tabs use is one of these changes.
+- Pasting into the open tab replaces Blockly's paste key with a wrapper (`src/lib/blocks/
+clipboard.ts`); a Blockly upgrade that changes the paste shortcut needs a look there.
 - Programs from before tabs make the same Python as before (the tests check it).
 - **Not yet checked on a hub:** a program of several modules. The firmware code that runs it is
   cited above. The generated files compile with the hub's compiler (in the tests), and two such

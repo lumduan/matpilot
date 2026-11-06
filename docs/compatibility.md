@@ -297,8 +297,8 @@ These check undo and redo, and saving and loading programs
 
 ### Tabs and functions checks (milestone 4)
 
-These check tabs and functions ([ADR 0013](adr/0013-block-tabs.md)). Checks 1 to 5 and 8 to 10
-need no hub; checks 6 and 7 run a program of several files on the hub, which has not been tried
+These check tabs and functions ([ADR 0013](adr/0013-block-tabs.md)). Checks 1 to 5 and 8 to 13
+need no hub; checks 6, 7 and 14 run a program of several files on the hub, which has not been tried
 yet. Use the bench layout (motors A and B as wheels).
 
 1. Press **+** next to the tabs. A tab `tab2` opens with its name selected: type `moves` and press
@@ -322,6 +322,22 @@ yet. Use the bench layout (motors A and B as wheels).
 9. Press **Save**, save to this computer, press **Start over**, then **Load** that file: both tabs
    come back.
 10. Reload the page: the tabs are still there, and the tab you had open is open.
+11. Copy and paste between tabs: in `main`, click a block and press Ctrl+C (⌘C on a Mac). Open
+    `moves`, click an empty place and press Ctrl+V: the copy appears in `moves`, near the middle.
+    Then right-click a block in `moves`, choose **Copy**, open `main`, right-click an empty place
+    and choose **Paste**: the copy appears where you right-clicked.
+12. Cut and paste a function: in `moves`, click **define square** and press Ctrl+X. Main's
+    **square** block says the function is gone. Make a tab `shapes`, click an empty place and
+    press Ctrl+V: the problem is gone, and `main.py` has `import shapes` and `shapes.square(200)`.
+13. Shared variables: in `main`, open **Variables** and press **Create shared variable...**; name it
+    `laps`. Drag **🌐 set shared laps to 0** under "when the program starts". Open `shapes` (from
+    check 12): under Variables, `laps` is there too. Put **🌐 change shared laps by 1** inside
+    **define square**. The Python panel's `setup.py` has `laps = 0` under "Shared variables", and
+    `main.py` and `shapes.py` use `setup.laps`. The plain **set** block's list does not offer
+    `laps`. Rename `laps` from its 🌐 block in `shapes`: the blocks in `main` follow. Delete it
+    there: the notice says how many blocks went, in every tab; press **Undo** in the notice.
+14. With the hub: add **print 🌐 laps** at the end of the main program and press **Run**. The
+    Monitor shows `1` after one square.
 
 ### Blocks results
 
@@ -330,6 +346,7 @@ yet. Use the bench layout (motors A and B as wheels).
 | 2026-11-05 | Chrome 156 | macOS 27.0.1 | SPIKE Prime | 4.0.1    | Checks 1 and 2 passed; 3 to 9 not yet reported                                           |
 | 2026-11-06 | Chrome 156 | macOS 27.0.1 | SPIKE Prime | 4.0.1    | All passed: simple 1 to 10, advanced 1 to 4, layout and live values 1 to 9 (notes below) |
 | 2026-11-06 | Chrome 156 | macOS 27.0.1 | (none)      | —        | Undo, Save and Load checks 1 to 8 passed, GitHub ones included (notes below)             |
+| 2026-11-06 | not stated | not stated   | (none)      | —        | Tabs and functions checks 1 to 5 tried; two requests came out of them (notes below)      |
 
 The 2026-11-05 row uses the numbering of the list before it was reorganised (see the start of this
 section): its checks 1 and 2 are simple-block checks 1 and 2 today, run then with the earlier
@@ -362,6 +379,22 @@ be those of the earlier runs.
 Notes on the undo, save and load run (2026-11-06, reported in conversation; browser and OS
 assumed as above). Checks 1 to 4 were reported as working, and checks 5 to 8, with a GitHub
 organisation, a repository and a token, as working too. No hub is needed for these checks.
+
+Notes on the first tabs and functions run (2026-11-06, the maintainer, reported in conversation
+with a screen recording that did not reach the agent; browser and OS not stated). Checks 1 to 5
+were tried, and two things came out of them, both built the same day
+([ADR 0013](adr/0013-block-tabs.md), decision 10):
+
+- **Copy and paste could not go from one tab to another.** Blockly pastes into the tab the blocks
+  were copied from, even when that tab is hidden. Now Ctrl+V pastes into the open tab, and the
+  right-click menu has Copy and Paste (check 11).
+- **A function that was cut and pasted back still showed as gone.** A pasted block gets a new id,
+  and calls found their function by id only. Now a call whose function is gone finds the one
+  function with its name (check 12).
+
+The maintainer also agreed that variables belong to their tab, and asked for shared (global)
+variables as well, for when one is really needed (decision 11, check 13). Checks 6 and 7 wait for
+the hub.
 
 ## Xbox controller check (milestone 5)
 
