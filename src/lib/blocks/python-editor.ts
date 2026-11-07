@@ -6,9 +6,16 @@
  *
  * Loaded only when someone presses Edit, so the Blocks page does not carry it otherwise.
  */
+import {
+  autocompletion,
+  snippetCompletion,
+  type Completion,
+  type CompletionContext,
+  type CompletionResult,
+} from '@codemirror/autocomplete';
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
 import { python } from '@codemirror/lang-python';
-import { HighlightStyle, indentUnit, syntaxHighlighting } from '@codemirror/language';
+import { HighlightStyle, indentUnit, syntaxHighlighting, syntaxTree } from '@codemirror/language';
 import { lintGutter, setDiagnostics, type Diagnostic } from '@codemirror/lint';
 import {
   EditorState,
@@ -22,12 +29,14 @@ import {
   EditorView,
   drawSelection,
   highlightActiveLine,
+  hoverTooltip,
   keymap,
   lineNumbers,
   type DecorationSet,
 } from '@codemirror/view';
 import { tags } from '@lezer/highlight';
 import type { PythonProblem, TextRange } from './from-python/tab';
+import { wordFor, wordsAfter, type ProgramNames, type Word } from './from-python/vocabulary';
 
 export interface PythonEditorOptions {
   readonly host: HTMLElement;
@@ -36,6 +45,8 @@ export interface PythonEditorOptions {
   readonly editable: readonly TextRange[];
   /** The file's name, for screen readers. */
   readonly label: string;
+  /** This program's names, suggested along with the blocks' Python. */
+  readonly names: ProgramNames;
   readonly onChange: (text: string) => void;
   /** Someone tried to change a part made from the blocks. */
   readonly onLocked: () => void;
@@ -75,6 +86,84 @@ function onlyEditable(
 }
 
 const lockedMark = Decoration.mark({ class: 'cm-locked' });
+
+/** Inside a text in quotes or a comment, nothing is suggested or explained. */
+function inTextOrComment(state: EditorState, position: number): boolean {
+  const name = syntaxTree(state).resolveInner(position, -1).name;
+  return name === 'String' || name === 'FormatString' || name === 'Comment';
+}
+
+/** The help for a word: its shape, what it does, the block it becomes, and an example. */
+function help(word: Word, path: string): HTMLElement {
+  const box = document.createElement('div');
+  box.className = 'cm-mp-help';
+  const head = document.createElement('div');
+  head.className = 'cm-mp-help-head';
+  head.textContent = `${path ? `${path}.` : ''}${word.label.split(' ')[0]}${word.detail ? ` ${word.detail}` : ''}`;
+  const info = document.createElement('p');
+  info.textContent = word.info;
+  box.append(head, info);
+  if (word.block) {
+    const block = document.createElement('p');
+    block.className = 'cm-mp-help-block';
+    block.textContent = `Block: ${word.block}`;
+    box.append(block);
+  }
+  if (word.example) {
+    const example = document.createElement('pre');
+    example.textContent = word.example;
+    box.append(example);
+  }
+  return box;
+}
+
+/** Suggestions while typing: after `robot.` what the robot can do, and so on. */
+function suggestions(names: ProgramNames) {
+  return (context: CompletionContext): CompletionResult | null => {
+    if (inTextOrComment(context.state, context.pos)) return null;
+    const before = context.matchBefore(/[\w.]*$/);
+    const text = before?.text ?? '';
+    const dot = text.lastIndexOf('.');
+    const path = dot >= 0 ? text.slice(0, dot) : '';
+    const typed = dot >= 0 ? text.slice(dot + 1) : text;
+    if (!context.explicit && dot < 0 && typed === '') return null;
+    if (/^\d/.test(text)) return null;
+    const words = wordsAfter(path, names);
+    if (words.length === 0) return null;
+    const options: Completion[] = words.map((word) =>
+      snippetCompletion(word.insert, {
+        label: word.label,
+        detail: word.detail,
+        type: word.kind,
+        info: () => help(word, path),
+        ...(word.boost === undefined ? {} : { boost: word.boost }),
+      }),
+    );
+    return { from: (before?.from ?? context.pos) + dot + 1, options, validFor: /^\w*$/ };
+  };
+}
+
+/** The help for the name under the pointer. */
+function explain(names: ProgramNames) {
+  return hoverTooltip((view, position) => {
+    if (inTextOrComment(view.state, position)) return null;
+    const line = view.state.doc.lineAt(position);
+    const text = line.text;
+    let start = position - line.from;
+    let end = start;
+    while (start > 0 && /[\w.]/.test(text[start - 1]!)) start -= 1;
+    while (end < text.length && /\w/.test(text[end]!)) end += 1;
+    const path = text.slice(start, end).split('.').filter(Boolean);
+    const word = wordFor(path, names);
+    if (!word) return null;
+    return {
+      pos: line.from + start,
+      end: line.from + end,
+      above: true,
+      create: () => ({ dom: help(word, path.slice(0, -1).join('.')) }),
+    };
+  });
+}
 
 /** The read-only parts, greyed. */
 function lockedDecorations(doc: Text, ranges: readonly TextRange[]): DecorationSet {
@@ -116,7 +205,9 @@ const theme = EditorView.theme({
     backgroundColor: 'var(--bg)',
     color: 'var(--text)',
   },
-  '.cm-scroller': { fontFamily: 'var(--font-mono)', lineHeight: '1.5' },
+  // The scroll bar's room is kept even when it is not needed, so the width stays the same and
+  // long lines do not wrap differently when the editor grows or shrinks.
+  '.cm-scroller': { fontFamily: 'var(--font-mono)', lineHeight: '1.5', scrollbarGutter: 'stable' },
   '.cm-content': { caretColor: 'var(--text)' },
   '.cm-cursor': { borderLeftColor: 'var(--text)' },
   '.cm-gutters': {
@@ -125,6 +216,9 @@ const theme = EditorView.theme({
     borderRight: '1px solid var(--border)',
   },
   '.cm-activeLine': { backgroundColor: 'var(--code-active-line)' },
+  // A fixed width: a problem's dot coming and going must not change how long lines wrap.
+  '.cm-gutter-lint': { width: '1.1em' },
+  '.cm-gutter-lint .cm-gutterElement': { padding: '0 0.15em' },
   '&.cm-focused .cm-selectionBackground, .cm-selectionBackground, ::selection': {
     backgroundColor: 'var(--code-selection)',
   },
@@ -134,6 +228,25 @@ const theme = EditorView.theme({
     backgroundColor: 'var(--surface)',
     color: 'var(--text)',
     border: '1px solid var(--border)',
+  },
+  '.cm-tooltip-autocomplete ul li[aria-selected]': {
+    backgroundColor: 'var(--accent)',
+    color: 'var(--accent-text)',
+  },
+  '.cm-completionDetail': { color: 'var(--muted)', fontStyle: 'normal', marginLeft: '0.5em' },
+  '.cm-tooltip-autocomplete ul li[aria-selected] .cm-completionDetail': { color: 'inherit' },
+  '.cm-completionInfo, .cm-tooltip-hover': { maxWidth: '22rem' },
+  '.cm-mp-help': { padding: '0.35rem 0.5rem', fontFamily: 'var(--font-sans)', fontSize: '0.8rem' },
+  '.cm-mp-help-head': { fontFamily: 'var(--font-mono)', fontWeight: '600' },
+  '.cm-mp-help p': { margin: '0.3rem 0 0' },
+  '.cm-mp-help-block': { color: 'var(--muted)' },
+  '.cm-mp-help pre': {
+    margin: '0.35rem 0 0',
+    padding: '0.3rem 0.4rem',
+    fontFamily: 'var(--font-mono)',
+    backgroundColor: 'var(--bg)',
+    borderRadius: '0.3rem',
+    whiteSpace: 'pre-wrap',
   },
 });
 
@@ -149,6 +262,8 @@ export function createPythonEditor(options: PythonEditorOptions): PythonEditorHa
     python(),
     syntaxHighlighting(highlight),
     lintGutter(),
+    autocompletion({ override: [suggestions(options.names)], icons: true }),
+    explain(options.names),
     keymap.of([...defaultKeymap, ...historyKeymap, indentWithTab]),
     editableField.init(() => options.editable),
     EditorState.changeFilter.of((tr) => {

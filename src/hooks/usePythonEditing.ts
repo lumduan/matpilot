@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { PythonProblem, TextRange } from '@/lib/blocks/from-python/tab';
+import type { ProgramNames } from '@/lib/blocks/from-python/vocabulary';
 import type { PythonEditorHandle } from '@/lib/blocks/python-editor';
 import { compilePython } from '@/lib/pybricks/compiler';
 import type { BlocksEditor } from './useBlocksEditor';
@@ -38,6 +39,7 @@ interface Session {
   readonly fileName: string;
   readonly text: string;
   readonly editable: readonly TextRange[];
+  readonly names: ProgramNames;
 }
 
 function withLines(text: string, problems: readonly PythonProblem[]): ShownProblem[] {
@@ -106,6 +108,7 @@ export function usePythonEditing(editor: BlocksEditor): PythonEditing {
           host: hostElement,
           text: session.text,
           editable: session.editable,
+          names: session.names,
           label: `Python: ${session.fileName}`,
           onChange: (source) => {
             text.current = source;
@@ -164,6 +167,7 @@ export function usePythonEditing(editor: BlocksEditor): PythonEditing {
           fileName: edit.fileName,
           text: edit.text,
           editable: edit.editable,
+          names: edit.names,
         });
       },
       (error: unknown) => {

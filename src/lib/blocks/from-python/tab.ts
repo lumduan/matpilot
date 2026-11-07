@@ -9,7 +9,7 @@
  * are replaced; the "set up" block, loose blocks, and blocks that only change the Config are
  * kept. It changes nothing itself: it returns the problems, or the tab's new saved state.
  */
-import type { SyntaxNode } from '@lezer/common';
+import type { SyntaxNode, Tree } from '@lezer/common';
 import * as Blockly from 'blockly/core';
 import { pythonGenerator } from 'blockly/python';
 import {
@@ -27,6 +27,7 @@ import { PYTHON_NAME, isReservedName, type ProgramTab } from '../tabs';
 import {
   Reader,
   SILENT_BLOCKS,
+  addComment,
   chain,
   newId,
   type FunctionRef,
@@ -34,6 +35,7 @@ import {
 } from './reader';
 import type { BlockState } from './shadows';
 import { Source, parsePython, parts, statements, type PythonProblem } from './syntax';
+import type { ProgramNames } from './vocabulary';
 
 export type { PythonProblem } from './syntax';
 
@@ -50,6 +52,8 @@ export interface PythonEdit {
   readonly text: string;
   /** The parts the user may change; the rest is made from the blocks. */
   readonly editable: readonly TextRange[];
+  /** This program's names, for the editor's suggestions (./vocabulary.ts). */
+  readonly names: ProgramNames;
 }
 
 const FUNCTIONS = 'Functions';
@@ -111,7 +115,41 @@ export function pythonForEditing(tabs: readonly ProgramTab[], tabId: string): Py
       ? `${text.slice(0, main.from)}${section}${text.slice(main.from)}`
       : `${text.trimEnd()}\n\n${section}`;
   }
-  return { tabId, fileName, text, editable: editableRanges(text, isMain) };
+  return {
+    tabId,
+    fileName,
+    text,
+    editable: editableRanges(text, isMain),
+    names: programNames(tabs, tab),
+  };
+}
+
+/** The names the tab's Python may use: its variables, shared ones, devices, functions, tabs. */
+export function programNames(tabs: readonly ProgramTab[], tab: ProgramTab): ProgramNames {
+  const main = tabs[0]!;
+  const shared: string[] = [];
+  for (const [name, variable] of pythonNames(main.workspace)) {
+    if (variable.getType() === SHARED_VARIABLE_TYPE) shared.push(name);
+  }
+  const variables: string[] = [];
+  const devices: { name: string; type: DeviceType }[] = [];
+  for (const [name, variable] of pythonNames(tab.workspace)) {
+    const type = variable.getType();
+    if (isDeviceType(type)) devices.push({ name, type });
+    else if (type === '') variables.push(name);
+  }
+  const functions: { name: string; inputs: string[]; tab: string | null }[] = [];
+  const modules = new Set<string>();
+  for (const info of collectFunctions(tabs).values()) {
+    if (!info.enabled) continue;
+    const inputs = info.inputs.map((input) => input.name);
+    if (info.tab === tab) functions.push({ name: info.name, inputs, tab: null });
+    else if (info.tab !== main) {
+      functions.push({ name: info.name, inputs, tab: info.tab.name });
+      modules.add(info.tab.name);
+    }
+  }
+  return { variables, shared, devices, functions, tabs: [...modules] };
 }
 
 export interface PythonRead {
@@ -161,6 +199,26 @@ function pythonNames(
   return out;
 }
 
+/** The `#` comments inside these spans, in order (section headings are not comments). */
+function editableComments(
+  tree: Tree,
+  source: Source,
+  spans: readonly ({ from: number; to: number } | null | undefined)[],
+): SyntaxNode[] {
+  const inside = spans.filter((span): span is { from: number; to: number } => !!span);
+  const out: SyntaxNode[] = [];
+  tree.iterate({
+    enter(node) {
+      if (node.name !== 'Comment') return;
+      const text = source.of(node.node);
+      const heading = RULE.exec(text);
+      if (heading && text === rule(heading[1]!)) return;
+      if (inside.some((span) => node.from >= span.from && node.from < span.to)) out.push(node.node);
+    },
+  });
+  return out;
+}
+
 /** Names assigned anywhere in these statements (`x = ...`, `x += ...`). */
 function assignedNames(source: Source, nodes: readonly SyntaxNode[]): Set<string> {
   const out = new Set<string>();
@@ -201,10 +259,18 @@ export function readTabPython(
   const definitions: SyntaxNode[] = [];
   let program: SyntaxNode[] = [];
   let section = '';
+  // Where the Functions part and main's program are, for their comments.
+  const spans = new Map<string, { from: number; to: number }>();
+  let mainBody: { from: number; to: number } | null = null;
   for (let node = tree.topNode.firstChild; node; node = node.nextSibling) {
     if (node.name === 'Comment') {
       const match = RULE.exec(source.of(node));
-      if (match && source.of(node) === rule(match[1]!)) section = match[1]!;
+      if (match && source.of(node) === rule(match[1]!)) {
+        const open = spans.get(section);
+        if (open) spans.set(section, { from: open.from, to: node.from });
+        section = match[1]!;
+        spans.set(section, { from: node.to, to: text.length });
+      }
       continue;
     }
     if (section === FUNCTIONS) {
@@ -219,7 +285,9 @@ export function readTabPython(
       const finallyWord =
         node.name === 'TryStatement' ? parts(node).find((part) => part.name === 'finally') : null;
       if (node.name === 'TryStatement' && finallyWord && program.length === 0) {
-        program = statements(node.getChild('Body')!);
+        const body = node.getChild('Body')!;
+        mainBody = { from: body.from, to: body.to };
+        program = statements(body);
       } else {
         program.push(node);
       }
@@ -364,12 +432,19 @@ export function readTabPython(
     isReserved: (name) => reserved.has(name) || isReservedName(name),
     assigned: assignedNames(source, [...definitions, ...program]),
     signatures: signatures(tab.workspace),
+    comments: editableComments(tree, source, [
+      spans.get(FUNCTIONS),
+      isMain ? (mainBody ?? spans.get(MAIN)) : undefined,
+    ]),
   };
   const reader = new Reader(context);
-  const defines = definitions
-    .filter((node) => refs.has(node))
-    .map((node) => reader.define(node, refs.get(node)!));
-  const mainBlocks = isMain ? reader.body(program) : [];
+  const readable = definitions.filter((node) => refs.has(node));
+  const defines = readable.map((node) => reader.define(node, refs.get(node)!));
+  // The functions' comments: those above a def go to its block.
+  reader.placeComments(readable, defines, spans.get(FUNCTIONS) ?? null);
+  const functionOrphans = reader.orphans;
+  const mainBlocks = isMain ? reader.body(program, mainBody ?? spans.get(MAIN) ?? null) : [];
+  const programComments = isMain ? [...functionOrphans, ...reader.orphans] : [];
   problems.push(...reader.problems);
   if (problems.length > 0) return failed(problems.sort((a, b) => a.from - b.from));
 
@@ -411,9 +486,13 @@ export function readTabPython(
   for (const state of kept) {
     if (isMain && state.id === programId) {
       const next = chain([...silent, ...mainBlocks]);
-      const { next: _old, ...rest } = state;
+      const { next: _old, icons: _icons, ...rest } = state;
       void _old;
-      tops.push(next ? { ...rest, next: { block: next } } : rest);
+      void _icons;
+      // Comments under Main that no block took stay on "when the program starts".
+      const program: BlockState = next ? { ...rest, next: { block: next } } : rest;
+      addComment(program, programComments);
+      tops.push(program);
       silentPlaced = true;
     } else {
       tops.push(state);

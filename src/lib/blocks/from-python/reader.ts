@@ -58,6 +58,32 @@ export interface ReaderContext {
   readonly assigned: ReadonlySet<string>;
   /** `type` and `type|FIELD=value,...` of the blocks being replaced. */
   readonly signatures: ReadonlySet<string>;
+  /** The `#` comments of the editable parts, in order: each goes to a block's comment. */
+  readonly comments: readonly SyntaxNode[];
+}
+
+type Span = { readonly from: number; readonly to: number };
+
+/** The last block inside a block's last statement input (a loop's last line), or the block. */
+function lastInside(block: BlockState): BlockState {
+  const inputs = Object.entries((block.inputs ?? {}) as Record<string, { block?: BlockState }>);
+  const statementInputs = inputs.filter(([name]) => /^(DO\d*|ELSE)$/.test(name));
+  let last = statementInputs[statementInputs.length - 1]?.[1].block;
+  if (!last) return block;
+  while (last.next?.block) last = last.next.block;
+  return lastInside(last);
+}
+
+/** Adds lines to a block's comment (the bubble on the block, which Python shows as `#`). */
+export function addComment(block: BlockState, lines: readonly string[], before = false): void {
+  if (lines.length === 0) return;
+  const icons = (block.icons ?? {}) as Record<string, { text?: string } | undefined>;
+  const old = icons.comment?.text;
+  const all = before ? [...lines, ...(old ? [old] : [])] : [...(old ? [old] : []), ...lines];
+  block.icons = {
+    ...icons,
+    comment: { text: all.join('\n'), pinned: false, height: 80, width: 220 },
+  };
 }
 
 const SIMPLE_DEVICE = /^(motor|colour_sensor|distance_sensor|touch_sensor)_([a-f])$/;
@@ -241,9 +267,96 @@ export class Reader {
   private inputs: ReadonlyMap<string, string> | null = null;
   private loops = 0;
   private readonly src: Source;
+  private readonly comments: { readonly node: SyntaxNode; readonly text: string; used: boolean }[];
+  /** Comments of the last body read that none of its blocks took: the caller's block takes them. */
+  orphans: string[] = [];
 
   constructor(private readonly ctx: ReaderContext) {
     this.src = ctx.source;
+    this.comments = ctx.comments.map((node) => ({
+      node,
+      text: ctx.source.of(node).replace(/^#\s?/, '').trimEnd(),
+      used: false,
+    }));
+  }
+
+  /** The comments from `from` to `to` that no block has taken yet; they are taken now. */
+  private take(from: number, to: number): { readonly node: SyntaxNode; readonly text: string }[] {
+    const found = this.comments.filter(
+      (comment) => !comment.used && comment.node.from >= from && comment.node.from < to,
+    );
+    for (const comment of found) comment.used = true;
+    return found;
+  }
+
+  /** Whether `to` is on the line where the code before `from` ends (spaces after it skipped). */
+  private sameLine(from: number, to: number): boolean {
+    const end = this.src.text.slice(0, from).trimEnd().length;
+    return !this.src.text.slice(end, to).includes('\n');
+  }
+
+  /** How far a line is indented, at `position`. */
+  private indent(position: number): number {
+    return position - (this.src.text.lastIndexOf('\n', position - 1) + 1);
+  }
+
+  /**
+   * Gives each block the comments around its statement: those on the lines before it, those at
+   * the end of its line, and those inside it that no inner block took. Comments after the last
+   * statement go to the last block, or, when there is none, to `orphans`.
+   */
+  placeComments(
+    nodes: readonly SyntaxNode[],
+    blocks: readonly (BlockState | undefined)[],
+    span: Span | null,
+  ): void {
+    let carry: string[] = [];
+    let previous: BlockState | undefined;
+    let previousNode: SyntaxNode | undefined;
+    let previousEnd = span?.from ?? nodes[0]?.from ?? 0;
+    // Comments after the previous statement: on its line, or indented under it (the end of a
+    // loop), go to it; the others wait for the next block.
+    const settle = (found: readonly { node: SyntaxNode; text: string }[]) => {
+      const rest: string[] = [];
+      for (const comment of found) {
+        if (previous && this.sameLine(previousEnd, comment.node.from)) {
+          addComment(previous, [comment.text]);
+        } else if (
+          previous &&
+          previousNode &&
+          this.indent(comment.node.from) > this.indent(previousNode.from)
+        ) {
+          addComment(lastInside(previous), [comment.text]);
+        } else {
+          rest.push(comment.text);
+        }
+      }
+      return rest;
+    };
+    for (const [index, node] of nodes.entries()) {
+      carry.push(...settle(this.take(previousEnd, node.from)));
+      const block = blocks[index];
+      const inside = this.take(node.from, node.to).map((comment) => comment.text);
+      if (block) {
+        addComment(block, carry, true);
+        addComment(block, inside);
+        carry = [];
+        if (block !== previous) {
+          previous = block;
+          previousNode = node;
+        }
+      } else {
+        carry.push(...inside);
+      }
+      previousEnd = node.to;
+    }
+    const after = [...carry, ...settle(span ? this.take(previousEnd, span.to) : [])];
+    if (previous) {
+      addComment(previous, after);
+      this.orphans = [];
+    } else {
+      this.orphans = after;
+    }
   }
 
   fail(node: SyntaxNode, message: string = NO_BLOCK): null {
@@ -804,23 +917,48 @@ export class Reader {
 
   // --- Statements --------------------------------------------------------------------------------
 
-  /** Reads statements into a chain; a problem in one does not stop the others being read. */
-  body(nodes: readonly SyntaxNode[]): BlockState[] {
+  /**
+   * Reads statements into a chain; a problem in one does not stop the others being read. The
+   * comments in `span` go to the blocks (see placeComments).
+   */
+  body(nodes: readonly SyntaxNode[], span: Span | null = null): BlockState[] {
     const out: BlockState[] = [];
+    // One entry per statement read: the statements it used (as one node range) and its block.
+    const ranges: SyntaxNode[] = [];
+    const firsts: (BlockState | undefined)[] = [];
     let i = 0;
     while (i < nodes.length) {
       const result = this.statement(nodes, i);
       out.push(...result.blocks);
+      ranges.push(nodes[i]!);
+      firsts.push(result.blocks[0]);
+      // A block made from several statements takes the comments between them too.
+      for (let extra = 1; extra < result.used; extra += 1) {
+        ranges.push(nodes[i + extra]!);
+        firsts.push(result.blocks[0]);
+      }
       i += result.used;
     }
+    this.placeComments(ranges, firsts, span);
     return out;
   }
 
-  /** The statements of a Body node, `pass` alone being none. */
+  /** The statements of a Body node, `pass` alone being none, with the comments in it. */
   bodyOf(body: SyntaxNode | null | undefined): BlockState[] {
     if (!body) return [];
     const nodes = statements(body).filter((node) => node.name !== 'PassStatement');
-    return this.body(nodes);
+    return this.body(nodes, { from: body.from, to: body.to });
+  }
+
+  /** bodyOf, and the comments it could not give to a block (the caller's block takes them). */
+  private bodyAndOrphans(body: SyntaxNode | null | undefined): {
+    blocks: BlockState[];
+    orphans: string[];
+  } {
+    const blocks = this.bodyOf(body);
+    const orphans = this.orphans;
+    this.orphans = [];
+    return { blocks, orphans };
   }
 
   private statement(
@@ -1634,6 +1772,7 @@ export class Reader {
     let branch = 0;
     let hasElse = false;
     let ok = true;
+    const orphans: string[] = [];
     for (let i = 0; i < children.length; i += 1) {
       const word = children[i]!.name;
       if (word === 'if' || word === 'elif') {
@@ -1643,7 +1782,8 @@ export class Reader {
         const value = this.input(condition, 'controls_if', `IF${branch}`);
         if (!value) ok = false;
         else inputs[`IF${branch}`] = value;
-        const blocks = this.bodyOf(body);
+        const { blocks, orphans: left } = this.bodyAndOrphans(body);
+        orphans.push(...left);
         const statement = statementInput(blocks);
         if (statement) inputs[`DO${branch}`] = statement;
         branch += 1;
@@ -1652,14 +1792,16 @@ export class Reader {
         const body = children[i + 1];
         if (body?.name !== 'Body') return this.fail(node);
         hasElse = true;
-        const statement = statementInput(this.bodyOf(body));
+        const { blocks, orphans: left } = this.bodyAndOrphans(body);
+        orphans.push(...left);
+        const statement = statementInput(blocks);
         if (statement) inputs.ELSE = statement;
         i += 1;
       }
     }
     if (!ok) return null;
     const elseIfCount = branch - 1;
-    return {
+    const block: BlockState = {
       type: 'controls_if',
       ...(elseIfCount > 0 || hasElse
         ? {
@@ -1671,6 +1813,8 @@ export class Reader {
         : {}),
       inputs,
     };
+    addComment(block, orphans);
+    return block;
   }
 
   private forStatement(node: SyntaxNode): BlockState | null {
@@ -1701,14 +1845,16 @@ export class Reader {
     }
     const count = this.input(times, 'controls_repeat_ext', 'TIMES');
     this.loops += 1;
-    const blocks = this.bodyOf(body);
+    const { blocks, orphans } = this.bodyAndOrphans(body);
     this.loops -= 1;
     if (!count) return null;
     const statement = statementInput(blocks);
-    return {
+    const block: BlockState = {
       type: 'controls_repeat_ext',
       inputs: { TIMES: count, ...(statement ? { DO: statement } : {}) },
     };
+    addComment(block, orphans);
+    return block;
   }
 
   /** `while`: repeat forever, wait until, or repeat while / until. */
@@ -1719,7 +1865,7 @@ export class Reader {
       return this.fail(node, 'There is no block for while … else.');
     }
     this.loops += 1;
-    const blocks = this.bodyOf(body);
+    const { blocks, orphans } = this.bodyAndOrphans(body);
     this.loops -= 1;
     const statement = statementInput(blocks);
     const loopBody: Record<string, InputState> = statement ? { DO: statement } : {};
@@ -1753,7 +1899,10 @@ export class Reader {
         inputs: { BOOL: whileValue, ...loopBody },
       });
     }
-    return candidates.length > 0 ? this.choose(candidates) : null;
+    if (candidates.length === 0) return null;
+    const chosen = this.choose(candidates);
+    addComment(chosen, orphans);
+    return chosen;
   }
 
   /** A `def`: the define block, with its inputs and body. */
@@ -1767,11 +1916,13 @@ export class Reader {
     this.inputs = new Map(ref.inputs.map((input) => [input.name, input.id]));
     const saved = this.loops;
     this.loops = 0;
-    const blocks = this.body(nodes);
+    const blocks = this.body(nodes, body ? { from: body.from, to: body.to } : null);
+    const orphans = this.orphans;
+    this.orphans = [];
     this.loops = saved;
     this.inputs = null;
     const statement = statementInput(blocks);
-    return {
+    const block: BlockState = {
       type: FUNCTION_BLOCKS.define,
       id: ref.id,
       fields: {
@@ -1785,5 +1936,7 @@ export class Reader {
         : {}),
       ...(statement ? { inputs: { DO: statement } } : {}),
     };
+    addComment(block, orphans);
+    return block;
   }
 }

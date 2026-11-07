@@ -24,7 +24,9 @@ export function PythonEditPane({
   return (
     <div className="python-edit" data-testid="python-edit-pane">
       <p className="python-edit-help">
-        Change the Python in the white parts. The grey parts come from the blocks and the devices.{' '}
+        Change the Python in the white parts; the grey parts come from the blocks and the devices.
+        Type to see suggestions (Ctrl+Space shows them), and rest the pointer on a name to see what
+        it does. A <code>#</code> line is kept as a note on the block below it.{' '}
         <strong>Update blocks</strong> turns your Python into blocks.
       </p>
       <div className="python-editor" ref={host} data-testid="python-editor" />
