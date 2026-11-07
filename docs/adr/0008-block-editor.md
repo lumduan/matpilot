@@ -61,7 +61,7 @@ variables and other, and to add MatPilot's own parts (such as a controller choic
 
    The Python is still shown while there are problems.
 
-6. **The Python is visible beside the blocks.** It is read-only, with Copy and "Edit as Python",
+6. **The Python is visible beside the blocks.** It is read-only, with Copy and "Edit as Python" (renamed **Open in Program page** by [ADR 0014](0014-python-editing-on-blocks-page.md), which added editing the Python on this page),
    which opens it on `/program`.
 7. **Run works exactly as on `/program`.** The program is compiled in the browser and uploaded
    through `HubConnection` ([ADR 0007](0007-ble-transport-writes.md)), and output goes to the

@@ -24,7 +24,8 @@ What works today:
   hub's lights with pictures: a dial, a steering path, a lever, a 5×5 grid. The detailed blocks,
   one Pybricks command each with devices set up by name, fold under **Advanced**. The Python they
   make opens beside them or fills the window, and every motor stops when the program ends or is
-  stopped. A bar above the blocks shows what is plugged into each port, with live values. Make
+  stopped. The Python can be edited there too: **Update blocks** turns it back into blocks, and
+  anything that has no block yet is marked in red where it is. A bar above the blocks shows what is plugged into each port, with live values. Make
   blocks of your own (**Functions**) and keep them in tabs, like a browser's: each tab becomes a
   Python file that the main tab imports. Copy and paste work between tabs, and a shared variable
   (🌐) is there for a value every tab needs. Undo and redo buttons take changes back. **Save** and **Load** keep programs in a file on your computer, or

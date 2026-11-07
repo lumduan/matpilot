@@ -8,7 +8,8 @@
  * closing a tab, moving a function to another tab, deleting a shared variable that other tabs
  * use) are not in a tab's history: the editor keeps the program from before the change, and
  * `undoProgramChange()` puts it back. Ctrl+V and the Paste menu item paste into the open tab,
- * wherever the blocks were copied (./clipboard.ts).
+ * wherever the blocks were copied (./clipboard.ts). A tab's Python can be edited and turned back
+ * into its blocks (ADR 0014, ./from-python/tab.ts): that is also a change undone from the notice.
  *
  * Browser-only: import it lazily (src/hooks/useBlocksEditor.ts).
  */
@@ -58,6 +59,11 @@ import {
   type TabNameCheck,
 } from './tabs';
 import { getThemes } from './theme';
+import type { PythonEdit, PythonProblem } from './from-python/tab';
+
+/** The Python-to-blocks converter, loaded the first time someone edits Python (ADR 0014). */
+let pythonTools: Promise<typeof import('./from-python/tab')> | null = null;
+const loadPythonTools = () => (pythonTools ??= import('./from-python/tab'));
 import {
   TOOLBOX,
   inputFlyout,
@@ -145,6 +151,17 @@ export interface EditorHandle {
   closeTab(id: string): void;
   /** Opens the block's tab and shows the block. */
   showBlock(tabId: string, blockId: string): void;
+  /** The tab's Python to edit, and the parts of it that can change (ADR 0014). */
+  pythonEdit(tabId: string): Promise<PythonEdit>;
+  /** What in this Python cannot become the tab's blocks; empty when it all can. */
+  checkPython(tabId: string, text: string): Promise<readonly PythonProblem[]>;
+  /**
+   * Replaces the tab's blocks with this Python's, as one change the notice can undo; or returns
+   * the problems and changes nothing.
+   */
+  applyPython(tabId: string, text: string): Promise<readonly PythonProblem[]>;
+  /** Locks the blocks of every tab while Python is being edited, and unlocks them. */
+  setLocked(locked: boolean): void;
   dispose(): void;
 }
 
@@ -678,6 +695,60 @@ export function createEditor(options: EditorOptions): EditorHandle {
       if (!block || !active) return;
       active.workspace.centerOnBlock(blockId);
       Blockly.common.setSelected(block);
+    },
+    async pythonEdit(tabId) {
+      const { pythonForEditing } = await loadPythonTools();
+      return pythonForEditing(programTabs, tabId);
+    },
+    async checkPython(tabId, text) {
+      const { readTabPython } = await loadPythonTools();
+      return readTabPython(programTabs, tabId, text).problems;
+    },
+    async applyPython(tabId, text) {
+      const { readTabPython } = await loadPythonTools();
+      const tab = tabs.find((each) => each.id === tabId);
+      if (!tab) return [{ from: 0, to: 0, message: 'This tab is gone.' }];
+      const read = readTabPython(programTabs, tabId, text);
+      if (read.problems.length > 0 || !read.state) return read.problems;
+      previous = { program: save(), meta };
+      hidePopups();
+      const wasReadOnly = tab.workspace.isReadOnly();
+      tab.workspace.setIsReadOnly(false);
+      Blockly.Events.disable();
+      try {
+        Blockly.serialization.workspaces.load(read.state, tab.workspace);
+        // New functions go below the other blocks.
+        const unplaced = new Set(read.unplaced);
+        let bottom = Math.max(
+          0,
+          ...tab.workspace
+            .getTopBlocks(false)
+            .filter((block) => !unplaced.has(block.id))
+            .map((block) => block.getBoundingRectangle().bottom),
+        );
+        for (const id of read.unplaced) {
+          const block = tab.workspace.getBlockById(id);
+          if (!block) continue;
+          block.moveTo(new Blockly.utils.Coordinate(24, bottom + 48));
+          bottom = block.getBoundingRectangle().bottom;
+        }
+      } finally {
+        Blockly.Events.enable();
+        tab.workspace.setIsReadOnly(wasReadOnly);
+      }
+      tab.workspace.clearUndo();
+      reportHistory();
+      schedule();
+      const dropped =
+        read.droppedDisabled > 0
+          ? ` The ${read.droppedDisabled} turned-off block${read.droppedDisabled === 1 ? ' was' : 's were'} not in the Python, so ${read.droppedDisabled === 1 ? 'it is' : 'they are'} gone.`
+          : '';
+      options.onProgramChange(`Updated the blocks of “${tab.name}” from its Python.${dropped}`);
+      return [];
+    },
+    setLocked(locked) {
+      hidePopups();
+      for (const tab of tabs) tab.workspace.setIsReadOnly(locked);
     },
     dispose() {
       setPortHints({});

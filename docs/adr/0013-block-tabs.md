@@ -118,7 +118,7 @@ After trying checks 11 to 13, the maintainer asked for two more:
    the browser the program is kept as `matpilot.blocks.tabs.v2`; the old
    `matpilot.blocks.workspace.v1` is read once, when there is no program in tabs yet.
 9. **The page.** The Python panel has a button per file and shows the open tab's file; a tab
-   with no functions shows a note instead. **Edit as Python** (the one-file editor on `/program`)
+   with no functions shows a note instead. **Edit as Python** (the one-file editor on `/program`; now **Open in Program page**, [ADR 0014](0014-python-editing-on-blocks-page.md))
    is turned off for a program of several files. **Run** compiles every file and sends them as one
    program, main first.
 

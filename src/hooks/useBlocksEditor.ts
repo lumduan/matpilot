@@ -9,6 +9,7 @@ import type {
   SavedProgram,
 } from '@/lib/blocks/editor';
 import type { PortHints } from '@/lib/blocks/fields/hints';
+import type { PythonEdit, PythonProblem } from '@/lib/blocks/from-python/tab';
 import type { GeneratedProgram } from '@/lib/blocks/generator';
 import {
   MAIN_TAB_NAME,
@@ -100,6 +101,10 @@ function saveProgram(state: SavedProgram): void {
 
 export type BlocksEditorStatus = 'loading' | 'ready' | 'failed';
 
+const STILL_LOADING: readonly PythonProblem[] = [
+  { from: 0, to: 0, message: 'The block editor is still loading.' },
+];
+
 export type OpenResult =
   | { readonly ok: true; readonly file: ProgramFile }
   | { readonly ok: false; readonly message: string };
@@ -136,6 +141,14 @@ export interface BlocksEditor {
   readonly openFile: (text: string, fileName: string, github: GitHubLink | null) => OpenResult;
   /** Records a new name or GitHub file after saving. */
   readonly setMeta: (meta: ProgramMeta) => void;
+  /** The tab's Python to edit, and the parts that can change (ADR 0014); null while loading. */
+  readonly pythonEdit: (tabId: string) => Promise<PythonEdit | null>;
+  /** What in this Python cannot become the tab's blocks. */
+  readonly checkPython: (tabId: string, text: string) => Promise<readonly PythonProblem[]>;
+  /** Replaces the tab's blocks with the Python's (undone from the notice), or returns why not. */
+  readonly applyPython: (tabId: string, text: string) => Promise<readonly PythonProblem[]>;
+  /** Locks the blocks while their Python is edited. */
+  readonly setLocked: (locked: boolean) => void;
 }
 
 /**
@@ -245,6 +258,22 @@ export function useBlocksEditor(
     [],
   );
 
+  const pythonEdit = useCallback(
+    async (tabId: string) => (await editor.current?.pythonEdit(tabId)) ?? null,
+    [],
+  );
+  const checkPython = useCallback(
+    async (tabId: string, text: string) =>
+      (await editor.current?.checkPython(tabId, text)) ?? STILL_LOADING,
+    [],
+  );
+  const applyPython = useCallback(
+    async (tabId: string, text: string) =>
+      (await editor.current?.applyPython(tabId, text)) ?? STILL_LOADING,
+    [],
+  );
+  const setLocked = useCallback((locked: boolean) => editor.current?.setLocked(locked), []);
+
   const files = program?.files;
   const fileText = useCallback(
     (name: string, savedBy: string) =>
@@ -315,5 +344,9 @@ export function useBlocksEditor(
     saveToComputer,
     openFile,
     setMeta,
+    pythonEdit,
+    checkPython,
+    applyPython,
+    setLocked,
   };
 }
