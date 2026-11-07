@@ -667,8 +667,8 @@ stated. DeepSeek is still to be tried.
 ## Robots checks (milestone 7)
 
 These check the Robots page and a program that uses a robot
-([ADR 0016](adr/0016-robots-and-mats.md), step 7a). Checks 1 to 6 need no hub; check 7 needs the
-hub and the robot, and a ruler.
+([ADR 0016](adr/0016-robots-and-mats.md), step 7a, and its calibration helper). Checks 1 to 6 and
+8 need no hub; checks 7 and 9 need the hub and the robot, and a ruler or a tape measure.
 
 1. Open **Robots** in the top bar and press **Make a robot**. Measure your robot and type in its
    width, length and height, how far the wheel axle is from the back, the wheel diameter (the
@@ -697,6 +697,14 @@ hub and the robot, and a ruler.
    `track × 90 / measured angle` (80° with 112 mm gives 126). Run again: it should be close.
 8. GitHub (with the GitHub set up on Blocks): **Save**, then **Save to GitHub**: the robot goes
    into the same folder as the programs. **Load** lists it under **From GitHub**.
+9. The calibration helper (check 7 done for you), with the hub, the robot and a tape measure:
+   **Measure on the floor…** on the Robots page. **Connect hub**, then under **1. Drive 1 metre**
+   mark the floor at the robot's front, **▶ Run on the robot**, and type how far it drove (and,
+   if you like, how far to the side it ended). Under **2. Turn 10 times**, line it up with an
+   edge, run it, count the turns, and say where it stopped (before or past the way it started,
+   by how many degrees: make the picture look like the robot). **Use these numbers**: the wheel
+   diameter and the axle track change on the page. Run both again: it should now drive about
+   1000 mm and end pointing about the way it started. Note the numbers before and after.
 
 ## Mats checks (milestone 7)
 
