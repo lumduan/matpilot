@@ -738,8 +738,8 @@ mat's printing file from the WRO website) and a robot made on the Robots page.
 
 ## Running a program on a mat (milestone 7)
 
-These check steps 7c and 7d ([ADR 0016](adr/0016-robots-and-mats.md)). No hub is needed for 1
-to 4, 6, 8 and 9; 5 and 7 compare with the real robot.
+These check steps 7c and 7d and how sure a run is ([ADR 0016](adr/0016-robots-and-mats.md)). No
+hub is needed for 1 to 4, 6, 8 and 9; 5, 7 and 10 compare with the real robot.
 
 1. On **Blocks**, make a short program: move forward 300 mm, turn right 90°, move forward
    200 mm. Choose your robot in **Robot**.
@@ -769,6 +769,11 @@ page, looking down, at the port the program uses.
    Drive into it: the result says "Ran into …" (the robot drives through; it does not stop).
 9. Change the program's colour sensor to a port where the robot has none: the result names the
    missing sensor, and the sensor reads nothing.
+10. How sure is it: give the robot its drift on the Robots page (**Measure on the floor** finds
+    the drift per metre; type the drift per 90° turn). Run on the mat: **How sure is it?** says
+    how close 9 in 10 runs end, and how often the robot ends in each target. Run the real robot
+    from the same start five times and mark where it ends each time: most marks should fall
+    inside the circle drawn on the mat.
 
 ### Mats results
 

@@ -13,6 +13,7 @@ import type { Mat, MatArea, MatPlacement } from '@/lib/mats/mat';
 import { normalHeading, robotOnMat, sensorOnMat } from '@/lib/mats/pose';
 import type { RobotProfile } from '@/lib/robots/profile';
 import type { Frame } from '@/lib/sim/engine';
+import type { Spread } from '@/lib/sim/spread';
 
 export type MatTool = 'move' | 'ruler' | 'area';
 
@@ -54,6 +55,7 @@ export function MatView({
   path = null,
   playhead = 0,
   locked = false,
+  spread = null,
 }: {
   mat: Mat;
   picture: ImageBitmap | null;
@@ -71,6 +73,8 @@ export function MatView({
   playhead?: number;
   /** The robot cannot be dragged (a run is shown). */
   locked?: boolean;
+  /** Where the real robot may end: pretend runs' paths and ends, and the 9-in-10 circle. */
+  spread?: Spread | null;
 }) {
   const host = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -88,6 +92,15 @@ export function MatView({
   const W = mat.widthMm;
   // A run's path, worked out once per run; playback only cuts it at the playhead.
   const pathShape = useMemo(() => (path && path.length > 1 ? pathOf(path, H) : null), [path, H]);
+  const spreadShape = useMemo(
+    () =>
+      spread
+        ? spread.paths.map((each) =>
+            each.map((pose) => `${round(pose.xMm)},${round(H - pose.yMm)}`).join(' '),
+          )
+        : null,
+    [spread, H],
+  );
 
   useEffect(() => {
     const element = host.current;
@@ -388,6 +401,13 @@ export function MatView({
             height={Math.abs(drawing.to.y - drawing.from.y)}
           />
         )}
+        {spread && spreadShape && path && path.length > 0 && (
+          <g className="mat-spread" data-testid="mat-spread">
+            {spreadShape.map((points, index) => (
+              <polyline key={index} className="mat-spread-path" points={points} />
+            ))}
+          </g>
+        )}
         {pathShape && (
           <g className="mat-path" data-testid="mat-path">
             <polyline className="mat-path-all" points={pathShape.all} />
@@ -428,6 +448,20 @@ export function MatView({
                 data-testid="mat-robot-handle"
               />
             )}
+          </g>
+        )}
+        {spread && path && path.length > 0 && (
+          // Over the robot, so the ends show through it at the end of the run.
+          <g className="mat-spread-ends" data-testid="mat-spread-ends">
+            <circle
+              className="mat-spread-ring"
+              cx={path.at(-1)!.pose.xMm}
+              cy={H - path.at(-1)!.pose.yMm}
+              r={Math.max(spread.radiusMm, 1)}
+            />
+            {spread.ends.map((end, index) => (
+              <circle key={index} className="mat-spread-end" cx={end.xMm} cy={H - end.yMm} r={4} />
+            ))}
           </g>
         )}
         {ruler && rulerLength > 0 && (

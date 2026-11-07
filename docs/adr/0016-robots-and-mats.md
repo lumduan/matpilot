@@ -197,7 +197,8 @@ The profile is the **contract** that the Mats page reads, and that a future part
   the target.
 - **Honest about what it is:** a kinematic model. The robot moves exactly as told: no slipping,
   no bumping into objects, no battery. The page says so, and the calibration helper and the drift
-  fields (later) narrow the gap.
+  fields (later) narrow the gap. ➡️ Both built 2026-11-07: see "Built: the calibration helper" and
+  "Built: how sure is the robot" below.
 - **Sensors, in a second step:** the colour sensor reads the mat picture under its position
   (reflection and colour from the pixels, with Pybricks' colour rules cited when built). Distance
   sensors and objects on the mat come later. ➡️ Built as 7d on 2026-11-07, together with the
@@ -223,6 +224,7 @@ is a robot profile (section 3), so everything above keeps working.
    (upload, view, place, measure)
 7a + Blocks ──→ program uses a robot (part of 7a)
 later: draw a path on the mat → blocks;  how sure is the robot (drift);  part builder (own ADR)
+(built 2026-11-07: 7d with distance and touch, the calibration helper, how sure is the robot)
 ```
 
 ## Decisions for the maintainer
@@ -467,6 +469,39 @@ words: build the fields as recommended first; using them will show what to add o
   build with a fake hub: connect, run (the uploaded program is the 1000 mm one), stop, type 1114
   and 8 mm, then 10 turns and 144° past: 62.4 mm and 120 mm and a drift of 8 mm, saved to the
   robot and shown in the form; closing the dialog disconnects; a phone (no sideways scroll).
+
+## Built (2026-11-07): how sure is the robot
+
+- **What it shows:** after a run, **How sure is it?** under the result: "9 in 10 end within
+  19 mm of this end, facing within ±4°", how many times in 100 the robot ends inside each target,
+  touches each keep-out area or solid object, and goes off the mat. On the mat, 30 faint pretend
+  runs fan out along the path, 100 dots mark where they end, and a dashed circle holds 9 in 10 of
+  them. A checkbox hides them.
+- **Where the numbers come from** (`src/lib/sim/spread.ts`): the robot's drift fields (section 3;
+  the calibration helper fills the drift per metre, the drift per 90° is typed). 100 pretend
+  runs replay the run's path, each as a slightly different robot that keeps its error from start
+  to end: it drives (1 + a) times as far, creeps sideways as it drives, and turns (1 + b) times as
+  far, with a, the creep and b drawn from normal distributions sized so that after 1 metre it is
+  off by about the drift per metre forward or back and to the side, and a 90° turn by about the
+  drift per 90°. A field not measured adds no error, and the page says so. The draws are seeded,
+  so the same run shows the same spread.
+- **Decided while building:**
+  - **Only measured drift:** a robot with no drift gets a line saying how to measure it, not a
+    guess.
+  - **It replays the path; it does not run the program again.** A program that steers by its
+    sensors (following a line, squaring up on a wall) corrects some of the error, so the real
+    spread can be smaller; the page says so.
+  - Pretend runs are checked every 100 ms of the run (50 mm at a SPIKE robot's top speed) and at
+    the end; a 120 s run shows its result and spread in under a second.
+- **Tests:** after 1 metre with 10 mm per metre, 4000 pretend runs spread about 10 mm forward or
+  back and 10 mm to the side, and 9 in 10 end within 19 to 24 mm; a 90° turn with 2° per 90°
+  spreads about 2°, in place; a sloppy robot ends inside a target in some runs, a few of its runs
+  reach a box 60 mm past its front and all reach it 240 mm further on; the same run gives the same
+  spread. Headless Chromium on the production build with the CSP: a robot with 15 mm per metre and
+  2° per 90° drives 600 mm, turns left and drives 150 mm into a Garage beside a Ditch: "9 in 10
+  end within 19 mm …, facing within ±4°", inside "Garage" 100 times in 100, touches "Ditch" 7
+  times in 100; 30 paths, 100 ends and the circle drawn; the checkbox hides them; a 120 s run
+  shows in 0.9 s; a robot without drift gets the line.
 
 ## Amendment (2026-11-07): robots and mats on GitHub; D5 changed
 
