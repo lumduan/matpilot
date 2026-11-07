@@ -1,6 +1,9 @@
 # ADR 0016: Robots and Mats: robot profiles, mats at real size, and running a program on a mat
 
-- Status: Accepted 2026-11-07, every recommended option. Steps 7a, 7b and 7c built the same day (see "Built")
+- Status: Accepted 2026-11-07, every recommended option. Built 2026-11-07/08: steps 7a to 7d,
+  the calibration helper, how sure is the robot, and a path drawn on the mat → blocks (see the
+  "Built" sections). The part builder (section 7) is [ADR 0017](0017-lego-part-builder.md),
+  proposed
 - Date: 2026-11-07
 - Replaces: the one-line plan for milestone 7 ("Mat profiles with drag-and-drop objects") in
   [docs/roadmap.md](../roadmap.md)
@@ -213,7 +216,9 @@ A part builder like BrickLink's is a large project of its own: a library of part
 3D view, snapping parts together, and working out the wheels, the sensors and the size from the
 model. It gets its own ADR after research into the open part library LEGO builders use (LDraw: its
 licence, file formats, and size) and into what can be imported from BrickLink's tools. Its output
-is a robot profile (section 3), so everything above keeps working.
+is a robot profile (section 3), so everything above keeps working. ➡️ That ADR is
+[ADR 0017](0017-lego-part-builder.md), proposed 2026-11-08 (recommended: import a model exported
+from BrickLink Studio as LDraw, rather than a builder of MatPilot's own).
 
 ### 8. Order of work
 
