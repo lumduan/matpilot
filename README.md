@@ -50,7 +50,8 @@ What works today:
   a warning when it leaves the mat or runs out of time. Its sensors read the mat: the colour
   sensor sees the picture under it (by the hub's own colour rules), the distance and touch
   sensors find the mat's edges and the solid objects you mark. **How sure is it?** shows where
-  the real robot may end, from its measured drift. Robots and mats are saved on this
+  the real robot may end, from its measured drift. **Path**: click points on the mat and they
+  become "turn" and "move" blocks on the Blocks page. Robots and mats are saved on this
   computer, or on GitHub with the same setup as programs.
 - **AI helper** (on `/blocks`, off until an adult sets it up): explains the open tab's program, or
   reviews it with hints rather than answers, using Anthropic, OpenAI or DeepSeek with the adult's
@@ -64,7 +65,7 @@ What works today:
   hub, records the results in the browser, and produces a report for the
   [compatibility table](docs/compatibility.md).
 
-More blocks (tasks that run at the same time), offline use, and drawing a path on the mat to make blocks ([ADR 0016](docs/adr/0016-robots-and-mats.md)) are planned. See the [roadmap](docs/roadmap.md).
+More blocks (tasks that run at the same time), offline use, and building a robot from LEGO parts ([ADR 0016](docs/adr/0016-robots-and-mats.md)) are planned. See the [roadmap](docs/roadmap.md).
 
 Tested firmware baseline: **Pybricks v4.0.1** on LEGO SPIKE Prime. This is the version MatPilot is
 tested against, not a hard requirement.

@@ -154,6 +154,11 @@ export interface EditorHandle {
   closeTab(id: string): void;
   /** Opens the block's tab and shows the block. */
   showBlock(tabId: string, blockId: string): void;
+  /**
+   * Adds a stack of blocks at the end of main's program (below the other blocks when main has
+   * no program block, or its last block takes nothing after it), as one change Undo takes back.
+   */
+  addToMain(state: Blockly.serialization.blocks.State): { blocks: number; attached: boolean };
   /** The tab's Python to edit, and the parts of it that can change (ADR 0014). */
   pythonEdit(tabId: string): Promise<PythonEdit>;
   /** What in this Python cannot become the tab's blocks; empty when it all can. */
@@ -696,6 +701,47 @@ export function createEditor(options: EditorOptions): EditorHandle {
           `Closed the tab “${tab.name}” and its ${blocks} block${blocks === 1 ? '' : 's'}.`,
         );
       }
+    },
+    addToMain(state) {
+      const main = tabs.find((tab) => tab.id === MAIN_TAB_ID) ?? tabs[0];
+      if (!main) return { blocks: 0, attached: false };
+      // The notice's Undo puts the program back as it was (undoProgramChange).
+      previous = { program: save(), meta };
+      selectTab(main.id);
+      const { workspace } = main;
+      const hat = workspace.getTopBlocks(true).find((block) => block.type === 'mp_program');
+      const bottom = Math.max(
+        0,
+        ...workspace.getTopBlocks(false).map((top) => top.getBoundingRectangle().bottom),
+      );
+      let attached = false;
+      let added: Blockly.Block | null = null;
+      // One group: Undo takes the whole stack back at once.
+      Blockly.Events.setGroup(true);
+      try {
+        added = Blockly.serialization.blocks.append(
+          { ...state, x: 24, y: bottom + 48 } as Blockly.serialization.blocks.State,
+          workspace,
+        );
+        let last: Blockly.Block | null = hat ?? null;
+        while (last?.getNextBlock()) last = last.getNextBlock();
+        if (last?.nextConnection && added.previousConnection) {
+          last.nextConnection.connect(added.previousConnection);
+          attached = true;
+        }
+      } finally {
+        Blockly.Events.setGroup(false);
+      }
+      workspace.centerOnBlock(added.id);
+      reportHistory();
+      schedule();
+      const blocks = added.getDescendants(false).filter((block) => !block.isShadow()).length;
+      options.onProgramChange(
+        attached
+          ? `Added ${blocks} block${blocks === 1 ? '' : 's'} at the end of main.`
+          : `Added ${blocks} block${blocks === 1 ? '' : 's'} to main, below the other blocks: drag them where they should run.`,
+      );
+      return { blocks, attached };
     },
     showBlock(tabId, blockId) {
       selectTab(tabId);

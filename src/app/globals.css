@@ -3515,3 +3515,36 @@ code {
 .run-spread .field-hint {
   margin: 0;
 }
+
+/* A path drawn with the Path tool on the Mats page (ADR 0016). */
+.mat-plan {
+  pointer-events: none;
+}
+
+.mat-plan-line {
+  fill: none;
+  stroke: #6d28d9;
+  stroke-width: 3;
+  stroke-dasharray: 2 6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.mat-plan-point circle {
+  fill: #6d28d9;
+  stroke: #fff;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.mat-plan-point text {
+  fill: #fff;
+  font-weight: 700;
+}
+
+.path-steps {
+  margin: 0 0 0.4rem;
+  padding-left: 1.4rem;
+  font-size: 0.9rem;
+}

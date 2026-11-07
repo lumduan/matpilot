@@ -13,6 +13,8 @@ import { linkSummary, programSummary } from '@/components/hub/status';
 import { useBlocksEditor } from '@/hooks/useBlocksEditor';
 import { useGitHub } from '@/hooks/useGitHub';
 import { useHubRunner } from '@/hooks/useHubRunner';
+import { useIncomingBlocks } from '@/hooks/useIncomingBlocks';
+import { stepsToBlocks } from '@/lib/blocks/incoming';
 import { useMounted } from '@/hooks/useMounted';
 import { usePythonEditing } from '@/hooks/usePythonEditing';
 import { saveProgramForEditor } from '@/hooks/useProgramRunner';
@@ -66,6 +68,7 @@ export function BlocksApp() {
   // A change to the program as a whole, with Undo: opened, started over, tab closed, moved.
   const [notice, setNotice] = useState<string | null>(null);
   const editor = useBlocksEditor(host, portHints, setNotice);
+  const incoming = useIncomingBlocks();
   // Editing a tab's Python and turning it back into blocks (ADR 0014).
   const pythonEditing = usePythonEditing(editor);
   const editing = pythonEditing.active;
@@ -479,8 +482,42 @@ export function BlocksApp() {
         editor.status === 'failed' ||
         editor.restoredStarter ||
         notice ||
+        (incoming.incoming && editor.status === 'ready') ||
         copied === 'failed') && (
         <div className="studio-notices">
+          {incoming.incoming && editor.status === 'ready' && (
+            <p
+              className="notice notice-ok notice-actions"
+              role="status"
+              data-testid="incoming-blocks"
+            >
+              <span>
+                From the Mats page: the path “{incoming.incoming.name}”,{' '}
+                {incoming.incoming.steps.length} block
+                {incoming.incoming.steps.length === 1 ? '' : 's'} (turns and moves).
+              </span>
+              <button
+                type="button"
+                className="button button-small"
+                onClick={() => {
+                  const state = incoming.incoming && stepsToBlocks(incoming.incoming.steps);
+                  if (state) editor.addToMain(state);
+                  incoming.clear();
+                }}
+                data-testid="incoming-add"
+              >
+                Add at the end of main
+              </button>
+              <button
+                type="button"
+                className="button button-small"
+                onClick={incoming.clear}
+                data-testid="incoming-dismiss"
+              >
+                Dismiss
+              </button>
+            </p>
+          )}
           {notice && (
             <p
               className="notice notice-ok notice-actions"

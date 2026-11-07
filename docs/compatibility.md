@@ -738,8 +738,9 @@ mat's printing file from the WRO website) and a robot made on the Robots page.
 
 ## Running a program on a mat (milestone 7)
 
-These check steps 7c and 7d and how sure a run is ([ADR 0016](adr/0016-robots-and-mats.md)). No
-hub is needed for 1 to 4, 6, 8 and 9; 5, 7 and 10 compare with the real robot.
+These check steps 7c and 7d, how sure a run is, and a path drawn on the mat
+([ADR 0016](adr/0016-robots-and-mats.md)). No hub is needed for 1 to 4, 6, 8 and 9; 5, 7, 10 and
+11 compare with the real robot.
 
 1. On **Blocks**, make a short program: move forward 300 mm, turn right 90°, move forward
    200 mm. Choose your robot in **Robot**.
@@ -774,6 +775,11 @@ page, looking down, at the port the program uses.
     how close 9 in 10 runs end, and how often the robot ends in each target. Run the real robot
     from the same start five times and mark where it ends each time: most marks should fall
     inside the circle drawn on the mat.
+11. A path: on **Mats**, place the robot, choose **Path**, and click three or four points towards
+    a mission. The panel lists the moves. **Run it on the mat**: the robot ends on the last
+    point. **Send to Blocks**, open **Blocks**: **Add at the end of main** puts the moves at the
+    end of the program (Undo in the notice takes them back). Run the program on the real robot
+    from the same start and compare where it ends.
 
 ### Mats results
 

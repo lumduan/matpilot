@@ -122,6 +122,10 @@ export interface BlocksEditor {
   readonly renameTab: EditorHandle['renameTab'];
   readonly closeTab: (id: string) => void;
   readonly showBlock: (tabId: string, blockId: string) => void;
+  /** Adds blocks at the end of main's program (see EditorHandle.addToMain). */
+  readonly addToMain: (
+    state: object,
+  ) => { readonly blocks: number; readonly attached: boolean } | null;
   /** The program as the text of a file (ADR 0011). */
   readonly fileText: (name: string, savedBy: string) => string;
   /** Downloads the program as `<name>.matpilot.json`; returns the file name. */
@@ -246,6 +250,10 @@ export function useBlocksEditor(
     (tabId: string, blockId: string) => editor.current?.showBlock(tabId, blockId),
     [],
   );
+  const addToMain = useCallback(
+    (state: object) => editor.current?.addToMain(state as never) ?? null,
+    [],
+  );
 
   const pythonEdit = useCallback(
     async (tabId: string) => (await editor.current?.pythonEdit(tabId)) ?? null,
@@ -349,6 +357,7 @@ export function useBlocksEditor(
     renameTab,
     closeTab,
     showBlock,
+    addToMain,
     fileText,
     saveToComputer,
     openFile,
