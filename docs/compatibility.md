@@ -383,6 +383,8 @@ be those of the earlier runs.
   knew from the LEGO SPIKE app carried over directly ([ADR 0010](adr/0010-simple-blocks.md)).
 - **Still open, simple check 8:** which way the drawn "up" arrow points on the hub's light matrix
   was not reported. Until it is, the orientation of the 5×5 picture on the hub is unverified.
+  (➡️ The Xbox check on 2026-11-07 found the lights' top row, row 0, at the end with ports A and
+  B; check 8 still has to show that a drawn picture follows it.)
 - **Optional robot check: not run.** No two-wheel robot was built yet. From the motor turns in
   checks 5 to 7, the maintainer expects the movement blocks to be right once the wheel sizes are.
 
@@ -462,6 +464,7 @@ sign (step 5).
 | Date       | Browser    | OS           | Hub         | Firmware | Controller | Result                                                                                      |
 | ---------- | ---------- | ------------ | ----------- | -------- | ---------- | ------------------------------------------------------------------------------------------- |
 | 2026-11-06 | Chrome 156 | macOS 27.0.1 | SPIKE Prime | 4.0.1    | Xbox       | Connected; the hub's Bluetooth light stayed blue (link kept, see notes); steps 3 and 5 open |
+| 2026-11-07 | not stated | not stated   | SPIKE Prime | 4.0.1    | Xbox       | Passed: output kept arriving; top row at the A and B end; pairing took several tries        |
 
 Notes (2026-11-06; a photo instead of the report; browser and OS assumed as above, controller
 model not stated):
@@ -474,7 +477,28 @@ model not stated):
   likely held while the controller was connected. A photo cannot tell steady from blinking, and
   whether output kept arriving (step 4) was not reported.
 - Not reported: the side of the lit top row (step 3) and the sign of "stick up" (step 5). The
-  controller blocks' checks below show both on the page.
+  controller blocks' checks below show both on the page. (➡️ Both were answered on 2026-11-07,
+  see the next notes.)
+
+Notes (2026-11-07; the maintainer, with four photos of the hub and one of the plotter; browser,
+OS, hub, firmware and controller not restated, assumed to be those of the earlier runs). This run
+pressed **Run** first and paired the controller afterwards, so that the lit top row could be seen
+before the controller connected.
+
+- **Step 3, the top of the lights:** the lit row is the one next to ports A and B, at the end with
+  the Bluetooth button, away from the hub's yellow end. So row 0 of the 5×5 lights is the A and B
+  end. (The photos show the hub with its yellow end up, so the row is at the bottom of the photo
+  and the port letters there are upside down.)
+- **Step 4, the link:** the hub light turned green and the plotter drew `left_x` and `left_y`
+  following the stick, so the program's output kept arriving while the controller was connected.
+  The link to the page held, unlike the maintainer's 2026-08 `pybricksdev` run.
+- **Step 5, the stick sign:** reported as passed. In this program that means the light moved
+  towards the top row, which it does only for a positive `left_y` (it draws row
+  `2 - round(y / 50)`), so pushing the stick away gives a positive `left_y`. The plot agrees as far
+  as it shows: `left_y` reached about +50 and more, `left_x` about -100; which push made each was
+  not stated. Controller blocks check 3 shows the number on the page.
+- **Pairing took several tries.** The reason was not reported. Pressing Run first leaves only
+  the 30 seconds of the search for pairing; the steps above pair first, then Run.
 
 ## Controller blocks checks (milestone 5)
 

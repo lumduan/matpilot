@@ -102,12 +102,14 @@ The firmware facts this design relies on are cited in `src/lib/blocks/pybricks.t
 - Two blocks (the ready-made loop) make a robot drive from the controller, and the child sees
   every stick and button on the page while it runs.
 - The view depends on the hub's link to the page staying up while it uses the controller. The
-  first photo says it does. If it does not on some computer, the robot still drives; the page
+  first photo says it does, and the Xbox check on 2026-11-07 showed it: output kept arriving
+  while the controller was connected. If it does not on some computer, the robot still drives; the page
   then shows the existing "Connection lost" notice, and Menu or the hub's centre button stops
   the program.
 - Which way "stick up" counts is read from the firmware (up is positive: the raw axis is turned
-  over), not yet seen on hardware. The first controller check settles it: the view shows the
-  number, and forward must drive forward.
+  over). On hardware, the Xbox check on 2026-11-07 was reported as passed, which in that program
+  means pushing the stick away gave a positive value. Controller blocks check 3 shows the number
+  on the page, and forward must drive forward.
 - About 10 printed lines a second (one value line every 100 ms, and a status line now and then)
   is little next to the Bluetooth link's capacity. The Monitor stays readable because these lines
   never reach it.
