@@ -7,7 +7,7 @@ export function SiteFooter() {
       <p>
         {PROJECT_NAME} is open-source software released under the MIT License. It runs entirely in
         your browser and sends nothing to any server, except to GitHub when you save or load a block
-        program there.
+        program there, and to the AI company an adult chose when you ask the AI helper.
       </p>
     </footer>
   );

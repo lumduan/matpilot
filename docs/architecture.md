@@ -18,10 +18,12 @@ flowchart TD
         MPY["mpy-cross, Pybricks WebAssembly build<br/>implemented"]
         PROTO["Pybricks BLE protocol client<br/>upload, start, stop, stdout, REPL implemented"]
         WEBBT["Web Bluetooth API<br/>provided by the browser"]
+        AI["AI helper<br/>explain and review implemented"]
     end
 
     HUB["LEGO SPIKE Prime hub<br/>Pybricks firmware"]
     PAD["Xbox Wireless Controller"]
+    PROVIDER["AI provider API<br/>Anthropic, OpenAI or DeepSeek"]
 
     UI --> COMPAT
     UI --> BLOCKLY
@@ -32,6 +34,8 @@ flowchart TD
     PROTO --> WEBBT
     WEBBT -->|"BLE, browser is central"| HUB
     PAD -->|"BLE, hub is central, planned"| HUB
+    CODEGEN -->|"Python source"| AI
+    AI -->|"HTTPS with the adult's key, on Ask only"| PROVIDER
 ```
 
 The same layers as text, top to bottom:
@@ -45,6 +49,10 @@ Browser (static files, no server)
            (src/lib/ble, src/lib/pybricks)    connection (upload/start/stop/stdout)
           -> Web Bluetooth (browser API)
             -> LEGO SPIKE Prime hub (Pybricks firmware)
+
+AI helper (ADR 0015) ......................... explain and review implemented
+  Python of the program + the child's prompt
+    -> the provider an adult chose (HTTPS, their key, only when Ask is pressed)
 
 Hub-direct gamepad path (planned)
   Xbox Wireless Controller -> SPIKE Prime hub   (hub is the BLE central;
@@ -128,6 +136,7 @@ pane on `/blocks` ([ADR 0012](adr/0012-controller-blocks.md)). They never reach 
 | Program files       | `src/lib/blocks/program-file.ts`, `program-meta.ts` | The `.matpilot.json` file format, version 2 with tabs ([ADR 0013](adr/0013-block-tabs.md)); the program's name and GitHub file ([ADR 0011](adr/0011-save-load-github.md))                                                                                        |
 | Controller view     | `src/lib/controller/`                               | Controller profiles and their drawing (`layout.ts`, shared by the block pickers and the pane); the `@xbx` lines a controller program prints: button order, parser, and the state the Controller pane shows ([ADR 0012](adr/0012-controller-blocks.md))           |
 | GitHub storage      | `src/lib/github/`                                   | REST client for one repository folder, and the save rule that never silently replaces a teammate's file ([ADR 0011](adr/0011-save-load-github.md))                                                                                                               |
+| AI helper           | `src/lib/ai/`                                       | Providers and their CSP origins, settings, the daily limit and prompt journal, the request (fixed instructions, program, prompt), the prompt checklist, and the client over the official SDKs, loaded only when used ([ADR 0015](adr/0015-ai-helper.md))         |
 | Export guard        | `scripts/verify-export.mjs`                         | Fails the build without `out/index.html`, with third-party loads, or with a CSP that allows another origin                                                                                                                                                       |
 
 ### Hub probe flow
@@ -153,12 +162,12 @@ does not compile.
 
 ## Boundaries enforced in code
 
-| Rule                                    | Enforcement                                                                                                                                                                                             |
-| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Static export only                      | `output: 'export'` in `next.config.ts`; `scripts/verify-export.mjs`                                                                                                                                     |
-| No third-party origins at runtime       | `verify-export.mjs` scans exported HTML/CSS and pins each page's CSP: only `'self'`, plus `https://api.github.com` in `connect-src` for GitHub save and load ([ADR 0011](adr/0011-save-load-github.md)) |
-| UI does not call Web Bluetooth directly | ESLint `no-restricted-properties` on `navigator.bluetooth` in `src/app`, `src/components`, `src/hooks`                                                                                                  |
-| `src/lib/` stays framework-agnostic     | ESLint `no-restricted-imports` bans React and Next.js in `src/lib/`                                                                                                                                     |
-| Hub probe is read-only                  | GATT types expose only `readValue()`; unit tests assert no writes                                                                                                                                       |
-| One module writes to the hub            | `HubConnection` only; unit tests check write order, chunk size, one write in flight, and STOP before disconnect                                                                                         |
-| WebAssembly only from this site         | CSP `script-src` adds `'wasm-unsafe-eval'` (no JS eval); `verify-export.mjs` requires `out/vendor/mpy-cross-v6.wasm`                                                                                    |
+| Rule                                    | Enforcement                                                                                                                                                                                                                                                                                                                            |
+| --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Static export only                      | `output: 'export'` in `next.config.ts`; `scripts/verify-export.mjs`                                                                                                                                                                                                                                                                    |
+| No third-party origins at runtime       | `verify-export.mjs` scans exported HTML/CSS and pins each page's CSP: only `'self'`, plus, in `connect-src`, `https://api.github.com` for GitHub save and load ([ADR 0011](adr/0011-save-load-github.md)) and the AI providers in `src/lib/ai/providers.ts` ([ADR 0015](adr/0015-ai-helper.md)); a unit test keeps the two lists equal |
+| UI does not call Web Bluetooth directly | ESLint `no-restricted-properties` on `navigator.bluetooth` in `src/app`, `src/components`, `src/hooks`                                                                                                                                                                                                                                 |
+| `src/lib/` stays framework-agnostic     | ESLint `no-restricted-imports` bans React and Next.js in `src/lib/`                                                                                                                                                                                                                                                                    |
+| Hub probe is read-only                  | GATT types expose only `readValue()`; unit tests assert no writes                                                                                                                                                                                                                                                                      |
+| One module writes to the hub            | `HubConnection` only; unit tests check write order, chunk size, one write in flight, and STOP before disconnect                                                                                                                                                                                                                        |
+| WebAssembly only from this site         | CSP `script-src` adds `'wasm-unsafe-eval'` (no JS eval); `verify-export.mjs` requires `out/vendor/mpy-cross-v6.wasm`                                                                                                                                                                                                                   |

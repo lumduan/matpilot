@@ -1,5 +1,6 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -24,6 +25,16 @@ import { LoadDialog } from './LoadDialog';
 import { PythonEditPane } from './PythonEditPane';
 import { SaveDialog } from './SaveDialog';
 import { TabBar } from './TabBar';
+
+// The AI helper (ADR 0015) loads only when its panel opens.
+const AiPanel = dynamic(() => import('./AiPanel').then((module) => module.AiPanel), {
+  ssr: false,
+  loading: () => (
+    <aside className="studio-side ai-side" aria-busy="true">
+      <p className="muted ai-loading">Loading the AI helper…</p>
+    </aside>
+  ),
+});
 
 /** How long the page's introduction stays open after the page loads. */
 const INTRO_OPEN_MS = 5000;
@@ -89,6 +100,13 @@ export function BlocksApp() {
     'closed',
     OPEN_CLOSED,
   );
+  const [aiPane, setAiPane] = useStoredState('matpilot.blocks.ai.v1', 'closed', OPEN_CLOSED);
+  // A line the AI helper pointed at, marked in the Python ("at" tells two presses apart).
+  const [markedLine, setMarkedLine] = useState<{
+    readonly file: string;
+    readonly line: number;
+    readonly at: number;
+  } | null>(null);
   const intro = useIntro();
   const { connection, monitor } = runner;
 
@@ -119,6 +137,13 @@ export function BlocksApp() {
     runner.compileError && (runner.compileError.file ?? 'main.py') === shownFile?.name
       ? runner.compileError.line
       : null;
+  const mark = markedLine && markedLine.file === shownFile?.name ? markedLine : null;
+  const aiOpen = aiPane === 'open';
+  const showLine = (line: number) => {
+    if (view === 'blocks') setPythonPanel('open');
+    setChosenFile(null);
+    setMarkedLine({ file: activeFile ?? 'main.py', line, at: Date.now() });
+  };
   const problemTabs = new Set(problems.map((problem) => problem.tabId));
   const monitorOpen = monitorPane === 'open';
   const plotterOpen = plotterPane === 'open';
@@ -437,7 +462,8 @@ export function BlocksApp() {
           <p className="studio-intro-legal">
             {TRADEMARK_DISCLAIMER} {PROJECT_NAME} is open-source software released under the MIT
             License. It runs entirely in your browser and sends nothing to any server, except to
-            GitHub when you save or load a program there.
+            GitHub when you save or load a program there, and to the AI company an adult chose when
+            you ask the AI helper.
           </p>
         </div>
       </div>
@@ -589,6 +615,7 @@ export function BlocksApp() {
                   <CodeView
                     code={code}
                     errorLine={errorLine}
+                    mark={mark}
                     label={shownFile ? `Python: ${shownFile.name}` : undefined}
                   />
                 </>
@@ -626,11 +653,21 @@ export function BlocksApp() {
                 <CodeView
                   code={code}
                   errorLine={errorLine}
+                  mark={mark}
                   label={shownFile ? `Python: ${shownFile.name}` : undefined}
                 />
               </>
             )}
           </aside>
+        )}
+        {aiOpen && (
+          <AiPanel
+            files={files}
+            openFile={activeFile ?? 'main.py'}
+            tab={tabName(editor.activeTab) || 'main'}
+            onShowLine={showLine}
+            onClose={() => setAiPane('closed')}
+          />
         )}
       </div>
 
@@ -777,6 +814,15 @@ export function BlocksApp() {
                 <span className="visually-hidden"> new values</span>
               </span>
             )}
+          </button>
+          <button
+            type="button"
+            className="toggle-button"
+            aria-pressed={aiOpen}
+            onClick={() => setAiPane(aiOpen ? 'closed' : 'open')}
+            data-testid="toggle-ai"
+          >
+            AI helper
           </button>
           {controllerOffered && (
             <button

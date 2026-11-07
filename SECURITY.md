@@ -25,11 +25,14 @@ MatPilot is pre-alpha. Only the latest commit on the default branch receives sec
 In scope, for example:
 
 - Script injection or other ways to run untrusted code in the MatPilot page.
-- Anything that makes the app send data to a third-party origin, or load code from one. The one
-  intended exception is GitHub's API (`https://api.github.com`), only when the user saves or loads
-  a block program on GitHub ([ADR 0011](docs/adr/0011-save-load-github.md)). Ways to make the app
-  send the user's GitHub token anywhere else, or send anything to GitHub without the user's
-  action, are in scope.
+- Anything that makes the app send data to a third-party origin, or load code from one. The
+  intended exceptions are GitHub's API (`https://api.github.com`), only when the user saves or
+  loads a block program on GitHub ([ADR 0011](docs/adr/0011-save-load-github.md)), and the AI
+  helper's providers (`https://api.anthropic.com`, `https://api.openai.com`,
+  `https://api.deepseek.com`), only after an adult has turned the helper on with a key and only
+  when Ask is pressed ([ADR 0015](docs/adr/0015-ai-helper.md)). Ways to make the app send the
+  user's GitHub token or AI key anywhere else, or send anything to GitHub or an AI provider
+  without the user's action, are in scope.
 - Anything that makes the app write to a hub without the user's explicit action.
 - Supply-chain problems in this repository's build or CI configuration.
 

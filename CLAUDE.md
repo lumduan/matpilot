@@ -42,11 +42,18 @@ CI checks this.
    `true`).
 3. **No runtime requests to third-party origins.** No CDN scripts, remote fonts, analytics, or
    telemetry. Self-host every asset. `scripts/verify-export.mjs` and the production CSP meta tag
-   enforce this; do not weaken either. **One exception, decided in
-   [ADR 0011](docs/adr/0011-save-load-github.md):** `connect-src` allows `https://api.github.com`,
-   which the page calls only when the user saves or loads a block program on GitHub (the
-   GitHub client in `src/lib/github/`). `verify-export.mjs` pins the CSP's sources to exactly
-   that; add no other origin without a new ADR.
+   enforce this; do not weaken either. **Two exceptions, both in `connect-src`:**
+   - `https://api.github.com` ([ADR 0011](docs/adr/0011-save-load-github.md)), which the page
+     calls only when the user saves or loads a block program on GitHub (the GitHub client in
+     `src/lib/github/`);
+   - the AI helper's providers ([ADR 0015](docs/adr/0015-ai-helper.md)):
+     `https://api.anthropic.com`, `https://api.openai.com` and `https://api.deepseek.com`, called
+     only after an adult has turned the helper on with their own key, and only when Ask is
+     pressed (`src/lib/ai/`; the list is `src/lib/ai/providers.ts`).
+
+   `verify-export.mjs` pins the CSP's sources to exactly these, and a unit test keeps its list
+   equal to `providers.ts`. Add no other origin without a new ADR.
+
 4. **No service worker** until the offline PWA milestone.
 5. **English only** for all code, comments, identifiers, documentation, and commit messages.
 6. **Conventional Commits** for commit messages (`feat(ble): ...`, `fix(compat): ...`, `docs: ...`).
@@ -112,6 +119,14 @@ entry in [NOTICE](NOTICE).
     ([ADR 0012](docs/adr/0012-controller-blocks.md)): the `@xbx` lines, their button order (the
     generator writes the same list), and the state the Controller pane shows. The hub reads the
     controller; the page only displays it.
+  - `src/lib/ai/`: the AI helper ([ADR 0015](docs/adr/0015-ai-helper.md)): the providers
+    (`providers.ts`, also the CSP's list), the settings and keys' format, the daily limit and the
+    prompt journal (`usage.ts`), the request (`prompt.ts`: fixed instructions first, with the
+    blocks' words from `from-python/vocabulary.ts`, then the program, then the prompt), the prompt
+    checklist, answer parsing, and the client (`client.ts`) over the official SDKs
+    (`@anthropic-ai/sdk`, `openai`), loaded only when used. The key goes only to its provider:
+    never into program files, GitHub saves, the journal or logs. Tests answer with a fake
+    provider (`client.test.ts`); never use a real key in tests.
   - `src/lib/github/`: saving and loading block programs in a GitHub repository
     ([ADR 0011](docs/adr/0011-save-load-github.md)): the REST client (the only code that talks to
     another origin), repository and folder names, and the save rule that never silently replaces
@@ -119,7 +134,7 @@ entry in [NOTICE](NOTICE).
 - `src/hooks/`: the only React code that creates or calls `src/lib/` objects with side effects
   (the hub probe, the compatibility check, the hub connection in `useHubRunner`, live device
   values in `useLiveDevices`, the block editor in `useBlocksEditor`, editing a tab's Python in
-  `usePythonEditing`, GitHub in `useGitHub`).
+  `usePythonEditing`, GitHub in `useGitHub`, the AI helper in `useAiHelper`).
   Components may import types and pure helpers.
 - `src/components/`, `src/app/`: UI only. They must not touch `navigator.bluetooth` (ESLint
   enforces this).

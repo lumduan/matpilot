@@ -46,6 +46,8 @@
   --code-active-line: rgba(31, 95, 191, 0.06);
   --code-selection: rgba(31, 95, 191, 0.22);
   --code-locked: rgba(128, 128, 128, 0.12);
+  /* A line the AI helper points at (ADR 0015). */
+  --code-mark: rgba(255, 196, 0, 0.3);
 
   /* Plot series, fixed order (dataviz reference palette, validated on #ffffff: CVD ΔE 9.1). */
   --series-1: #2a78d6;
@@ -99,6 +101,7 @@
     --code-active-line: rgba(91, 155, 240, 0.08);
     --code-selection: rgba(91, 155, 240, 0.3);
     --code-locked: rgba(255, 255, 255, 0.05);
+    --code-mark: rgba(255, 213, 0, 0.2);
 
     /* Dark steps of the same hues, validated on #1a1f25 (CVD ΔE 8.4, all ≥ 3:1). */
     --series-1: #3987e5;
@@ -484,6 +487,12 @@ code {
   display: block;
 }
 
+.code-gutter .code-gutter-mark {
+  color: var(--text);
+  background: var(--code-mark);
+  font-weight: 700;
+}
+
 .code-gutter .code-gutter-error {
   color: var(--error-text);
   background: var(--error-bg);
@@ -527,6 +536,7 @@ code {
 }
 
 .code-text {
+  position: relative;
   flex: 1;
   min-width: 0;
   margin: 0;
@@ -2163,4 +2173,264 @@ code {
 }
 .py-bracket3 {
   color: var(--py-bracket3);
+}
+
+/* The line the AI helper points at, over the read-only Python (top: set by CodeView). */
+.code-mark {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1lh;
+  background: var(--code-mark);
+  pointer-events: none;
+}
+
+/* The AI helper (ADR 0015): a panel beside the blocks, like the Python. */
+.ai-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.6rem;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0.6rem 0.9rem 0.9rem;
+  font-size: 0.9rem;
+}
+
+.ai-body p {
+  margin: 0;
+}
+
+/* The panel scrolls; its parts keep their own height instead of shrinking to fit. */
+.ai-body > * {
+  flex-shrink: 0;
+}
+
+/* Marks every answer as coming from an AI (ADR 0015). */
+.ai-badge {
+  display: inline-block;
+  margin-right: 0.35rem;
+  padding: 0 0.3rem;
+  font-size: 0.7rem;
+  line-height: 1.4;
+  color: var(--surface);
+  background: var(--accent);
+  border-radius: 0.25rem;
+}
+
+.ai-loading {
+  padding: 0.9rem;
+}
+
+.ai-setup {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.6rem;
+}
+
+.ai-help {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.ai-body .segmented {
+  /* Not the header's phone order for its view switch. */
+  order: 0;
+  align-self: flex-start;
+}
+
+.ai-prompt {
+  resize: vertical;
+  min-height: 4.5rem;
+  font-family: inherit;
+}
+
+.ai-checklist {
+  font-size: 0.85rem;
+}
+
+.ai-checklist-title {
+  font-weight: 600;
+}
+
+.ai-checklist ul {
+  margin: 0.25rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ai-checklist li {
+  display: flex;
+  gap: 0.4rem;
+  color: var(--muted);
+}
+
+.ai-checklist li + li {
+  margin-top: 0.15rem;
+}
+
+.ai-checklist li[data-ok='true'] {
+  color: var(--text);
+}
+
+.ai-check {
+  flex: none;
+  width: 1rem;
+  text-align: center;
+  font-weight: 700;
+}
+
+.ai-checklist li[data-ok='true'] .ai-check {
+  color: var(--ok-text);
+}
+
+.ai-example {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.ai-ask-row {
+  align-items: center;
+}
+
+.ai-sees summary,
+.ai-journal summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.ai-sees pre {
+  max-height: 16rem;
+  overflow: auto;
+  margin: 0.4rem 0 0;
+  padding: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+}
+
+.ai-sees > p {
+  margin-top: 0.3rem;
+}
+
+.ai-answer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.6rem 0.7rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: 0.4rem;
+}
+
+.ai-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.ai-text {
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.ai-text p + p,
+.ai-text p + ul,
+.ai-text ul + p {
+  margin-top: 0.45rem;
+}
+
+.ai-text ul {
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+.ai-text li + li {
+  margin-top: 0.3rem;
+}
+
+.ai-text code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+}
+
+.ai-line-link {
+  padding: 0 0.35rem;
+  font: inherit;
+  font-size: 0.85em;
+  font-weight: 700;
+  color: var(--accent);
+  background: transparent;
+  border: 1px solid var(--accent);
+  border-radius: 0.3rem;
+  cursor: pointer;
+}
+
+.ai-line-link:hover,
+.ai-line-link:focus-visible {
+  background: var(--code-mark);
+}
+
+.ai-meta,
+.ai-footnote {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.ai-helped {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.ai-helped .button[aria-pressed='true'] {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.ai-journal ol {
+  margin: 0.4rem 0;
+  padding-left: 1.2rem;
+}
+
+.ai-journal li + li {
+  margin-top: 0.3rem;
+}
+
+.ai-journal li summary {
+  font-weight: 400;
+}
+
+.ai-journal-mode {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.ai-journal-answer {
+  margin: 0.3rem 0 !important;
+  white-space: pre-wrap;
+}
+
+.ai-journal li .button {
+  margin-top: 0.3rem;
+}
+
+.ai-providers {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.ai-limit {
+  max-width: 8rem;
 }

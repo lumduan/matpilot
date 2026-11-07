@@ -5,9 +5,12 @@ MatPilot is a block-based programming and control web app for LEGO SPIKE Prime h
 (WRO and other open or school-run events), with or without a gamepad.
 
 MatPilot runs entirely in your browser. There is no backend, no account, and no telemetry: the app
-is a set of static files, and it talks to the hub directly over Web Bluetooth. The one exception is
-optional: if you save or load block programs on GitHub, the page talks to GitHub's API with a token
-you give it ([ADR 0011](docs/adr/0011-save-load-github.md)).
+is a set of static files, and it talks to the hub directly over Web Bluetooth. There are two
+optional exceptions: if you save or load block programs on GitHub, the page talks to GitHub's API
+with a token you give it ([ADR 0011](docs/adr/0011-save-load-github.md)); and if an adult turns on
+the AI helper with their own key, the program and the child's question go to the AI company they
+chose (Anthropic, OpenAI or DeepSeek) when the child presses Ask
+([ADR 0015](docs/adr/0015-ai-helper.md)).
 
 ## Project status
 
@@ -34,6 +37,11 @@ What works today:
   (the Xbox controller for now); buttons and sticks are picked on a picture of the controller, and
   a Controller panel shows them live while the program runs. Built with
   Blockly.
+- **AI helper** (on `/blocks`, off until an adult sets it up): explains the open tab's program, or
+  reviews it with hints rather than answers, using Anthropic, OpenAI or DeepSeek with the adult's
+  own key. Children learn to prompt: a checklist ticks the habits of a good prompt as they type,
+  "What the AI sees" shows the exact text sent, and a journal keeps earlier prompts to compare.
+  Every answer is marked as coming from an AI.
 - **Program & Monitor** (`/program`): write MicroPython, run it on the hub, and watch its output as
   text (like Arduino's Serial Monitor) and as a live graph (like its Serial Plotter). The program is
   compiled in the browser.
