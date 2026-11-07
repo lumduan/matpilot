@@ -21,9 +21,11 @@ Thank you for helping. MatPilot is pre-alpha, so expect things to move. Please r
    or anything else that needs a server at runtime ([ADR 0001](docs/adr/0001-browser-only-web-bluetooth.md),
    [ADR 0002](docs/adr/0002-static-export-no-server-features.md)).
 4. **No third-party requests at runtime.** No CDN scripts, remote fonts, analytics, or telemetry.
-   Self-host every asset. The only exception is GitHub's API, called when a user saves or loads a
-   block program on GitHub ([ADR 0011](docs/adr/0011-save-load-github.md)); the build fails if
-   the page's Content Security Policy allows anything else.
+   Self-host every asset. The exceptions are GitHub's API, called when a user saves or loads a
+   block program on GitHub ([ADR 0011](docs/adr/0011-save-load-github.md)), and the AI helper's
+   providers (Anthropic, OpenAI, DeepSeek), called only after an adult turns the helper on with
+   their own key ([ADR 0015](docs/adr/0015-ai-helper.md)); the build fails if the page's Content
+   Security Policy allows anything else.
 5. **Keep BLE and protocol code framework-agnostic.** Web Bluetooth and Pybricks protocol logic
    lives in `src/lib/` as plain TypeScript. React code calls it through `src/hooks/`. ESLint
    enforces both directions.

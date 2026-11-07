@@ -8,8 +8,11 @@
 //   3. the self-hosted compiler binary (out/vendor/mpy-cross-v6.wasm, ADR 0006) or Blockly's
 //      self-hosted media (out/vendor/blockly-media/, ADR 0008) is missing, or
 //   4. an exported page lacks the Content-Security-Policy meta tag, or its policy allows any
-//      origin but the page's own. The one exception is https://api.github.com in connect-src,
-//      for Save and Load on GitHub (docs/adr/0011-save-load-github.md).
+//      origin but the page's own. The exceptions are in connect-src: https://api.github.com, for
+//      Save and Load on GitHub (docs/adr/0011-save-load-github.md), and the AI helper's providers
+//      (docs/adr/0015-ai-helper.md; the same list as src/lib/ai/providers.ts, which a unit test
+//      checks), or
+//   5. a page's connect-src lacks one of those origins, so the feature would fail in the browser.
 //
 // Plain links (<a href="https://...">) are allowed: they are not loaded unless the user clicks.
 
@@ -32,10 +35,16 @@ const FETCHING_ATTR =
 const CSS_URL = /url\(\s*(['"]?)([^'")]+)\1\s*\)/gi;
 const CSS_IMPORT = /@import\s+(['"])([^'"]+)\1/gi;
 
-/** The CSP sources each directive may list besides the keywords below (ADR 0011). */
+/** The CSP sources each directive may list besides the keywords below (ADR 0011, ADR 0015). */
 const CSP_EXTRA_SOURCES = {
   'img-src': ['data:'],
-  'connect-src': ['https://api.github.com'],
+  'connect-src': [
+    'https://api.github.com',
+    // The AI helper's providers (ADR 0015).
+    'https://api.anthropic.com',
+    'https://api.openai.com',
+    'https://api.deepseek.com',
+  ],
 };
 const CSP_KEYWORDS = new Set(["'self'", "'none'", "'unsafe-inline'", "'wasm-unsafe-eval'"]);
 const CSP_META = /<meta\b[^>]*\bhttp-equiv\s*=\s*["']Content-Security-Policy["'][^>]*>/gi;
@@ -67,6 +76,12 @@ function cspProblems(html) {
     for (const source of sources) {
       if (CSP_KEYWORDS.has(source) || (CSP_EXTRA_SOURCES[name] ?? []).includes(source)) continue;
       problems.push(`Content-Security-Policy ${name} allows ${source}`);
+    }
+  }
+  const connect = directives.get('connect-src') ?? [];
+  for (const source of CSP_EXTRA_SOURCES['connect-src']) {
+    if (!connect.includes(source)) {
+      problems.push(`Content-Security-Policy connect-src lacks ${source}`);
     }
   }
   return problems;
@@ -146,5 +161,5 @@ if (problems.length > 0) {
 }
 
 console.log(
-  `Static export verified: ${INDEX} exists, no exported HTML/CSS loads a third-party origin, and every page's CSP allows only its own origin (plus GitHub's API for connect-src).`,
+  `Static export verified: ${INDEX} exists, no exported HTML/CSS loads a third-party origin, and every page's CSP allows only its own origin (plus, in connect-src, GitHub's API and the AI helper's providers).`,
 );

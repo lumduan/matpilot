@@ -18,7 +18,7 @@ flowchart TD
     M6["6 · Offline PWA<br/>BLOCKED — needs 2"]
     M7["7 · Mat profiles<br/>with drag-and-drop objects<br/>READY"]
     M8["8 · Edit the Python on the Blocks page<br/>back to blocks, errors marked<br/>ACTIVE — built and tried 2026-11-07,<br/>suggestions and comments added"]
-    M9["9 · AI helper, any provider<br/>explain, review, write, learn to prompt<br/>READY — decided 2026-11-07, next to build"]
+    M9["9 · AI helper, any provider<br/>explain, review, write, learn to prompt<br/>ACTIVE — explain and review built 2026-11-07,<br/>write mode later"]
     GOAL["First usable release<br/>for classrooms and competitions<br/>GOAL"]
 
     M0 --> M1
@@ -50,7 +50,7 @@ flowchart TD
     class M6 blocked
     class GOAL goal
     class M8 active
-    class M9 ready
+    class M9 active
 ```
 
 | Milestone                        | Status     | What it is                                                                                                                                                                                                                                                                      | Blocker                                                                                                                                                                                                                                                                                                                                                                                                                                 |
@@ -64,7 +64,7 @@ flowchart TD
 | **6 · Offline PWA**              | ⬜ BLOCKED | Service worker and manifest so the app, including the WebAssembly compiler, works without a network                                                                                                                                                                             | Needs 2 (the compiler must be cacheable to compile offline)                                                                                                                                                                                                                                                                                                                                                                             |
 | **7 · Mat profiles**             | 🔵 READY   | Mat profiles with drag-and-drop objects, all in millimetres ([ADR 0004](adr/0004-millimetre-units.md))                                                                                                                                                                          | None technically; scheduled last by priority                                                                                                                                                                                                                                                                                                                                                                                            |
 | **8 · Python editing**           | 🟡 ACTIVE  | Edit a tab's Python on `/blocks`; it goes back to blocks only when correct, with errors marked where they are; suggestions with help, and comments kept ([ADR 0014](adr/0014-python-editing-on-blocks-page.md))                                                                 | Tried 2026-11-07; suggestions, help and comments added the same day ([checks](compatibility.md#python-editing-checks-milestone-8) 10 to 12)                                                                                                                                                                                                                                                                                             |
-| **9 · AI helper**                | 🔵 READY   | Explain, review and write code with any AI provider, and learn to prompt ([ADR 0015](adr/0015-ai-helper.md))                                                                                                                                                                    | None: decided 2026-11-07 and next to build; writing code uses 8                                                                                                                                                                                                                                                                                                                                                                         |
+| **9 · AI helper**                | 🟡 ACTIVE  | Explain, review and write code with any AI provider, and learn to prompt ([ADR 0015](adr/0015-ai-helper.md))                                                                                                                                                                    | Explain and review are built (Anthropic, OpenAI, DeepSeek), tested with a fake provider; the [checks](compatibility.md#ai-helper-checks-milestone-9) with a real key are the maintainer's. Left: the write mode, which uses 8                                                                                                                                                                                                           |
 | **Goal: first usable release**   | 🟪 GOAL    | Students program a robot with blocks, run it on a hub, drive it with a controller, and use the app offline                                                                                                                                                                      | Needs 4, 5, 6 and 7                                                                                                                                                                                                                                                                                                                                                                                                                     |
 
 **The real bottleneck is hardware access.** Hardware verification (a real SPIKE Prime hub on each
@@ -80,7 +80,8 @@ controller.
 
 **Milestones 8 and 9 were asked for and decided on 2026-11-07**
 ([ADR 0014](adr/0014-python-editing-on-blocks-page.md), [ADR 0015](adr/0015-ai-helper.md)): 8 is
-built and waits for the maintainer's checks, and 9 is next to build. They
+built and was tried; 9's explain and review are built and wait for the maintainer's checks with a
+real key, and its write mode comes later. They
 are not part of the first usable release unless the maintainer says so.
 
 ## Milestones in planned order
@@ -256,7 +257,7 @@ every toolbox block back. The maintainer tried the
 [checks](compatibility.md#python-editing-checks-milestone-8) the same day and asked for
 suggestions with help, and for comments that are kept; both were added (checks 10 to 12).
 
-### 9 · AI helper with any provider (decided 2026-11-07, next to build)
+### 9 · AI helper with any provider (explain and review built 2026-11-07)
 
 Asked for on 2026-11-07: AI that explains, reviews and writes code through an API, so that
 children learn to prompt, and not tied to one provider (OpenAI, Anthropic, DeepSeek and others).
@@ -264,6 +265,14 @@ children learn to prompt, and not tied to one provider (OpenAI, Anthropic, DeepS
 bring-your-own key set by an adult, a fixed list of provider origins in the CSP, hint mode for
 children, and every answer checked like a person's code. Explain and review need only 4; writing
 code needs 8, so 9 cannot be finished before 8.
+
+Built on 2026-11-07: the **AI helper** panel on `/blocks` with Explain and Review, for Anthropic,
+OpenAI and DeepSeek through their official SDKs (loaded only when used), the adult's settings
+(key, model from the provider's list, language, questions a day), the prompt checklist, "What the
+AI sees", answers marked as from an AI with **Line N** links into the Python, tokens per answer,
+and the prompt journal. Tested with a fake provider in the browser; the
+[checks](compatibility.md#ai-helper-checks-milestone-9) with a real key are next. The write mode
+is not built.
 
 ## Keeping this roadmap current
 

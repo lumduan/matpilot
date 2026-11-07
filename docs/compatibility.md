@@ -621,6 +621,44 @@ way to leave comments in the Python (check 12). On the second try, checks 10 to 
 and the maintainer asked for the colours of VS Code and similar editors, in the editor and in the
 read-only Python panel too (check 13).
 
+## AI helper checks (milestone 9)
+
+These check the AI helper on `/blocks` ([ADR 0015](adr/0015-ai-helper.md)) with a real key. No hub
+is needed. An adult does checks 1 and 2. A key is never sent to anyone but its provider, so these
+are the only checks with a real provider: the automated tests answer with a fake one. Any
+program works; the steps use the one from the tabs checks (main calls `shapes.square(200)`).
+
+1. Press **AI helper** at the bottom right. The panel says an adult sets it up first, and nothing
+   is sent. Press **Set up (for adults)**, choose **Anthropic (Claude)**, paste a key, and press
+   **Check the key and list models**: the dialog says the key was accepted and how many models
+   there are, and the **Model** list shows them. Choose one, tick **Turn the AI helper on**, set
+   **Questions a day**, and **Save**.
+2. Repeat with **DeepSeek** and its key. Leave **Remember the keys** unticked: after closing the
+   browser tab and opening `/blocks` again, the panel asks for the key again.
+3. Choose **Explain**, leave the prompt empty, and press **Ask the AI**. The answer is marked
+   "Answer from an AI", with the provider and the model, and it explains the program in steps,
+   naming blocks (for example "move forward for … mm"). Under it: the tokens used, and "1 of N
+   questions left today" goes down by one.
+4. Type a prompt in Thai, for example `ทำไมหุ่นไม่หยุด อยากให้หยุดหลังวาดสี่เหลี่ยม ช่วยใบ้หน่อย`. The
+   checklist ticks its items as you type. The answer comes in Thai (with "Answers in: the
+   language of the question").
+5. Choose **Review** and press **Ask the AI**. The answer points at lines as **Line N** buttons,
+   with hints rather than the fixed code. Press one: the Python panel opens with that line
+   marked.
+6. Open **What the AI sees**: it shows the fixed instructions, the program with numbered lines,
+   and the prompt last. It contains no key.
+7. Ask something that is not about the robot, for example about a film. The AI declines kindly
+   and suggests a question about the program.
+8. Press **Yes** under "Did this help?", then open **Your earlier prompts**: the prompts are
+   listed with their answers, and **Use this prompt again** puts one back in the box.
+9. With the daily limit reached, **Ask the AI** is greyed out.
+10. With a wrong key (type one letter wrong and save), asking says the key was not accepted.
+
+### AI helper results
+
+| Date | Browser | OS  | Provider and model | Result |
+| ---- | ------- | --- | ------------------ | ------ |
+
 ## Keeping this file current
 
 The supported and unsupported lists also live in `README.md` (copied matrix) and

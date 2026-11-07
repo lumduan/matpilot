@@ -1,9 +1,9 @@
 # ADR 0015: An AI helper for coding, review and learning to prompt, with any provider
 
-- Status: Accepted (not built yet: it comes after [ADR 0014](0014-python-editing-on-blocks-page.md))
+- Status: Accepted. Explain and review built 2026-11-07 (see "Built"); the write mode is not built
 - Date: 2026-11-07 (proposed; accepted the same day, with every recommended option)
-- Would amend: the "no runtime requests to third-party origins" rule ([CLAUDE.md](../../CLAUDE.md)
-  hard constraint 3) for a fixed list of AI provider origins, used only after an adult turns the
+- Amends: the "no runtime requests to third-party origins" rule ([CLAUDE.md](../../CLAUDE.md)
+  hard constraint 3), for a fixed list of AI provider origins, used only after an adult turns the
   helper on and enters a key. [ADR 0011](0011-save-load-github.md) made the same kind of
   exception for GitHub.
 - Builds on: [ADR 0014](0014-python-editing-on-blocks-page.md) (Python to blocks), which the
@@ -158,15 +158,74 @@ The maintainer chose every recommended option on 2026-11-07:
 - **D4, first users:** the maintainer's child at home; classrooms later.
 - **D5, order:** ADR 0014 first, then the helper.
 
-Until the helper is built, nothing in the site changes: no new origin is in the CSP.
+## Built (2026-11-07): explain and review
+
+What was built, and what was decided while building it. The write mode is not built.
+
+- **Where:** an **AI helper** button at the bottom of `/blocks` opens a panel beside the blocks.
+  The button shows even before setup, so an adult can find the settings; until an adult turns the
+  helper on with a key and a model, the panel only says what it is and offers **Set up (for
+  adults)**, and nothing is sent. (The proposal said the helper stays hidden without a key; this
+  is the smallest change that still lets an adult find it.)
+- **Code:** `src/lib/ai/` (providers, settings, usage and journal, prompt, checklist, answer,
+  client), `src/hooks/useAiHelper.ts`, `src/components/blocks/AiPanel.tsx` and
+  `AiSettingsDialog.tsx`. The panel's code loads when it opens (about 19 KB gzipped).
+- **Clients (decision 1's open point):** the official SDKs, `@anthropic-ai/sdk` 1.6.0 and
+  `openai` 7.53.0, both Apache-2.0 (see [NOTICE](../../NOTICE)). Each loads only when a question
+  is asked or the models are listed: about 77 KB and 81 KB gzipped, measured on the 2026-11-07
+  build. The page's first download does not include them.
+- **Keys:** one per provider, in this browser tab only (sessionStorage) unless the adult ticks
+  **Remember the keys**, then in localStorage. A key goes only to its provider; it is never put in
+  program files, GitHub saves, the journal or "What the AI sees". SDK 1.6.0 sends the Anthropic key
+  as `Authorization: Bearer`, which the API accepts like `x-api-key`.
+- **CORS, checked again on 2026-11-07** with the headers the SDKs really send (their
+  `x-stainless-*` headers, `anthropic-version`, `anthropic-beta`,
+  `anthropic-dangerous-direct-browser-access`, `authorization`): all three providers answer the
+  preflight with 200 and allow them. With `anthropic-dangerous-direct-browser-access: true`,
+  Anthropic's error answers (401) also carry `Access-Control-Allow-Origin`, so the page can say
+  "the key was not accepted" instead of a network error.
+- **Models:** from the provider's own list, fetched with the key, which also checks the key; a
+  model can be typed by hand too. For OpenAI the list leaves out models that do not answer chat
+  completions (embeddings, speech, images, realtime and the like).
+- **Anthropic's refusals:** a request asks for Anthropic's server-side fallback
+  (`fallbacks: "default"`, beta `server-side-fallback-2026-07-01`) only when the model's entry in
+  the model list names fallback models; if the API refuses the option (400), the question is sent
+  once more without it. An answer with `stop_reason: "refusal"` shows "The AI did not answer this".
+- **The request:** fixed instructions first, the same for every question and mode so prompt
+  caching can reuse them (marked `cache_control: ephemeral` for Anthropic); then the program, the
+  open tab's file first, with numbered lines; then the task for the mode, the child's prompt, and
+  the language. The fixed part includes the blocks' own words for every Python call, built from
+  the Python editor's word list (`from-python/vocabulary.ts`), so the AI names blocks as the child
+  sees them. No child-safety system prompt from Anthropic was available to this project, so the
+  fixed instructions carry MatPilot's own rules (robots and programming only, no personal
+  information, words for children, hints rather than fixes, never pretend to be a person).
+- **Answers:** marked "Answer from an AI" with the provider and the model, and the tokens used
+  (with the cached part). "Line N:" at the start of a point becomes a button that marks that line
+  in the Python. Answers are text; nothing in them runs or changes blocks.
+- **Learning to prompt:** a checklist of four habits (ask one clear question; say which part;
+  say what you want or what happens now; say how to answer), ticked as the child types, in Thai or
+  English. It advises and never blocks a question. "What the AI sees" shows the exact text. The
+  journal keeps the last 30 prompts with their answers and whether they helped, in this browser.
+- **Daily limit:** 20 questions a day by default (1 to 500), counted in this browser. A question
+  counts when it is answered; a failed call does not.
+- **Tests:** unit tests for every module; the client is tested against a fake provider through the
+  SDKs' `fetch` option, so the real SDK code builds the requests. A headless Chromium run on the
+  production build (with its CSP) answers the providers' requests with a fake through the
+  DevTools protocol: setup, model list, ask, Line link, journal, a 402 from DeepSeek, the daily
+  limit, and only the providers' origins called. No real key was used; the
+  [checks with a real key](../compatibility.md#ai-helper-checks-milestone-9) are the
+  maintainer's.
+- **Not built:** the write mode, streaming answers, Google's OpenAI-style route, and a model on
+  this computer.
 
 ## Consequences
 
-- Hard constraint 3 would read "GitHub, plus the listed AI providers once an adult turns the
-  helper on". `verify-export.mjs` pins the list, and CLAUDE.md changes when this is accepted.
+- Hard constraint 3 now reads "GitHub, plus the listed AI providers once an adult turns the
+  helper on". `verify-export.mjs` pins the list (and requires each origin), and a unit test keeps
+  it equal to `src/lib/ai/providers.ts`.
 - Answers differ between providers and models. MatPilot checks code the same way whichever wrote
   it (compiler, converter, problems), so a weaker model cannot break a program. Its code can only
   be refused.
 - Anyone who uses that browser can read a key stored there. The spending limit at the provider is
   the real protection.
-- With no key, nothing changes: the helper stays hidden.
+- With no key, nothing is sent: the panel only offers setup to an adult.

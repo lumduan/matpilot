@@ -200,6 +200,46 @@ parser to read that Python back into blocks
 (docs/adr/0014-python-editing-on-blocks-page.md). Their JavaScript is bundled
 into the site and loaded when someone edits Python; no source is modified.
 
+==============================================================================
+Anthropic TypeScript SDK (npm package @anthropic-ai/sdk, redistributed
+unmodified)
+https://github.com/anthropics/anthropic-sdk-typescript
+Copyright 2023 Anthropic, PBC.
+Version used: 1.6.0
+License: Apache License, Version 2.0
+  https://www.apache.org/licenses/LICENSE-2.0
+  The full text ships in the package as node_modules/@anthropic-ai/sdk/LICENSE
+  (sha256 7fc343be7ec189b803c1872267cbaf0381b12ffdb22d972b8ea7b21b262ba563).
+  The package also ships LICENSE-MIT, which says the project moved from the
+  MIT License to Apache-2.0 in version 1.0.0; the MIT License still covers
+  contributions merged before that change. The package contains no NOTICE
+  file.
+Bundled with it: @opentelemetry/api 1.10.0
+  (https://github.com/open-telemetry/opentelemetry-js), Copyright The
+  OpenTelemetry Authors, License: Apache License, Version 2.0; the full text
+  ships in that package as LICENSE
+  (sha256 c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4).
+  It is the tracing API only: it sends nothing by itself.
+==============================================================================
+
+==============================================================================
+OpenAI TypeScript and JavaScript SDK (npm package openai, redistributed
+unmodified)
+https://github.com/openai/openai-node
+Copyright 2026 OpenAI (as stated in its LICENSE)
+Version used: 7.53.0
+License: Apache License, Version 2.0
+  https://www.apache.org/licenses/LICENSE-2.0
+  The full text ships in the package as node_modules/openai/LICENSE
+  (sha256 636eb7d79da9bb6d515a4b3fd417aa26679eb3cf16396ddab4bc55fa74e616e4).
+  The package contains no NOTICE file.
+==============================================================================
+
+MatPilot's AI helper (docs/adr/0015-ai-helper.md) calls Anthropic through the
+Anthropic SDK, and OpenAI and DeepSeek through the OpenAI SDK. Their
+JavaScript is bundled into the site and loaded only when someone asks the AI
+helper a question or lists a provider's models; no source is modified.
+
 MIT License
 
 Copyright (C) 2018-2021 by Marijn Haverbeke <marijn@haverbeke.berlin> and others
