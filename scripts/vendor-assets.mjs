@@ -9,6 +9,8 @@
 //   a PDF's scripts, and its standard fonts (some under a GPL-based licence): a PDF that names a
 //   font without carrying it is drawn with the computer's own fonts, which a mat's pictures do not
 //   need.
+// - ADR 0016: MicroPython's WebAssembly port, which runs a program on a mat. Its loader is copied
+//   as .js for the same reason as pdf.js's worker.
 import { copyFileSync, cpSync, mkdirSync, readdirSync, rmSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
@@ -52,3 +54,14 @@ for (const folder of ['iccs', 'cmaps']) {
 console.log(
   `Vendored pdf.js's worker, ${wasmFiles.length} decoder files, and its ICC profile and character maps to public/vendor/pdfjs/.`,
 );
+
+// MicroPython (ADR 0016, step 7c).
+const micropythonDir = dirname(
+  require.resolve('@micropython/micropython-webassembly-pyscript/package.json'),
+);
+const micropythonOut = join(vendorDir, 'micropython');
+rmSync(micropythonOut, { recursive: true, force: true });
+mkdirSync(micropythonOut, { recursive: true });
+copyFileSync(join(micropythonDir, 'micropython.mjs'), join(micropythonOut, 'micropython.js'));
+copyFileSync(join(micropythonDir, 'micropython.wasm'), join(micropythonOut, 'micropython.wasm'));
+console.log('Vendored MicroPython (loader and WebAssembly) to public/vendor/micropython/.');

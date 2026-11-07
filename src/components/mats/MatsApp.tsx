@@ -8,6 +8,7 @@ import { FileSaveDialog } from '@/components/files/FileSaveDialog';
 import { NumberField } from '@/components/robots/NumberField';
 import { StudioNav } from '@/components/StudioNav';
 import { useGitHub } from '@/hooks/useGitHub';
+import { useMatRun } from '@/hooks/useMatRun';
 import { useMats, type MatDraft } from '@/hooks/useMats';
 import { MAT_FILES } from '@/lib/github/files';
 import { useRobots } from '@/hooks/useRobots';
@@ -27,6 +28,7 @@ import { PROJECT_NAME, PROJECT_STATUS } from '@/lib/project';
 import { robotProblems } from '@/lib/robots/profile';
 import { RULES_PROFILES } from '@/lib/robots/rules';
 import { AddMatDialog } from './AddMatDialog';
+import { MatRunPanel, PlaybackBar } from './MatRunPanel';
 import { MatView, type MatTool } from './MatView';
 
 const TOOLS: readonly { readonly value: MatTool; readonly label: string; readonly hint: string }[] =
@@ -86,6 +88,11 @@ export function MatsApp() {
     ? (usable.find((each) => each.id === mat.placement!.robotId) ?? null)
     : null;
   const placement = dragging ?? mat?.placement ?? null;
+  const rulesForRun = RULES_PROFILES.find((each) => each.id === mat?.rulesId) ?? null;
+  const run = useMatRun(mat, robot, robot ? placement : null, rulesForRun);
+  // While a run is shown, the robot stands where the run has it.
+  const shown =
+    run.pose && run.state.kind === 'done' ? { robotId: robot?.id ?? null, ...run.pose } : placement;
   const rules = RULES_PROFILES.find((each) => each.id === mat?.rulesId) ?? null;
   const start = mat?.areas.find((area) => area.kind === 'start') ?? null;
 
@@ -227,7 +234,10 @@ export function MatsApp() {
               mat={mat}
               picture={mats.picture}
               robot={robot}
-              placement={robot ? placement : null}
+              placement={robot ? shown : null}
+              path={run.state.kind === 'done' ? run.state.result.frames : null}
+              playhead={run.time}
+              locked={run.state.kind === 'done' || run.state.kind === 'running'}
               tool={tool}
               selectedArea={selectedArea}
               onPlace={place}
@@ -235,6 +245,7 @@ export function MatsApp() {
               onSelectArea={setSelectedArea}
             />
           )}
+          {mat && <PlaybackBar run={run} />}
         </div>
 
         <aside className="mats-side" aria-label="The mat and the robot">
@@ -508,7 +519,7 @@ export function MatsApp() {
                   </ul>
                 </section>
               )}
-              <p className="field-hint">Running a block program on the mat comes next.</p>
+              <MatRunPanel run={run} />
             </>
           )}
         </aside>

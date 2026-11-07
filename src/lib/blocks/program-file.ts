@@ -155,6 +155,37 @@ export function parseProgramFile(text: string, fallbackName: string): ParsedProg
   };
 }
 
+/**
+ * The Python files a saved program carries (version 2 and 3; version 1 has one, main.py), so the
+ * Mats page can run a program file without a block editor (ADR 0016, step 7c). Empty when the file
+ * is not a program or has none.
+ */
+export function programPythonFiles(text: string): ProgramPythonFile[] {
+  let data: unknown;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    return [];
+  }
+  if (!isObject(data) || data.format !== PROGRAM_FILE_FORMAT || !Array.isArray(data.python))
+    return [];
+  const asLines = (value: unknown) =>
+    Array.isArray(value) && value.every((line) => typeof line === 'string')
+      ? `${(value as string[]).join('\n')}\n`
+      : null;
+  if (data.python.every((line) => typeof line === 'string')) {
+    const code = asLines(data.python);
+    return code ? [{ name: 'main.py', code }] : [];
+  }
+  const files: ProgramPythonFile[] = [];
+  for (const item of data.python as unknown[]) {
+    if (!isObject(item) || typeof item.file !== 'string') continue;
+    const code = asLines(item.lines);
+    if (code !== null) files.push({ name: item.file, code });
+  }
+  return files;
+}
+
 /** The tabs of a parsed file, main first, or what is wrong with them. */
 function readTabs(data: Record<string, unknown>): ProgramTabState[] | string {
   const empty = 'This program file has no blocks in it.';

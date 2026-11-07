@@ -2,6 +2,7 @@
 
 import {
   useEffect,
+  useMemo,
   useRef,
   useState,
   type KeyboardEvent as ReactKeyboardEvent,
@@ -11,6 +12,7 @@ import { contains, type Point, type Polygon } from '@/lib/geometry/rect';
 import type { Mat, MatArea, MatPlacement } from '@/lib/mats/mat';
 import { normalHeading, robotOnMat, sensorOnMat } from '@/lib/mats/pose';
 import type { RobotProfile } from '@/lib/robots/profile';
+import type { Frame } from '@/lib/sim/engine';
 
 export type MatTool = 'move' | 'ruler' | 'area';
 
@@ -49,6 +51,9 @@ export function MatView({
   onPlace,
   onArea,
   onSelectArea,
+  path = null,
+  playhead = 0,
+  locked = false,
 }: {
   mat: Mat;
   picture: ImageBitmap | null;
@@ -61,6 +66,11 @@ export function MatView({
   /** A rectangle was drawn with the area tool (MAT frame). */
   onArea: (area: Omit<MatArea, 'id' | 'name' | 'kind'>) => void;
   onSelectArea: (id: string | null) => void;
+  /** A run's frames: its path is drawn, the part up to `playhead` (ms) darker. */
+  path?: readonly Frame[] | null;
+  playhead?: number;
+  /** The robot cannot be dragged (a run is shown). */
+  locked?: boolean;
 }) {
   const host = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -76,6 +86,8 @@ export function MatView({
 
   const H = mat.heightMm;
   const W = mat.widthMm;
+  // A run's path, worked out once per run; playback only cuts it at the playhead.
+  const pathShape = useMemo(() => (path && path.length > 1 ? pathOf(path, H) : null), [path, H]);
 
   useEffect(() => {
     const element = host.current;
@@ -185,11 +197,11 @@ export function MatView({
       else setDrawing({ from: m, to: m });
       return;
     }
-    if (handle && Math.hypot(m.x - handle.x, m.y - handle.y) < px(16)) {
+    if (!locked && handle && Math.hypot(m.x - handle.x, m.y - handle.y) < px(16)) {
       drag.current = { kind: 'turn' };
       return;
     }
-    if (onRobot && placement && contains(onRobot.outline, [m])) {
+    if (!locked && onRobot && placement && contains(onRobot.outline, [m])) {
       drag.current = { kind: 'robot', offset: { x: placement.xMm - m.x, y: placement.yMm - m.y } };
       return;
     }
@@ -274,7 +286,7 @@ export function MatView({
   };
 
   const key = (event: ReactKeyboardEvent<SVGSVGElement>) => {
-    if (!placement) return;
+    if (!placement || locked) return;
     const step = event.shiftKey ? 10 : 1;
     const moves: Record<string, Point> = {
       ArrowLeft: { x: -step, y: 0 },
@@ -376,8 +388,14 @@ export function MatView({
             height={Math.abs(drawing.to.y - drawing.from.y)}
           />
         )}
+        {pathShape && (
+          <g className="mat-path" data-testid="mat-path">
+            <polyline className="mat-path-all" points={pathShape.all} />
+            <polyline className="mat-path-done" points={pathShape.until(playhead)} />
+          </g>
+        )}
         {onRobot && placement && robot && handle && (
-          <g className="mat-robot" data-testid="mat-robot">
+          <g className="mat-robot" data-locked={locked} data-testid="mat-robot">
             <polygon className="mat-robot-outline" points={points(onRobot.outline)} />
             <polygon className="mat-robot-body" points={points(onRobot.body)} />
             <polygon className="mat-robot-wheel" points={points(onRobot.left)} />
@@ -401,13 +419,15 @@ export function MatView({
               cy={H - placement.yMm}
               r={px(3)}
             />
-            <circle
-              className="mat-robot-handle"
-              cx={s(handle).x}
-              cy={s(handle).y}
-              r={px(9)}
-              data-testid="mat-robot-handle"
-            />
+            {!locked && (
+              <circle
+                className="mat-robot-handle"
+                cx={s(handle).x}
+                cy={s(handle).y}
+                r={px(9)}
+                data-testid="mat-robot-handle"
+              />
+            )}
           </g>
         )}
         {ruler && rulerLength > 0 && (
@@ -455,4 +475,35 @@ export function MatView({
       </p>
     </div>
   );
+}
+
+/**
+ * A run's path as SVG points (y down), at most about 1500 of them, and the part up to a time
+ * (`until`, ms), found by halving rather than by walking the frames.
+ */
+function pathOf(frames: readonly Frame[], height: number) {
+  const step = Math.max(1, Math.ceil(frames.length / 1500));
+  const times: number[] = [];
+  const points: string[] = [];
+  for (let i = 0; i < frames.length; i += step) {
+    const frame = frames[i]!;
+    times.push(frame.t);
+    points.push(
+      `${Math.round(frame.pose.xMm * 10) / 10},${Math.round((height - frame.pose.yMm) * 10) / 10}`,
+    );
+  }
+  const all = points.join(' ');
+  return {
+    all,
+    until(t: number): string {
+      let low = 0;
+      let high = times.length;
+      while (low < high) {
+        const middle = (low + high) >> 1;
+        if (times[middle]! <= t) low = middle + 1;
+        else high = middle;
+      }
+      return low >= points.length ? all : points.slice(0, low).join(' ');
+    },
+  };
 }

@@ -1,6 +1,6 @@
 # ADR 0016: Robots and Mats: robot profiles, mats at real size, and running a program on a mat
 
-- Status: Accepted 2026-11-07, every recommended option. Steps 7a and 7b built the same day (see "Built")
+- Status: Accepted 2026-11-07, every recommended option. Steps 7a, 7b and 7c built the same day (see "Built")
 - Date: 2026-11-07
 - Replaces: the one-line plan for milestone 7 ("Mat profiles with drag-and-drop objects") in
   [docs/roadmap.md](../roadmap.md)
@@ -344,6 +344,52 @@ words: build the fields as recommended first; using them will show what to add o
   PDF (page 2, 420 × 297 mm); a picture (1200 × 600 mm typed); a phone (no sideways scroll); no
   errors, and no request outside this site. The real WRO PDF was not available to the test (its
   download link returned a web page), so it is the maintainer's check.
+
+## Built (2026-11-07): step 7c, running a program on a mat
+
+- **Where:** **Run a program on the mat** in the Mats page's panel. The program is the one the
+  Blocks page last made (it hands its Python files over in this browser, `src/lib/sim/handoff.ts`),
+  or a program file loaded there (`.matpilot.json` files carry their Python). A program whose
+  blocks still have problems is not run, as on the hub.
+- **How (D6):** the program's own Python runs in MicroPython's WebAssembly port
+  (`@micropython/micropython-webassembly-pyscript` 1.29.0-6, MIT, served from
+  `/vendor/micropython/`) in a Web Worker (`src/lib/sim/sim.worker.ts`). A simulated `pybricks`
+  package (`src/lib/sim/pybricks.ts`) stands in for the firmware; its constants come from the
+  blocks' own option lists. Every call goes to a TypeScript engine on a virtual clock
+  (`src/lib/sim/engine.ts`), cited to the firmware for what it follows.
+- **The engine:** the program's numbers (its DriveBase wheel diameter and axle track) turn
+  distances into motor degrees; the robot's numbers on the mat turn motor degrees into movement.
+  When they differ, the robot goes too far or not far enough, as it would, and the page explains
+  why. Moves ramp at the drive base's accelerations; `drive()` runs until stopped; a motor command
+  on a wheel takes it from the drive base; a negative `run_angle` speed turns the other way. Each
+  read costs 1 ms of virtual time, so a loop that only reads still moves the clock on.
+- **Decided while building:**
+  - **Stopping:** at the time limit (the rules profile's run time, else 120 s) the simulated
+    `pybricks` raises SystemExit, as the hub's stop button does, so the program's `finally`
+    stops its motors. A JavaScript exception could not: MicroPython's WebAssembly port ends the
+    whole run on one, without running `finally` (found in testing).
+  - **A program that never waits** (a loop with nothing in it) is stopped after 30 s of real
+    time, and the page says so.
+  - **Sensors read nothing yet** (7d): no colour, nothing in range, no press; the page lists the
+    sensors a program read.
+  - **The Xbox controller** ends the run with a message: the mat cannot drive it yet.
+  - Stop, brake and hold all stop at once; nothing slips or bumps.
+- **The result** (`src/lib/sim/review.ts`): how the run ended (finished, time limit, an error
+  with its file and line, something not supported), whether the robot stayed on the mat, touched
+  a keep-out area, ended inside a target, where it ended, what it printed and showed, and how the
+  program and the robot differ. The path is drawn on the mat; a bar plays it back (1× to 8×),
+  with a time slider. **Back to the start** puts the robot back to be moved again.
+- **Tests:** engine unit tests (straight, clockwise turns, bigger wheels, drive, other motors, a
+  wheel motor taking over, the time limit, frames); MicroPython itself in the unit tests, in Node:
+  hand-written programs, a program in tabs, the time limit with `finally`, the stop watch and
+  sensors, Python errors with their line, the controller; and the generator's "every simple
+  block" and "every detailed block" programs now also run on a simulated mat with no Python
+  error. Headless Chromium on the production build: the Blocks page hands over the tabs-check
+  program; it runs (the result shows about 0.2 s after Run), its square ends where it started,
+  facing 0°; playback; the same program from its file; with 62.4 mm wheels instead of 56 mm the
+  square opens up (each turn 100.3°) and the page says why.
+- **Found while testing:** the global `main { flex: 1 }` rule made the Mats page as tall as its
+  panel, hiding the playback bar below the window; the page is now fixed to the window's height.
 
 ## Amendment (2026-11-07): robots and mats on GitHub; D5 changed
 

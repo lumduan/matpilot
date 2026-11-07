@@ -135,6 +135,13 @@ entry in [NOTICE](NOTICE).
     drawing it with pdf.js (`picture.ts`, loaded only on demand; its worker and decoders are
     served from `/vendor/pdfjs/`, copied by `scripts/vendor-assets.mjs`), IndexedDB storage
     (`store.ts`), and the robot on a mat (`pose.ts`).
+  - `src/lib/sim/`: running a program on a mat ([ADR 0016](docs/adr/0016-robots-and-mats.md), 7c):
+    the engine on a virtual clock (`engine.ts`, citing the firmware), the simulated `pybricks`
+    package in Python (`pybricks.ts`: when a block generates a new Pybricks name, add it here
+    too; the generator tests run every block's Python through it), the runner that loads
+    MicroPython (`runner.ts`, also run by the tests in Node), the Web Worker and its watchdog,
+    the Blocks page's hand-over of its Python, and the review of a run. MicroPython is served from
+    `/vendor/micropython/`, never bundled.
   - `src/lib/ai/`: the AI helper ([ADR 0015](docs/adr/0015-ai-helper.md)): the providers
     (`providers.ts`, also the CSP's list), the settings and keys' format, the daily limit and the
     prompt journal (`usage.ts`), the request (`prompt.ts`: fixed instructions first, with the
@@ -155,7 +162,7 @@ entry in [NOTICE](NOTICE).
   (the hub probe, the compatibility check, the hub connection in `useHubRunner`, live device
   values in `useLiveDevices`, the block editor in `useBlocksEditor`, editing a tab's Python in
   `usePythonEditing`, GitHub in `useGitHub`, the AI helper in `useAiHelper`, the robots in
-  `useRobots`, the mats in `useMats`).
+  `useRobots`, the mats in `useMats`, a run on a mat in `useMatRun`).
   Components may import types and pure helpers.
 - `src/components/`, `src/app/`: UI only. They must not touch `navigator.bluetooth` (ESLint
   enforces this).

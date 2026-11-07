@@ -7,6 +7,7 @@ import { SIMPLE_BLOCK_TYPES } from './simple-definitions';
 import { generateProgram, listSetUpDevices } from './generator';
 import { loadWorkspace, registerBlocks } from './register';
 import { STARTER_WORKSPACE } from './starter';
+import { runOnTestMat } from '../sim/expect-runs';
 
 type State = Record<string, unknown>;
 
@@ -331,6 +332,8 @@ finally:
     // Nothing MicroPython lacks: no `numbers` module, no f-strings, no sys.exit.
     expect(code).not.toMatch(/numbers|f"|f'|sys\.exit/);
     await expectCompiles(code);
+    // And it runs on a simulated mat, through the simulated pybricks (ADR 0016, 7c).
+    expect(await runOnTestMat(code)).not.toMatchObject({ reason: 'error' });
   });
 
   it('leaves out try/finally when no motor is set up', async () => {

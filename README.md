@@ -43,8 +43,10 @@ What works today:
   robot, and the drive base in its Python follows it.
 - **Mats** (`/mats`): add the mat's printing PDF and MatPilot reads its real size from the file
   (a photo works too, with its size typed in). Place your robot on it, drag and turn it, see
-  whether it fits the start area, measure distances, and mark areas. Robots and mats are saved
-  on this computer, or on GitHub with the same setup as programs.
+  whether it fits the start area, measure distances, and mark areas. **Run a program on the
+  mat**: the program's own Python runs in the browser and the robot's path is played back, with
+  a warning when it leaves the mat or runs out of time. Robots and mats are saved on this
+  computer, or on GitHub with the same setup as programs.
 - **AI helper** (on `/blocks`, off until an adult sets it up): explains the open tab's program, or
   reviews it with hints rather than answers, using Anthropic, OpenAI or DeepSeek with the adult's
   own key. Children learn to prompt: a checklist ticks the habits of a good prompt as they type,
@@ -57,7 +59,7 @@ What works today:
   hub, records the results in the browser, and produces a report for the
   [compatibility table](docs/compatibility.md).
 
-More blocks (tasks that run at the same time), offline use, and running a block program on a mat in the page ([ADR 0016](docs/adr/0016-robots-and-mats.md)) are planned. See the [roadmap](docs/roadmap.md).
+More blocks (tasks that run at the same time), offline use, and sensors that read the mat in a run ([ADR 0016](docs/adr/0016-robots-and-mats.md)) are planned. See the [roadmap](docs/roadmap.md).
 
 Tested firmware baseline: **Pybricks v4.0.1** on LEGO SPIKE Prime. This is the version MatPilot is
 tested against, not a hard requirement.
