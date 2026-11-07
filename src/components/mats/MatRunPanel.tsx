@@ -3,6 +3,7 @@
 import { memo, useRef, useState } from 'react';
 import type { MatRun, RunState } from '@/hooks/useMatRun';
 import type { RunReview } from '@/lib/sim/review';
+import type { Spread } from '@/lib/sim/spread';
 import type { SimEnd } from '@/lib/sim/runner';
 
 const seconds = (ms: number) => `${(ms / 1000).toFixed(1)} s`;
@@ -140,7 +141,15 @@ export function MatRunPanel({ run }: { run: MatRun }) {
           {state.message}
         </p>
       )}
-      {state.kind === 'done' && <RunResult state={state} limitS={run.seconds} />}
+      {state.kind === 'done' && (
+        <RunResult
+          state={state}
+          limitS={run.seconds}
+          spread={run.spread}
+          showSpread={run.showSpread}
+          onShowSpread={run.setShowSpread}
+        />
+      )}
     </section>
   );
 }
@@ -192,13 +201,81 @@ export function PlaybackBar({ run }: { run: MatRun }) {
   );
 }
 
+/** How sure is it: where the real robot may end, from its drift (src/lib/sim/spread.ts). */
+function SpreadReport({
+  spread,
+  show,
+  onShow,
+}: {
+  spread: Spread | null;
+  show: boolean;
+  onShow: (show: boolean) => void;
+}) {
+  if (!spread) {
+    return (
+      <p className="field-hint" data-testid="run-spread">
+        A real robot does not end exactly here. To see where it may end, give the robot its drift on
+        the Robots page: <strong>Measure on the floor</strong> finds its drift per metre, and you
+        can type its drift per 90° turn.
+      </p>
+    );
+  }
+  const times = (count: number) => `${count} ${count === 1 ? 'time' : 'times'} in ${spread.runs}`;
+  const { perMetreMm, per90Deg } = spread.drift;
+  return (
+    <section className="run-spread" aria-label="How sure is it" data-testid="run-spread">
+      <h3 className="run-spread-title">How sure is it?</h3>
+      <label className="run-spread-show">
+        <input
+          type="checkbox"
+          checked={show}
+          onChange={(event) => onShow(event.target.checked)}
+          data-testid="run-spread-show"
+        />{' '}
+        Show where the real robot may end ({spread.runs} pretend runs)
+      </label>
+      <ul data-testid="run-spread-facts">
+        <li>
+          9 in 10 end within <strong>{round(spread.radiusMm)} mm</strong> of this end, facing within{' '}
+          <strong>±{round(spread.headingDeg)}°</strong>.
+        </li>
+        {spread.targets.map((target) => (
+          <li key={`t-${target.name}`}>
+            Ends inside “{target.name}” {times(target.count)}.
+          </li>
+        ))}
+        {spread.touched
+          .filter((each) => each.count > 0)
+          .map((each) => (
+            <li key={`a-${each.name}`}>
+              Touches “{each.name}” {times(each.count)}.
+            </li>
+          ))}
+        {spread.leftMat > 0 && <li>Goes off the mat {times(spread.leftMat)}.</li>}
+      </ul>
+      <p className="field-hint">
+        Each pretend run is the robot with its drift: {perMetreMm ?? 0} mm per metre
+        {perMetreMm === null ? ' (not measured, so exact)' : ''}, {per90Deg ?? 0}° per 90° turn
+        {per90Deg === null ? ' (not measured, so exact)' : ''}. A program that follows a line or
+        squares up on a wall corrects some of this, so the real spread can be smaller.
+      </p>
+    </section>
+  );
+}
+
 /** How the run ended and what it showed: the same for the whole playback, so it is drawn once. */
 const RunResult = memo(function RunResult({
   state,
   limitS,
+  spread,
+  showSpread,
+  onShowSpread,
 }: {
   state: Extract<RunState, { kind: 'done' }>;
   limitS: number;
+  spread: Spread | null;
+  showSpread: boolean;
+  onShowSpread: (show: boolean) => void;
 }) {
   return (
     <div className="run-result" data-testid="run-result">
@@ -226,6 +303,7 @@ const RunResult = memo(function RunResult({
           </ul>
         </div>
       )}
+      <SpreadReport spread={spread} show={showSpread} onShow={onShowSpread} />
       {state.result.sensorsMissing.length > 0 && (
         <p className="notice notice-warn" data-testid="run-sensors">
           The program reads a {state.result.sensorsMissing.join(', a ')}, which the robot does not

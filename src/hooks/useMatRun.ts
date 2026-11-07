@@ -11,6 +11,7 @@ import type { Frame, Pose } from '@/lib/sim/engine';
 import { HANDOFF_KEY, readHandoff } from '@/lib/sim/handoff';
 import { reviewRun, type RunReview } from '@/lib/sim/review';
 import { runOnMat } from '@/lib/sim/run';
+import { runSpread } from '@/lib/sim/spread';
 import type { SimFile, SimResult, SimSensor } from '@/lib/sim/runner';
 import type { MatPixels } from '@/lib/sim/sensors';
 
@@ -18,7 +19,8 @@ import type { MatPixels } from '@/lib/sim/sensors';
  * Running a program on the mat and playing it back (ADR 0016, steps 7c and 7d). The program is
  * the one the Blocks page last made (handed over in this browser), or a program file loaded here.
  * The robot's sensors read the mat (src/lib/sim/sensors.ts): the colour sensor its picture, the
- * distance and touch sensors its edges and the solid objects marked on it.
+ * distance and touch sensors its edges and the solid objects marked on it. From the robot's
+ * drift, the spread shows where the real robot may end (src/lib/sim/spread.ts).
  */
 
 /** Without rules, a run stops after this long. */
@@ -97,6 +99,7 @@ export function useMatRun(
   const [time, setTimeState] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(1);
+  const [showSpread, setShowSpread] = useState(true);
   const frame = useRef(0);
   // The playhead, also kept here so the animation reads it without waiting for a render.
   const timeRef = useRef(0);
@@ -213,6 +216,12 @@ export function useMatRun(
   }, [setTime]);
 
   const pose = state.kind === 'done' ? poseAt(state.result.frames, time) : null;
+  // Where the real robot may end, from its drift: worked out once per run (and drift).
+  const frames = state.kind === 'done' ? state.result.frames : null;
+  const spread = useMemo(
+    () => (frames && robot && mat ? runSpread(frames, robot, mat) : null),
+    [frames, robot, mat],
+  );
 
   return {
     source,
@@ -240,6 +249,9 @@ export function useMatRun(
     setSpeed,
     pose,
     end,
+    spread,
+    showSpread,
+    setShowSpread,
   };
 }
 

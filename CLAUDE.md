@@ -140,7 +140,8 @@ entry in [NOTICE](NOTICE).
   - `src/lib/sim/`: running a program on a mat ([ADR 0016](docs/adr/0016-robots-and-mats.md), 7c
     and 7d): the engine on a virtual clock (`engine.ts`, citing the firmware), the sensors on the
     mat (`sensors.ts`: the colour sensor's firmware steps, each cited, from the picture at
-    1 px/mm; distance and touch against the mat's edges and solid objects), the simulated `pybricks`
+    1 px/mm; distance and touch against the mat's edges and solid objects), how sure a run is
+    (`spread.ts`: seeded pretend runs from the robot's drift), the simulated `pybricks`
     package in Python (`pybricks.ts`: when a block generates a new Pybricks name, add it here
     too; the generator tests run every block's Python through it), the runner that loads
     MicroPython (`runner.ts`, also run by the tests in Node), the Web Worker and its watchdog,

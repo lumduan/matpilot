@@ -238,6 +238,7 @@ export function MatsApp() {
               path={run.state.kind === 'done' ? run.state.result.frames : null}
               playhead={run.time}
               locked={run.state.kind === 'done' || run.state.kind === 'running'}
+              spread={run.showSpread ? run.spread : null}
               tool={tool}
               selectedArea={selectedArea}
               onPlace={place}

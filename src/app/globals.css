@@ -3224,6 +3224,32 @@ code {
 }
 
 /* A run on the mat (ADR 0016, step 7c): its path, the playback bar, the results. */
+/* Where the real robot may end (src/lib/sim/spread.ts): faint pretend runs under the path. */
+.mat-spread,
+.mat-spread-ends {
+  pointer-events: none;
+}
+
+.mat-spread-path {
+  fill: none;
+  stroke: rgb(201 106 0 / 22%);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.mat-spread-end {
+  fill: rgb(201 106 0 / 55%);
+}
+
+.mat-spread-ring {
+  fill: rgb(201 106 0 / 8%);
+  stroke: #b45f00;
+  stroke-width: 2;
+  stroke-dasharray: 5 4;
+  vector-effect: non-scaling-stroke;
+}
+
 .mat-path-all {
   fill: none;
   stroke: rgb(208 2 27 / 35%);
@@ -3466,4 +3492,26 @@ code {
 
 .calibrate-result .notice {
   margin: 0.6rem 0 0;
+}
+
+.run-spread {
+  margin: 0.6rem 0;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border);
+  border-left: 4px solid #b45f00;
+  border-radius: 0.4rem;
+}
+
+.run-spread-title {
+  margin: 0 0 0.3rem;
+  font-size: 0.95rem;
+}
+
+.run-spread ul {
+  margin: 0.4rem 0;
+  padding-left: 1.2rem;
+}
+
+.run-spread .field-hint {
+  margin: 0;
 }
