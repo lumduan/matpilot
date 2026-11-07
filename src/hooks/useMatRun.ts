@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { cleanProgramName, parseProgramFile, programPythonFiles } from '@/lib/blocks/program-file';
 import type { Mat, MatPlacement } from '@/lib/mats/mat';
+import { matPixels } from '@/lib/mats/picture';
 import { MOTOR_TOP_SPEED_DEG_S } from '@/lib/robots/motion';
 import type { RobotProfile } from '@/lib/robots/profile';
 import type { RulesProfile } from '@/lib/robots/rules';
@@ -10,11 +11,14 @@ import type { Frame, Pose } from '@/lib/sim/engine';
 import { HANDOFF_KEY, readHandoff } from '@/lib/sim/handoff';
 import { reviewRun, type RunReview } from '@/lib/sim/review';
 import { runOnMat } from '@/lib/sim/run';
-import type { SimFile, SimResult } from '@/lib/sim/runner';
+import type { SimFile, SimResult, SimSensor } from '@/lib/sim/runner';
+import type { MatPixels } from '@/lib/sim/sensors';
 
 /**
- * Running a program on the mat and playing it back (ADR 0016, step 7c). The program is the one
- * the Blocks page last made (handed over in this browser), or a program file loaded here.
+ * Running a program on the mat and playing it back (ADR 0016, steps 7c and 7d). The program is
+ * the one the Blocks page last made (handed over in this browser), or a program file loaded here.
+ * The robot's sensors read the mat (src/lib/sim/sensors.ts): the colour sensor its picture, the
+ * distance and touch sensors its edges and the solid objects marked on it.
  */
 
 /** Without rules, a run stops after this long. */
@@ -69,11 +73,22 @@ export function poseAt(frames: readonly Frame[], t: number): Pose | null {
   };
 }
 
+/** The robot's sensors as the simulation takes them. */
+export const simSensors = (robot: RobotProfile): SimSensor[] =>
+  robot.sensors.map((sensor) => ({
+    type: sensor.type,
+    port: sensor.port,
+    xMm: sensor.xMm,
+    yMm: sensor.yMm,
+    facing: sensor.facing,
+  }));
+
 export function useMatRun(
   mat: Mat | null,
   robot: RobotProfile | null,
   placement: MatPlacement | null,
   rules: RulesProfile | null,
+  picture: ImageBitmap | null,
 ) {
   const raw = useSyncExternalStore(subscribe, readRaw, () => null);
   const handoff = useMemo(() => readHandoff(raw), [raw]);
@@ -101,6 +116,22 @@ export function useMatRun(
           ? `The blocks have ${handoff!.problems === 1 ? 'a problem' : `${handoff!.problems} problems`} to fix on the Blocks page first.`
           : null;
   const seconds = rules?.runSeconds ?? DEFAULT_RUN_SECONDS;
+  // The picture at 1 px/mm, made once per picture, and only for a robot with a colour sensor.
+  const pixels = useRef<{ picture: ImageBitmap; size: string; pixels: MatPixels | null } | null>(
+    null,
+  );
+  const pixelsFor = useCallback(
+    (forMat: Mat, forRobot: RobotProfile): MatPixels | null => {
+      if (!picture || !forRobot.sensors.some((sensor) => sensor.type === 'color')) return null;
+      const size = `${forMat.widthMm}x${forMat.heightMm}`;
+      const cached = pixels.current;
+      if (cached && cached.picture === picture && cached.size === size) return cached.pixels;
+      const made = matPixels(picture, forMat.widthMm, forMat.heightMm);
+      pixels.current = { picture, size, pixels: made };
+      return made;
+    },
+    [picture],
+  );
 
   const run = useCallback(async () => {
     if (blocked || !mat || !robot || !placement || !files) return;
@@ -129,13 +160,22 @@ export function useMatRun(
                 turnAcceleration: robot.speed.turnAccelerationDegS2,
               }
             : null,
+        sensors: simSensors(robot),
+        mat: {
+          widthMm: mat.widthMm,
+          heightMm: mat.heightMm,
+          pixels: pixelsFor(mat, robot),
+          objects: mat.areas
+            .filter((area) => area.kind === 'object')
+            .map(({ xMm, yMm, widthMm, heightMm }) => ({ xMm, yMm, widthMm, heightMm })),
+        },
       });
       setState({ kind: 'done', result, review: reviewRun(result, robot, mat) });
       setPlaying(true);
     } catch (error) {
       setState({ kind: 'error', message: error instanceof Error ? error.message : String(error) });
     }
-  }, [blocked, mat, robot, placement, files, seconds, setTime]);
+  }, [blocked, mat, robot, placement, files, seconds, setTime, pixelsFor]);
 
   const end = state.kind === 'done' ? state.result.timeMs : 0;
 

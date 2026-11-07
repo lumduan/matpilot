@@ -199,7 +199,8 @@ The profile is the **contract** that the Mats page reads, and that a future part
   fields (later) narrow the gap.
 - **Sensors, in a second step:** the colour sensor reads the mat picture under its position
   (reflection and colour from the pixels, with Pybricks' colour rules cited when built). Distance
-  sensors and objects on the mat come later.
+  sensors and objects on the mat come later. ➡️ Built as 7d on 2026-11-07, together with the
+  distance and touch sensors and solid objects: see "Built: step 7d" below.
 - Blocks that need a real device and have no simulation yet (the Xbox controller, for one) end
   the run with a clear message. Later, a controller plugged into the computer (the browser's
   Gamepad API) could drive the robot on the mat live.
@@ -333,7 +334,8 @@ words: build the fields as recommended first; using them will show what to add o
   mat can be drawn again elsewhere; a WRO mat's file is about 13 MB. Mats are not saved to GitHub
   (D5).
 - **Not built yet:** running a program on the mat (7c), the colour sensor (7d), objects on the
-  mat, and turned areas (areas are square to the mat's edges).
+  mat, and turned areas (areas are square to the mat's edges). ➡️ 7c, 7d and solid objects were
+  built the same day (sections below); turned areas are still not built.
 - **Tests:** unit tests for the PDF size rules (wro-2026's WRO 2026 figure, a bleed, no trim box,
   a turned page, finding the trim box in bytes), the picture resolution, the mat file, and the
   robot on a mat. Headless Chromium on the production build with the CSP, with generated PDFs: a
@@ -371,7 +373,8 @@ words: build the fields as recommended first; using them will show what to add o
   - **A program that never waits** (a loop with nothing in it) is stopped after 30 s of real
     time, and the page says so.
   - **Sensors read nothing yet** (7d): no colour, nothing in range, no press; the page lists the
-    sensors a program read.
+    sensors a program read. ➡️ SUPERSEDED THE SAME DAY by 7d: sensors read the mat (see "Built:
+    step 7d" below); the page now lists only sensors the robot does not have.
   - **The Xbox controller** ends the run with a message: the mat cannot drive it yet.
   - Stop, brake and hold all stop at once; nothing slips or bumps.
 - **The result** (`src/lib/sim/review.ts`): how the run ended (finished, time limit, an error
@@ -390,6 +393,48 @@ words: build the fields as recommended first; using them will show what to add o
   square opens up (each turn 100.3°) and the page says why.
 - **Found while testing:** the global `main { flex: 1 }` rule made the Mats page as tall as its
   panel, hiding the playback bar below the window; the page is now fixed to the window's height.
+
+## Built (2026-11-07): step 7d, sensors read the mat
+
+- **The colour sensor** (`src/lib/sim/sensors.ts`) reads the mat's picture under it: the page
+  draws the picture at 1 pixel per millimetre once per run (only for a robot with a colour
+  sensor; mats up to 16 m² are read) and averages a spot of 4 mm radius. From there it follows
+  the firmware in the same whole-number steps, cited line by line in the file:
+  `reflection()` is the average of the raw red, green and blue in per cent; `color()` converts to
+  hue, saturation and value, shifts low hues, doubles low saturation, lifts low values, and picks
+  the nearest of the colours it may detect (by default red, yellow, green, blue, white and none;
+  `detectable_colors()` changes the list), with the saturation heuristic: a grey measurement
+  matches the nearest grey by value, any other the nearest colour by hue. `hsv()` gives the same
+  numbers.
+  - **The one estimate:** how a printed colour becomes the sensor's raw values. The picture's red,
+    green and blue (0 to 255) are taken as raw values in proportion (255 → 1024). A real sensor
+    depends on its height, the paper and the room's light, so the page says to set thresholds on
+    the real mat. `ambient()` reads 0.
+- **The distance sensor** measures along where it looks to the nearest wall or solid object: the
+  mat's edges count as walls (a competition table has them), and beyond 2000 mm it gives 2000, as
+  the firmware does. **A touch sensor** is pressed when a wall or a solid object is within 5 mm
+  ahead of it (`force()` then reads 5 N, `distance()` 2 mm: estimates of a firm press).
+- **Solid objects:** a new kind of area, **Solid object** (`object` in the mat file; older files
+  read as before). Drawn like any area, it is what the distance and touch sensors find.
+- **Decided while building:**
+  - **The robot does not stop at walls or objects**: it drives through them, as before. The
+    result says "Ran into “Box” at 4.3 s (on the mat it drives through)", in the same list as the
+    keep-out areas. Stopping at an object needs contact physics; not planned.
+  - **Where a sensor must look:** a colour sensor reads the mat only looking down; a distance or
+    touch sensor only looking forward, back, left or right. A program that reads a sensor the
+    robot does not have on that port, or that looks the wrong way, reads nothing (no colour,
+    2000 mm, no press), and the result names it: "The program reads a colour sensor on port C,
+    which the robot does not have…". The run goes on.
+- **Tests:** the firmware steps (white, black, the printed red, yellow, green and blue, grey, a
+  saturation of 73 where a hand calculation gave 75, reflection 32 for a full red alone), the spot with
+  y up, the ray to a wall and to a box and its cap, touching; in MicroPython in Node: a line
+  follower that stops about 40 mm on, a robot that drives until its touch sensor presses a box
+  (the wheels stop at 195 to 200 mm), a list of detectable colours, a distance sensor looking
+  down named in the result; the review of an object run into. Headless Chromium on the production
+  build with the CSP: a 1200 × 600 mm picture with a blue patch and a black line, a solid object
+  drawn and named Box; the program prints `start Color.WHITE 100 680`, `patch 95 Color.BLUE`,
+  `line 393 Color.NONE 287`, `end 0`, and the result says it ran into "Box" at 4.3 s; with the
+  robot's colour sensor moved to port F, the page names the missing sensor on port C.
 
 ## Amendment (2026-11-07): robots and mats on GitHub; D5 changed
 

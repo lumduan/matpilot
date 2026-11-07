@@ -56,6 +56,34 @@ What MatPilot ports, and from where:
       pybricks/util_pb/pb_color_map.c
         (SPDX-License-Identifier: MIT; Copyright (c) 2018-2020 The Pybricks Authors)
 
+  src/lib/robots/motion.ts, src/lib/sim/engine.ts
+    The motors' rated top speeds and acceleration, the drive base's default
+    speeds and accelerations and how it scales them, and how motor commands
+    behave, from:
+      lib/pbio/src/motor/servo_settings.c
+      lib/pbio/src/servo.c
+      lib/pbio/src/drivebase.c
+      lib/pbio/src/control.c
+        (SPDX-License-Identifier: MIT; Copyright (c) 2018-2023 The Pybricks Authors)
+
+  src/lib/sim/sensors.ts
+    How the colour sensor turns its raw red, green and blue into reflection,
+    hue, saturation and value and the nearest colour (the conversion, the hue
+    shift, the saturation heuristic and the colours' own values), and the
+    ultrasonic sensor's 2000 mm cap, from:
+      pybricks/pupdevices/pb_type_pupdevices_colorsensor.c
+      pybricks/pupdevices/pb_type_pupdevices_ultrasonicsensor.c
+      pybricks/parameters/pb_type_color.c
+        (SPDX-License-Identifier: MIT; Copyright (c) 2018-2023 The Pybricks Authors)
+      pybricks/util_pb/pb_color_map.c
+        (SPDX-License-Identifier: MIT; Copyright (c) 2018-2020 The Pybricks Authors)
+      lib/pbio/src/color/util.c
+        (SPDX-License-Identifier: MIT; Copyright (c) 2018-2022 The Pybricks Authors)
+      lib/pbio/src/color/conversion.c (pbio_color_rgb_to_hsv only)
+        (SPDX-License-Identifier: MIT; Copyright (c) 2020 The Pybricks Authors)
+      lib/pbio/include/pbio/color.h
+        (SPDX-License-Identifier: MIT; Copyright (c) 2020,2022 The Pybricks Authors)
+
 The upstream LICENSE states that its MIT license applies only to files carrying
 the "SPDX-License-Identifier: MIT" header. Every file listed above carries it.
 

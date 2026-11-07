@@ -89,7 +89,7 @@ export function MatsApp() {
     : null;
   const placement = dragging ?? mat?.placement ?? null;
   const rulesForRun = RULES_PROFILES.find((each) => each.id === mat?.rulesId) ?? null;
-  const run = useMatRun(mat, robot, robot ? placement : null, rulesForRun);
+  const run = useMatRun(mat, robot, robot ? placement : null, rulesForRun, mats.picture);
   // While a run is shown, the robot stands where the run has it.
   const shown =
     run.pose && run.state.kind === 'done' ? { robotId: robot?.id ?? null, ...run.pose } : placement;

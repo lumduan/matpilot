@@ -15,6 +15,7 @@ const MAT: Mat = {
   areas: [
     { id: '1', name: 'Ditch', kind: 'avoid', xMm: 500, yMm: 0, widthMm: 50, heightMm: 100 },
     { id: '2', name: 'Garage', kind: 'target', xMm: 700, yMm: 200, widthMm: 300, heightMm: 300 },
+    { id: '3', name: '', kind: 'object', xMm: 0, yMm: 500, widthMm: 100, heightMm: 100 },
   ],
   placement: null,
 };
@@ -27,7 +28,7 @@ const run = (
   events: [],
   end: { reason: 'finished' },
   timeMs: (poses.length - 1) * 1000,
-  sensorsRead: [],
+  sensorsMissing: [],
   programDrive,
 });
 
@@ -55,9 +56,21 @@ describe('reviewing a run', () => {
       robot,
       MAT,
     );
-    expect(review.touched).toEqual([{ name: 'Ditch', at: 1000 }]);
+    expect(review.touched).toEqual([{ name: 'Ditch', at: 1000, kind: 'avoid' }]);
     expect(review.leftMatAt).toBe(2000);
     expect(review.endedIn).toEqual([]);
+  });
+
+  it('says when the robot ran into a solid object', () => {
+    const review = reviewRun(
+      run([
+        [300, 300, 90],
+        [150, 450, 135],
+      ]),
+      robot,
+      MAT,
+    );
+    expect(review.touched).toEqual([{ name: 'Object', at: 1000, kind: 'object' }]);
   });
 
   it('explains how the program and the robot differ', () => {

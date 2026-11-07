@@ -14,8 +14,12 @@ import type { SimResult } from './runner';
 export interface RunReview {
   /** When the robot first went (partly) off the mat, ms; `null` if it never did. */
   readonly leftMatAt: number | null;
-  /** Keep-out areas touched, with when they were first touched. */
-  readonly touched: readonly { readonly name: string; readonly at: number }[];
+  /** Keep-out areas touched and solid objects run into, with when it first happened. */
+  readonly touched: readonly {
+    readonly name: string;
+    readonly at: number;
+    readonly kind: 'avoid' | 'object';
+  }[];
   /** Targets the robot ended wholly inside. */
   readonly endedIn: readonly string[];
   readonly targets: number;
@@ -29,17 +33,19 @@ const round = (value: number) => Math.round(value * 10) / 10;
 
 export function reviewRun(result: SimResult, robot: RobotProfile, mat: Mat): RunReview {
   const matShape = matPolygon(mat);
-  const avoid = mat.areas.filter((area) => area.kind === 'avoid');
+  const avoid = mat.areas.filter((area) => area.kind === 'avoid' || area.kind === 'object');
   const targets = mat.areas.filter((area) => area.kind === 'target');
   let leftMatAt: number | null = null;
-  const touched = new Map<string, number>();
+  const touched = new Map<string, { at: number; kind: 'avoid' | 'object' }>();
   for (const frame of result.frames) {
     const placement = asPlacement(frame.pose);
     if (leftMatAt === null && !robotInside(robot, placement, matShape)) leftMatAt = frame.t;
     const outline = robotOnMat(robot, placement).outline;
     for (const area of avoid) {
-      const name = area.name || 'Keep out';
-      if (!touched.has(name) && overlaps(areaPolygon(area), outline)) touched.set(name, frame.t);
+      const name = area.name || (area.kind === 'object' ? 'Object' : 'Keep out');
+      if (!touched.has(name) && overlaps(areaPolygon(area), outline)) {
+        touched.set(name, { at: frame.t, kind: area.kind === 'object' ? 'object' : 'avoid' });
+      }
     }
   }
   const last = result.frames.at(-1)?.pose ?? { xMm: 0, yMm: 0, headingDeg: 0 };
@@ -70,7 +76,7 @@ export function reviewRun(result: SimResult, robot: RobotProfile, mat: Mat): Run
   }
   return {
     leftMatAt,
-    touched: [...touched].map(([name, at]) => ({ name, at })),
+    touched: [...touched].map(([name, { at, kind }]) => ({ name, at, kind })),
     endedIn,
     targets: targets.length,
     final,

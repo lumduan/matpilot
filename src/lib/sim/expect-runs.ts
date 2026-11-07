@@ -20,6 +20,8 @@ export async function runOnTestMat(code: string, timeLimitMs = 20_000): Promise<
     start: { xMm: 1000, yMm: 500, headingDeg: 0 },
     timeLimitMs,
     driveSpeed: null,
+    sensors: [],
+    mat: { widthMm: 2362, heightMm: 1143, pixels: null, objects: [] },
   });
   return result.end;
 }

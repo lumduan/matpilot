@@ -13,12 +13,29 @@ const ROBOT: SimRobot = {
 };
 const load = loadMicroPython as unknown as LoadMicroPython;
 
+/** A 1000 × 1000 mm mat at 1 px/mm: white, with a black line across at y 600 to 620. */
+function linePixels() {
+  const data = new Uint8ClampedArray(1000 * 1000 * 4).fill(255);
+  for (let row = 1000 - 620; row < 1000 - 600; row += 1) {
+    for (let col = 0; col < 1000; col += 1) {
+      const i = (row * 1000 + col) * 4;
+      data[i] = data[i + 1] = data[i + 2] = 20;
+    }
+  }
+  return { width: 1000, height: 1000, data };
+}
+
 const input = (main: string, extra: SimInput['files'] = [], timeLimitMs = 120_000): SimInput => ({
   files: [{ name: 'main.py', code: main }, ...extra],
   robot: ROBOT,
   start: { xMm: 500, yMm: 500, headingDeg: 90 },
   timeLimitMs,
   driveSpeed: null,
+  sensors: [
+    { type: 'color', port: 'C', xMm: 60, yMm: 0, facing: 'down' },
+    { type: 'distance', port: 'D', xMm: 80, yMm: 0, facing: 'forward' },
+  ],
+  mat: { widthMm: 1000, heightMm: 1000, pixels: linePixels(), objects: [] },
 });
 
 const DRIVE = `from pybricks.parameters import Direction, Port
@@ -107,21 +124,100 @@ finally:
     expect(result.events.at(-1)?.text).toBe('stopped');
   });
 
-  it('times with the stop watch and reads sensors that see nothing yet', async () => {
+  it('times with the stop watch, and reads the mat with its sensors', async () => {
     const result = await runProgram(
       load,
       input(`${DRIVE}
-from pybricks.pupdevices import ColorSensor, UltrasonicSensor
+from pybricks.pupdevices import ColorSensor, UltrasonicSensor, ForceSensor
 from pybricks.parameters import Color
 eye = ColorSensor(Port.C)
 sonar = UltrasonicSensor(Port.D)
+bump = ForceSensor(Port.E)
 timer = StopWatch()
 wait(500)
-print(timer.time() >= 500, eye.color() == Color.NONE, sonar.distance())
+print(timer.time() >= 500, eye.color(), eye.reflection(), sonar.distance(), bump.pressed())
 `),
     );
-    expect(result.events.map((event) => event.text)).toEqual(['True True 2000']);
-    expect(result.sensorsRead).toEqual(['colour sensor on port C', 'distance sensor on port D']);
+    // The robot at (500, 500) facing up: the colour sensor 60 mm ahead sees white; the
+    // distance sensor 80 mm ahead sees the wall at y 1000; no touch sensor on E.
+    expect(result.events.map((event) => event.text)).toEqual(['True Color.WHITE 100 420 False']);
+    expect(result.sensorsMissing).toEqual(['touch sensor on port E']);
+  });
+
+  it('sees a solid object, drives up to it and feels it with a touch sensor', async () => {
+    const base = input(`${DRIVE}
+from pybricks.pupdevices import UltrasonicSensor, ForceSensor
+sonar = UltrasonicSensor(Port.D)
+bump = ForceSensor(Port.E)
+try:
+    print("first", sonar.distance())
+    robot.drive(150, 0)
+    while not bump.pressed():
+        wait(10)
+    robot.stop()
+    print("pressed at", robot.distance(), sonar.distance())
+finally:
+    robot.stop()
+`);
+    const result = await runProgram(load, {
+      ...base,
+      sensors: [...base.sensors, { type: 'force', port: 'E', xMm: 100, yMm: 0, facing: 'forward' }],
+      // A box from y 800 up, across the robot's way.
+      mat: { ...base.mat, objects: [{ xMm: 400, yMm: 800, widthMm: 200, heightMm: 100 }] },
+    });
+    const printed = result.events.filter((event) => event.kind === 'print').map((e) => e.text);
+    expect(printed[0]).toBe('first 220');
+    // The touch sensor 100 mm ahead presses 5 mm before the box: the wheels stop near 195 mm.
+    const [, , distance, sonar] = printed[1]!.split(' ');
+    expect(Number(distance)).toBeGreaterThanOrEqual(193);
+    expect(Number(distance)).toBeLessThanOrEqual(200);
+    expect(Number(sonar)).toBeLessThanOrEqual(30);
+    expect(result.sensorsMissing).toEqual([]);
+  });
+
+  it('picks only from the colours the program allows, and says which sensor is missing', async () => {
+    const base = input(`${DRIVE}
+from pybricks.pupdevices import ColorSensor, UltrasonicSensor
+from pybricks.parameters import Color
+eye = ColorSensor(Port.C)
+print(eye.detectable_colors() == (Color.RED, Color.YELLOW, Color.GREEN, Color.BLUE, Color.WHITE, Color.NONE))
+eye.detectable_colors([Color.BLACK, Color.WHITE])
+robot.straight(50)
+print(eye.color(), eye.hsv().v < 30)
+side = UltrasonicSensor(Port.F)
+print(side.distance())
+`);
+    const result = await runProgram(load, {
+      ...base,
+      sensors: [...base.sensors, { type: 'distance', port: 'F', xMm: 0, yMm: 0, facing: 'down' }],
+    });
+    expect(result.events.map((event) => event.text)).toEqual(['True', 'Color.BLACK True', '2000']);
+    expect(result.sensorsMissing).toEqual([
+      'distance sensor looking forward, back, left or right on port F',
+    ]);
+  });
+
+  it('follows a line: drives until the colour sensor sees black', async () => {
+    const result = await runProgram(
+      load,
+      input(`${DRIVE}
+from pybricks.pupdevices import ColorSensor
+eye = ColorSensor(Port.C)
+try:
+    robot.drive(100, 0)
+    while eye.reflection() > 50:
+        wait(10)
+    robot.stop()
+    print("black at", robot.distance())
+finally:
+    robot.stop()
+`),
+    );
+    // The sensor is 60 mm ahead of the wheels and the line starts at y 600: about 40 mm on.
+    const printed = result.events.find((event) => event.kind === 'print')!.text;
+    const distance = Number(printed.split(' ').at(-1));
+    expect(distance).toBeGreaterThanOrEqual(38);
+    expect(distance).toBeLessThanOrEqual(44);
   });
 
   it('says where a Python error is', async () => {

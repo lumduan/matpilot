@@ -135,8 +135,10 @@ entry in [NOTICE](NOTICE).
     drawing it with pdf.js (`picture.ts`, loaded only on demand; its worker and decoders are
     served from `/vendor/pdfjs/`, copied by `scripts/vendor-assets.mjs`), IndexedDB storage
     (`store.ts`), and the robot on a mat (`pose.ts`).
-  - `src/lib/sim/`: running a program on a mat ([ADR 0016](docs/adr/0016-robots-and-mats.md), 7c):
-    the engine on a virtual clock (`engine.ts`, citing the firmware), the simulated `pybricks`
+  - `src/lib/sim/`: running a program on a mat ([ADR 0016](docs/adr/0016-robots-and-mats.md), 7c
+    and 7d): the engine on a virtual clock (`engine.ts`, citing the firmware), the sensors on the
+    mat (`sensors.ts`: the colour sensor's firmware steps, each cited, from the picture at
+    1 px/mm; distance and touch against the mat's edges and solid objects), the simulated `pybricks`
     package in Python (`pybricks.ts`: when a block generates a new Pybricks name, add it here
     too; the generator tests run every block's Python through it), the runner that loads
     MicroPython (`runner.ts`, also run by the tests in Node), the Web Worker and its watchdog,

@@ -9,7 +9,22 @@
  */
 import type { PortName } from '../blocks/pybricks';
 import { Simulation, type DriveSettings, type Frame, type Pose, type SimRobot } from './engine';
+import { place } from '../geometry/rect';
 import { PYBRICKS_FILES, simModule } from './pybricks';
+import {
+  DEFAULT_COLORS,
+  DISTANCE_MAX_MM,
+  facingAngle,
+  hsvReflected,
+  matchColor,
+  rawFromColor,
+  rayDistance,
+  reflection,
+  spotColor,
+  touching,
+  type MatPixels,
+  type Rect,
+} from './sensors';
 
 export interface SimFile {
   readonly name: string;
@@ -24,6 +39,24 @@ export interface SimInput {
   readonly timeLimitMs: number;
   /** Speeds measured or typed in on the Robots page, in place of the firmware's defaults. */
   readonly driveSpeed: DriveSettings | null;
+  /** The robot's sensors, where they are on it (Robots page). */
+  readonly sensors: readonly SimSensor[];
+  /** The mat: its size, its picture at 1 px/mm (for the colour sensor), its solid objects. */
+  readonly mat: {
+    readonly widthMm: number;
+    readonly heightMm: number;
+    readonly pixels: MatPixels | null;
+    readonly objects: readonly Rect[];
+  };
+}
+
+export interface SimSensor {
+  readonly type: 'color' | 'distance' | 'force';
+  readonly port: PortName;
+  /** In the ROBOT frame: ahead (+) of the wheels, to the left (+). */
+  readonly xMm: number;
+  readonly yMm: number;
+  readonly facing: string;
 }
 
 export interface SimEvent {
@@ -51,8 +84,8 @@ export interface SimResult {
   readonly end: SimEnd;
   /** Virtual time when it ended, ms. */
   readonly timeMs: number;
-  /** Sensors the program read (they read nothing yet). */
-  readonly sensorsRead: readonly string[];
+  /** Sensors the program read that the robot does not have where it reads them. */
+  readonly sensorsMissing: readonly string[];
   /** The DriveBase the program made: its idea of the wheels, for comparing with the robot. */
   readonly programDrive: {
     readonly wheelDiameterMm: number;
@@ -110,7 +143,42 @@ export async function runProgram(
   const events: SimEvent[] = [];
   const errors: string[] = [];
   const sensors = new Map<string, string>();
-  const sensorsRead = new Set<string>();
+  const sensorsMissing = new Set<string>();
+  const KIND_NAME: Record<string, string> = {
+    color: 'colour',
+    distance: 'distance',
+    force: 'touch',
+  };
+  /** The robot's sensor of this kind on this port, and where it is on the mat now. */
+  const sensorOn = (port: unknown, kind: SimSensor['type']) => {
+    const sensor = input.sensors.find((each) => each.port === String(port) && each.type === kind);
+    if (!sensor) {
+      sensorsMissing.add(`${KIND_NAME[kind]} sensor on port ${String(port)}`);
+      return null;
+    }
+    const facing = facingAngle(sensor.facing);
+    // A colour sensor reads the mat looking down; distance and touch sensors look sideways.
+    if (kind === 'color' ? sensor.facing !== 'down' : facing === null) {
+      sensorsMissing.add(
+        kind === 'color'
+          ? `colour sensor looking down on port ${String(port)}`
+          : `${KIND_NAME[kind]} sensor looking forward, back, left or right on port ${String(port)}`,
+      );
+      return null;
+    }
+    const pose = sim.currentPose;
+    const at = place({ x: sensor.xMm, y: sensor.yMm }, pose.headingDeg, {
+      x: pose.xMm,
+      y: pose.yMm,
+    });
+    return { sensor, at, heading: facing === null ? 0 : pose.headingDeg + facing };
+  };
+  /** The colour sensor's raw reading where it is, or `null` (none there, or no picture). */
+  const colorRaw = (port: unknown) => {
+    const on = sensorOn(port, 'color');
+    if (!on || !input.mat.pixels) return null;
+    return rawFromColor(spotColor(input.mat.pixels, on.at));
+  };
   let unsupported: string | null = null;
   let programDrive: SimResult['programDrive'] = null;
 
@@ -181,17 +249,39 @@ export async function runProgram(
     drive_angle: () => sim.driveAngle(),
     drive_reset: () => sim.resetDrive(),
     sensor_new: (port: unknown, kind: unknown) => sensors.set(String(port), String(kind)),
-    sensor_color: (port: unknown) => {
-      sensorsRead.add(`colour sensor on port ${String(port)}`);
-      return 'NONE';
+    sensor_color: (port: unknown, colors: unknown) => {
+      const raw = colorRaw(port);
+      if (!raw) return 'NONE';
+      const list = String(colors ?? '') === '' ? DEFAULT_COLORS : String(colors).split(',');
+      return matchColor(hsvReflected(raw), list);
+    },
+    sensor_hsv: (port: unknown, index: unknown) => {
+      const raw = colorRaw(port);
+      const hsv = raw ? hsvReflected(raw) : { h: 0, s: 0, v: 0 };
+      return [hsv.h, hsv.s, hsv.v][Number(index)] ?? 0;
     },
     sensor_value: (port: unknown, what: unknown) => {
-      const kind = sensors.get(String(port)) ?? 'sensor';
-      sensorsRead.add(
-        `${kind === 'color' ? 'colour' : kind === 'force' ? 'touch' : kind} sensor on port ${String(port)}`,
-      );
-      // Nothing seen yet (step 7d): no light back, nothing in range, no press.
-      return what === 'distance' ? 2000 : 0;
+      const kind =
+        what === 'distance'
+          ? 'distance'
+          : what === 'force' || what === 'travel'
+            ? 'force'
+            : 'color';
+      if (what === 'reflection') {
+        const raw = colorRaw(port);
+        return raw ? reflection(raw) : 0;
+      }
+      if (what === 'ambient') {
+        sensorOn(port, 'color');
+        return 0;
+      }
+      const on = sensorOn(port, kind);
+      if (!on) return kind === 'distance' ? DISTANCE_MAX_MM : 0;
+      if (kind === 'distance')
+        return Math.round(rayDistance(on.at, on.heading, input.mat, input.mat.objects));
+      const pressed = touching(on.at, on.heading, input.mat, input.mat.objects);
+      // force() in newtons, distance() in mm: estimates of a firm press.
+      return pressed ? (what === 'travel' ? 2 : 5) : 0;
     },
     hub_event: (kind: unknown, text: unknown) =>
       hubEvent(String(kind) as SimEvent['kind'], String(text)),
@@ -223,7 +313,7 @@ export async function runProgram(
     events,
     end,
     timeMs: sim.time,
-    sensorsRead: [...sensorsRead],
+    sensorsMissing: [...sensorsMissing],
     programDrive,
   };
 }

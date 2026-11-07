@@ -18,12 +18,17 @@ export const DEFAULT_MAT_NAME = 'My mat';
 export const MAT_MIN_MM = 50;
 export const MAT_MAX_MM = 10_000;
 
-export type AreaKind = 'start' | 'target' | 'avoid' | 'other';
+/**
+ * `object`: something solid standing on the mat (a box, a wall): the distance sensor sees it and
+ * a touch sensor presses against it (../sim/sensors.ts). The robot itself does not stop at it.
+ */
+export type AreaKind = 'start' | 'target' | 'avoid' | 'object' | 'other';
 
 export const AREA_KINDS: readonly { readonly value: AreaKind; readonly label: string }[] = [
   { value: 'start', label: 'Start area' },
   { value: 'target', label: 'Target' },
   { value: 'avoid', label: 'Keep out' },
+  { value: 'object', label: 'Solid object' },
   { value: 'other', label: 'Other' },
 ];
 
