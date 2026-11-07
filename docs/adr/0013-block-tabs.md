@@ -170,9 +170,11 @@ After trying checks 11 to 13, the maintainer asked for two more:
 - Pasting into the open tab replaces Blockly's paste key with a wrapper (`src/lib/blocks/
 clipboard.ts`); a Blockly upgrade that changes the paste shortcut needs a look there.
 - Programs from before tabs make the same Python as before (the tests check it).
-- **Not yet checked on a hub:** a program of several modules. The firmware code that runs it is
-  cited above. The generated files compile with the hub's compiler (in the tests), and two such
-  programs were run once under CPython with stand-in `pybricks` modules (not part of the tests).
-  The [tabs and functions checks](../compatibility.md#tabs-and-functions-checks-milestone-4)
-  ask for it.
+- **Checked on a hub on 2026-11-07:** a program of three modules (`main`, a tab, `setup`) ran on
+  the maintainer's SPIKE Prime, and a shared variable was changed in one module and read in
+  another ([tabs and functions checks](../compatibility.md#tabs-and-functions-checks-milestone-4)
+  6, 7, 14 and 15; [results](../compatibility.md#blocks-results)). The firmware code that runs it
+  is cited above. Before that, the generated files were compiled with the hub's compiler (in the
+  tests), and two such programs were run once under CPython with stand-in `pybricks` modules (not
+  part of the tests).
 - **Not built:** functions that return a value, moving tabs around, copying a tab, typed inputs.
