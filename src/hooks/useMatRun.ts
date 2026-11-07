@@ -136,49 +136,58 @@ export function useMatRun(
     [picture],
   );
 
-  const run = useCallback(async () => {
-    if (blocked || !mat || !robot || !placement || !files) return;
-    setState({ kind: 'running' });
-    setPlaying(false);
-    setTime(0);
-    try {
-      const result = await runOnMat({
-        files,
-        robot: {
-          wheelDiameterMm: robot.wheels.diameterMm,
-          trackMm: robot.wheels.trackMm,
-          left: robot.drive.left,
-          right: robot.drive.right,
-          mirrored: robot.drive.mirrored,
-          motorTopSpeedDegS: MOTOR_TOP_SPEED_DEG_S[robot.drive.motor],
-        },
-        start: { xMm: placement.xMm, yMm: placement.yMm, headingDeg: placement.headingDeg },
-        timeLimitMs: seconds * 1000,
-        driveSpeed:
-          robot.speed.mode === 'set'
-            ? {
-                straightSpeed: robot.speed.straightMmS,
-                straightAcceleration: robot.speed.straightAccelerationMmS2,
-                turnRate: robot.speed.turnRateDegS,
-                turnAcceleration: robot.speed.turnAccelerationDegS2,
-              }
-            : null,
-        sensors: simSensors(robot),
-        mat: {
-          widthMm: mat.widthMm,
-          heightMm: mat.heightMm,
-          pixels: pixelsFor(mat, robot),
-          objects: mat.areas
-            .filter((area) => area.kind === 'object')
-            .map(({ xMm, yMm, widthMm, heightMm }) => ({ xMm, yMm, widthMm, heightMm })),
-        },
-      });
-      setState({ kind: 'done', result, review: reviewRun(result, robot, mat) });
-      setPlaying(true);
-    } catch (error) {
-      setState({ kind: 'error', message: error instanceof Error ? error.message : String(error) });
-    }
-  }, [blocked, mat, robot, placement, files, seconds, setTime, pixelsFor]);
+  /** Runs the chosen program, or `override` (which becomes the chosen one): a drawn path. */
+  const run = useCallback(
+    async (override?: ProgramSource) => {
+      const runFiles = override ? (override.kind === 'file' ? override.files : null) : files;
+      if (override) setSource(override);
+      if ((!override && blocked) || !mat || !robot || !placement || !runFiles) return;
+      setState({ kind: 'running' });
+      setPlaying(false);
+      setTime(0);
+      try {
+        const result = await runOnMat({
+          files: runFiles,
+          robot: {
+            wheelDiameterMm: robot.wheels.diameterMm,
+            trackMm: robot.wheels.trackMm,
+            left: robot.drive.left,
+            right: robot.drive.right,
+            mirrored: robot.drive.mirrored,
+            motorTopSpeedDegS: MOTOR_TOP_SPEED_DEG_S[robot.drive.motor],
+          },
+          start: { xMm: placement.xMm, yMm: placement.yMm, headingDeg: placement.headingDeg },
+          timeLimitMs: seconds * 1000,
+          driveSpeed:
+            robot.speed.mode === 'set'
+              ? {
+                  straightSpeed: robot.speed.straightMmS,
+                  straightAcceleration: robot.speed.straightAccelerationMmS2,
+                  turnRate: robot.speed.turnRateDegS,
+                  turnAcceleration: robot.speed.turnAccelerationDegS2,
+                }
+              : null,
+          sensors: simSensors(robot),
+          mat: {
+            widthMm: mat.widthMm,
+            heightMm: mat.heightMm,
+            pixels: pixelsFor(mat, robot),
+            objects: mat.areas
+              .filter((area) => area.kind === 'object')
+              .map(({ xMm, yMm, widthMm, heightMm }) => ({ xMm, yMm, widthMm, heightMm })),
+          },
+        });
+        setState({ kind: 'done', result, review: reviewRun(result, robot, mat) });
+        setPlaying(true);
+      } catch (error) {
+        setState({
+          kind: 'error',
+          message: error instanceof Error ? error.message : String(error),
+        });
+      }
+    },
+    [blocked, mat, robot, placement, files, seconds, setTime, pixelsFor],
+  );
 
   const end = state.kind === 'done' ? state.result.timeMs : 0;
 

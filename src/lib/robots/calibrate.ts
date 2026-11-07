@@ -18,13 +18,10 @@
  *   FW pybricks/robotics/pb_type_drivebase.c#L61-L80; it steers by the motors' encoders, not
  *   the gyro, unless told otherwise (FW pybricks/robotics/pb_type_drivebase.c#L75), so a wrong
  *   axle track shows in the turn;
- * - DriveBase.straight(distance) and turn(angle), waiting until done: pb_type_drivebase.c
- *   #L133-L152 #L155-L175; stop(): #L106-L117;
- * - a positive turn is clockwise seen from above: FW lib/pbio/src/drivebase.c#L146-L151;
- * - Motor(port, positive_direction): FW pybricks/common/pb_type_motor.c#L79-L85; Motor.stop():
- *   pb_type_motor.c#L483; Port and Direction: FW pybricks/parameters/pb_module_parameters.c
- *   #L11-L32; wait(time) in ms: FW pybricks/tools/pb_module_tools.c#L67-L103.
+ * - DriveBase.straight(distance) and turn(angle), waiting until done, a positive turn clockwise,
+ *   and the other names the programs use: cited in ./drive-program.ts.
  */
+import { driveBaseProgram } from './drive-program';
 import { LIMITS, type RobotProfile } from './profile';
 
 /** How far the first program drives, mm. */
@@ -45,8 +42,6 @@ export const basisOf = (robot: RobotProfile): CalibrationBasis => ({
   trackMm: robot.wheels.trackMm,
 });
 
-const number = (value: number) => String(Math.round(value * 100) / 100);
-
 /**
  * The program for one test, following the hub code rules (CLAUDE.md): a config block, ports
  * named once, and every motor stopped in `finally`.
@@ -56,48 +51,27 @@ export function calibrationProgram(
   kind: CalibrationKind,
   basis: CalibrationBasis = basisOf(robot),
 ): string {
-  const mirrored = (side: 'left' | 'right') =>
-    robot.drive.mirrored === side ? ', positive_direction=Direction.COUNTERCLOCKWISE' : '';
-  const move =
+  const kindLines =
     kind === 'straight'
-      ? ['DISTANCE_MM = ' + CALIBRATION_DISTANCE_MM, 'robot.straight(DISTANCE_MM)']
-      : [
-          `TURN_DEGREES = ${CALIBRATION_TURNS * 360}  # ${CALIBRATION_TURNS} turns, clockwise`,
-          'robot.turn(TURN_DEGREES)',
-        ];
-  return `# MatPilot calibration: ${
-    kind === 'straight'
-      ? `drive ${CALIBRATION_DISTANCE_MM} mm`
-      : `turn ${CALIBRATION_TURNS} times on the spot`
-  }
-# Robot: ${robot.name.replace(/[\r\n]+/g, ' ')}
-from pybricks.parameters import Direction, Port
-from pybricks.pupdevices import Motor
-from pybricks.robotics import DriveBase
-from pybricks.tools import wait
-
-# --- Config ---------------------------------------------------------------
-LEFT_MOTOR_PORT = Port.${robot.drive.left}
-RIGHT_MOTOR_PORT = Port.${robot.drive.right}
-WHEEL_DIAMETER_MM = ${number(basis.wheelDiameterMm)}
-AXLE_TRACK_MM = ${number(basis.trackMm)}
-${move[0]}
-START_DELAY_MS = 1000  # time to take your hands away
-
-# --- Setup ----------------------------------------------------------------
-left = Motor(LEFT_MOTOR_PORT${mirrored('left')})
-right = Motor(RIGHT_MOTOR_PORT${mirrored('right')})
-robot = DriveBase(left, right, WHEEL_DIAMETER_MM, AXLE_TRACK_MM)
-
-# --- Main -----------------------------------------------------------------
-try:
-    wait(START_DELAY_MS)
-    ${move[1]}
-finally:
-    robot.stop()
-    left.stop()
-    right.stop()
-`;
+      ? {
+          title: `MatPilot calibration: drive ${CALIBRATION_DISTANCE_MM} mm`,
+          config: [`DISTANCE_MM = ${CALIBRATION_DISTANCE_MM}`],
+          main: ['robot.straight(DISTANCE_MM)'],
+        }
+      : {
+          title: `MatPilot calibration: turn ${CALIBRATION_TURNS} times on the spot`,
+          config: [
+            `TURN_DEGREES = ${CALIBRATION_TURNS * 360}  # ${CALIBRATION_TURNS} turns, clockwise`,
+          ],
+          main: ['robot.turn(TURN_DEGREES)'],
+        };
+  return driveBaseProgram({
+    robot,
+    ...kindLines,
+    wheelDiameterMm: basis.wheelDiameterMm,
+    trackMm: basis.trackMm,
+    startDelayMs: 1000,
+  });
 }
 
 /** How far the robot turned in all: whole turns, then where it stopped against the start way. */

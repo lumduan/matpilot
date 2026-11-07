@@ -10,6 +10,7 @@ import { StudioNav } from '@/components/StudioNav';
 import { useGitHub } from '@/hooks/useGitHub';
 import { useMatRun } from '@/hooks/useMatRun';
 import { useMats, type MatDraft } from '@/hooks/useMats';
+import { useSendToBlocks } from '@/hooks/useIncomingBlocks';
 import { MAT_FILES } from '@/lib/github/files';
 import { useRobots } from '@/hooks/useRobots';
 import {
@@ -23,6 +24,7 @@ import {
   type MatArea,
   type MatPlacement,
 } from '@/lib/mats/mat';
+import { MAX_PATH_POINTS, pathProgram, planPath, type PathPoint } from '@/lib/mats/path';
 import { areaPolygon, matPolygon, normalHeading, poseInArea, robotInside } from '@/lib/mats/pose';
 import { PROJECT_NAME, PROJECT_STATUS } from '@/lib/project';
 import { robotProblems } from '@/lib/robots/profile';
@@ -30,6 +32,7 @@ import { RULES_PROFILES } from '@/lib/robots/rules';
 import { AddMatDialog } from './AddMatDialog';
 import { MatRunPanel, PlaybackBar } from './MatRunPanel';
 import { MatView, type MatTool } from './MatView';
+import { PathPanel } from './PathPanel';
 
 const TOOLS: readonly { readonly value: MatTool; readonly label: string; readonly hint: string }[] =
   [
@@ -46,7 +49,12 @@ const TOOLS: readonly { readonly value: MatTool; readonly label: string; readonl
     {
       value: 'area',
       label: 'Area',
-      hint: 'Drag a rectangle: a start area, a target, or a place to keep out of.',
+      hint: 'Drag a rectangle: a start area, a target, a place to keep out of, or a solid object.',
+    },
+    {
+      value: 'path',
+      label: 'Path',
+      hint: 'Click where the robot should drive, point by point; drag to look around.',
     },
   ];
 
@@ -95,6 +103,17 @@ export function MatsApp() {
     run.pose && run.state.kind === 'done' ? { robotId: robot?.id ?? null, ...run.pose } : placement;
   const rules = RULES_PROFILES.find((each) => each.id === mat?.rulesId) ?? null;
   const start = mat?.areas.find((area) => area.kind === 'start') ?? null;
+  // A path drawn with the Path tool: points on this mat, from where the robot stands.
+  const [path, setPath] = useState<{ matId: string; points: PathPoint[] } | null>(null);
+  const [pathSent, setPathSent] = useState<'ok' | 'failed' | null>(null);
+  const sendToBlocks = useSendToBlocks();
+  const pathPoints = mat && path?.matId === mat.id ? path.points : [];
+  const plan = robot && placement && pathPoints.length > 0 ? planPath(placement, pathPoints) : null;
+  const setPathPoints = (points: PathPoint[]) => {
+    if (!mat) return;
+    setPath({ matId: mat.id, points: points.slice(0, MAX_PATH_POINTS) });
+    setPathSent(null);
+  };
 
   const change = (next: Partial<Mat>) => mat && mats.update({ ...mat, ...next });
   const place = (next: MatPlacement, done: boolean) => {
@@ -238,6 +257,13 @@ export function MatsApp() {
               path={run.state.kind === 'done' ? run.state.result.frames : null}
               playhead={run.time}
               locked={run.state.kind === 'done' || run.state.kind === 'running'}
+              plan={run.state.kind === 'done' ? null : plan}
+              onPathPoint={
+                robot && placement
+                  ? (point) =>
+                      setPathPoints([...pathPoints, { xMm: round(point.x), yMm: round(point.y) }])
+                  : undefined
+              }
               spread={run.showSpread ? run.spread : null}
               tool={tool}
               selectedArea={selectedArea}
@@ -519,6 +545,29 @@ export function MatsApp() {
                     ))}
                   </ul>
                 </section>
+              )}
+              {(tool === 'path' || pathPoints.length > 0) && (
+                <PathPanel
+                  plan={plan}
+                  points={pathPoints.length}
+                  ready={Boolean(robot && placement)}
+                  sent={pathSent}
+                  onUndo={() => setPathPoints(pathPoints.slice(0, -1))}
+                  onClear={() => setPathPoints([])}
+                  onRun={() =>
+                    robot &&
+                    plan &&
+                    void run.run({
+                      kind: 'file',
+                      name: 'Drawn path',
+                      files: [{ name: 'main.py', code: pathProgram(robot, plan.steps) }],
+                    })
+                  }
+                  onSend={() =>
+                    plan &&
+                    setPathSent(sendToBlocks(`Path on ${mat.name}`, plan.steps) ? 'ok' : 'failed')
+                  }
+                />
               )}
               <MatRunPanel run={run} />
             </>

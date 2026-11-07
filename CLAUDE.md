@@ -121,9 +121,9 @@ entry in [NOTICE](NOTICE).
     controller; the page only displays it.
   - `src/lib/robots/`: robot profiles ([ADR 0016](docs/adr/0016-robots-and-mats.md)): the
     profile and its `.matpilot-robot.json` file (`profile.ts`), its speeds by the firmware's
-    rules (`motion.ts`, every Pybricks fact cited there), the calibration helper's two programs
-    and corrections (`calibrate.ts`, cited; its dialog runs them through `useHubRunner`), its
-    shape and turning circle
+    rules (`motion.ts`, every Pybricks fact cited there), short drive-base programs
+    (`drive-program.ts`, cited), the calibration helper's two programs and corrections
+    (`calibrate.ts`; its dialog runs them through `useHubRunner`), its shape and turning circle
     (`shape.ts`), and competition rules checks with quoted rules (`rules.ts`). Frames: ROBOT
     (origin between the drive wheels, +x forward, +y left) and MAT (origin bottom-left, +x right,
     +y up), counter-clockwise positive; Pybricks turns clockwise positive, so negate at the
@@ -136,7 +136,8 @@ entry in [NOTICE](NOTICE).
     the robot's pose (`mat.ts`, MAT frame), a PDF's real size from its TrimBox (`pdf-box.ts`),
     drawing it with pdf.js (`picture.ts`, loaded only on demand; its worker and decoders are
     served from `/vendor/pdfjs/`, copied by `scripts/vendor-assets.mjs`), IndexedDB storage
-    (`store.ts`), and the robot on a mat (`pose.ts`).
+    (`store.ts`), the robot on a mat (`pose.ts`), and a path drawn on the mat made into moves
+    (`path.ts`; the Blocks page adds them as blocks through `src/lib/blocks/incoming.ts`).
   - `src/lib/sim/`: running a program on a mat ([ADR 0016](docs/adr/0016-robots-and-mats.md), 7c
     and 7d): the engine on a virtual clock (`engine.ts`, citing the firmware), the sensors on the
     mat (`sensors.ts`: the colour sensor's firmware steps, each cited, from the picture at
@@ -165,7 +166,8 @@ entry in [NOTICE](NOTICE).
     `src/components/files/`.
 - `src/hooks/`: the only React code that creates or calls `src/lib/` objects with side effects
   (the hub probe, the compatibility check, the hub connection in `useHubRunner`, live device
-  values in `useLiveDevices`, the block editor in `useBlocksEditor`, editing a tab's Python in
+  values in `useLiveDevices`, the block editor in `useBlocksEditor`, blocks handed over from the
+  Mats page in `useIncomingBlocks`, editing a tab's Python in
   `usePythonEditing`, GitHub in `useGitHub`, the AI helper in `useAiHelper`, the robots in
   `useRobots`, the mats in `useMats`, a run on a mat in `useMatRun`).
   Components may import types and pure helpers.

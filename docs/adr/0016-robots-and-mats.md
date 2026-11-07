@@ -224,7 +224,8 @@ is a robot profile (section 3), so everything above keeps working.
    (upload, view, place, measure)
 7a + Blocks ──→ program uses a robot (part of 7a)
 later: draw a path on the mat → blocks;  how sure is the robot (drift);  part builder (own ADR)
-(built 2026-11-07: 7d with distance and touch, the calibration helper, how sure is the robot)
+(built 2026-11-07/08: 7d with distance and touch, the calibration helper, how sure is the robot,
+a path drawn on the mat → blocks)
 ```
 
 ## Decisions for the maintainer
@@ -502,6 +503,42 @@ words: build the fields as recommended first; using them will show what to add o
   end within 19 mm …, facing within ±4°", inside "Garage" 100 times in 100, touches "Ditch" 7
   times in 100; 30 paths, 100 ends and the circle drawn; the checkbox hides them; a 120 s run
   shows in 0.9 s; a robot without drift gets the line.
+
+## Built (2026-11-08): a path drawn on the mat → blocks
+
+- **Drawing:** the Mats page's **Path** tool. With the robot placed, each click on the mat adds a
+  point (a drag still moves the view); the path starts where the robot stands, turns to face
+  each point and drives straight to it. Numbered points and a dotted line show it on the mat;
+  the panel lists the moves as the blocks say them ("move forward 600 mm", "turn left 90°") with
+  **Undo point** and **Clear**. Points stay while the page is open (not saved with the mat).
+- **The moves** (`src/lib/mats/path.ts`): whole degrees and millimetres, as a child would type
+  them; each one is worked out from where the robot really is after the moves before it, so the
+  rounding does not add up (twenty awkward segments end within 2 mm of the last point). Turns
+  use Pybricks' sign (positive is clockwise), so a left turn is negative, as in the blocks.
+- **Run it on the mat** runs the path as a program on the robot's drive base
+  (`src/lib/robots/drive-program.ts`, shared with the calibration helper; hub code rules, cited)
+  and plays it back like any run, with "How sure is it?" when the robot has its drift.
+- **Send to Blocks** keeps the moves in this browser (`src/lib/blocks/incoming.ts`, key
+  `matpilot.blocks.incoming.v1`). The Blocks page then offers them: **Add at the end of main**
+  attaches the simple blocks "move … mm" and "turn" to the end of the program in main (or puts
+  them below it when its last block takes nothing after it), as one change the notice's **Undo**
+  takes back; **Dismiss** drops them.
+- **Decided while building:**
+  - **Nothing changes on the Blocks page without a click there**: the Mats page only leaves the
+    moves for it, like a paste.
+  - **Forward only:** the robot turns, then drives forward; no reversing. Simple to read, and
+    the same as the blocks a child would place by hand.
+  - **Only the simple blocks:** the moves become "move … mm" and "turn" with their pictures, so
+    the robot's drive base (chosen with **Robot** on Blocks) turns them into motor degrees.
+- **Tests:** the planner (a square path, the short way round, points on top of each other, no
+  rounding drift), its program run in MicroPython ending on the path's last point, the handed-over
+  steps read back strictly (anything else is refused), and the blocks they make loaded into
+  Blockly, generating `robot.straight(600)`, `robot.turn(-90)`, `robot.straight(300)` and
+  compiling with the real compiler. Headless Chromium on the production build: three clicks make
+  five moves (1200 mm), a drag adds nothing, Undo point, **Run it on the mat** ends at x 500,
+  y 500 facing 180°, **Send to Blocks**, the offer on `/blocks`, **Add at the end of main** (the
+  Python has the five moves, the offer and the key are gone), **Undo** puts the program back,
+  **Dismiss** drops a second offer.
 
 ## Amendment (2026-11-07): robots and mats on GitHub; D5 changed
 

@@ -13,9 +13,10 @@ import type { Mat, MatArea, MatPlacement } from '@/lib/mats/mat';
 import { normalHeading, robotOnMat, sensorOnMat } from '@/lib/mats/pose';
 import type { RobotProfile } from '@/lib/robots/profile';
 import type { Frame } from '@/lib/sim/engine';
+import type { PathPlan } from '@/lib/mats/path';
 import type { Spread } from '@/lib/sim/spread';
 
-export type MatTool = 'move' | 'ruler' | 'area';
+export type MatTool = 'move' | 'ruler' | 'area' | 'path';
 
 interface View {
   /** Screen pixels per millimetre. */
@@ -26,7 +27,13 @@ interface View {
 }
 
 type Drag =
-  | { readonly kind: 'pan'; readonly start: Point; readonly view: View }
+  | {
+      readonly kind: 'pan';
+      readonly start: Point;
+      readonly view: View;
+      /** With the Path tool: the point on the mat, added if the pointer does not move. */
+      readonly click?: Point;
+    }
   | { readonly kind: 'robot'; readonly offset: Point }
   | { readonly kind: 'turn' }
   | { readonly kind: 'ruler' | 'area'; readonly from: Point };
@@ -56,6 +63,8 @@ export function MatView({
   playhead = 0,
   locked = false,
   spread = null,
+  plan = null,
+  onPathPoint,
 }: {
   mat: Mat;
   picture: ImageBitmap | null;
@@ -75,6 +84,10 @@ export function MatView({
   locked?: boolean;
   /** Where the real robot may end: pretend runs' paths and ends, and the 9-in-10 circle. */
   spread?: Spread | null;
+  /** A path being drawn (Path tool): where the robot is after each point. */
+  plan?: PathPlan | null;
+  /** A click on the mat with the Path tool. */
+  onPathPoint?: (point: Point) => void;
 }) {
   const host = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -204,6 +217,10 @@ export function MatView({
       return;
     }
     const m = toMat(p.x, p.y);
+    if (tool === 'path') {
+      drag.current = { kind: 'pan', start: p, view, click: m };
+      return;
+    }
     if (tool === 'ruler' || tool === 'area') {
       drag.current = { kind: tool, from: m };
       if (tool === 'ruler') setRuler({ from: m, to: m });
@@ -285,6 +302,11 @@ export function MatView({
     const current = drag.current;
     drag.current = null;
     if (!current) return;
+    if (current.kind === 'pan' && current.click && onPathPoint) {
+      const p = local(event);
+      // A click, not a drag to look around.
+      if (Math.hypot(p.x - current.start.x, p.y - current.start.y) < 5) onPathPoint(current.click);
+    }
     if ((current.kind === 'robot' || current.kind === 'turn') && placement)
       onPlace(placement, true);
     if (current.kind === 'area' && drawing) {
@@ -405,6 +427,30 @@ export function MatView({
           <g className="mat-spread" data-testid="mat-spread">
             {spreadShape.map((points, index) => (
               <polyline key={index} className="mat-spread-path" points={points} />
+            ))}
+          </g>
+        )}
+        {plan && placement && plan.poses.length > 0 && (
+          <g className="mat-plan" data-testid="mat-plan">
+            <polyline
+              className="mat-plan-line"
+              points={[placement, ...plan.poses]
+                .map((pose) => `${round(pose.xMm)},${round(H - pose.yMm)}`)
+                .join(' ')}
+            />
+            {plan.poses.map((pose, index) => (
+              <g key={index} className="mat-plan-point">
+                <circle cx={pose.xMm} cy={H - pose.yMm} r={px(10)} />
+                <text
+                  x={pose.xMm}
+                  y={H - pose.yMm}
+                  fontSize={px(12)}
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                >
+                  {index + 1}
+                </text>
+              </g>
             ))}
           </g>
         )}
