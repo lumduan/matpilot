@@ -30,7 +30,9 @@ export function describeSaved(savedBy: string, savedAt: string): string {
   return [savedBy, when].filter(Boolean).join(', ');
 }
 
-/** "2.3 KB". */
+/** "2.3 KB", "12.6 MB". */
 export function describeSize(bytes: number): string {
-  return bytes < 1024 ? `${bytes} B` : `${(bytes / 1024).toFixed(1)} KB`;
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }

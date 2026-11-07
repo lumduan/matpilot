@@ -143,10 +143,14 @@ entry in [NOTICE](NOTICE).
     (`@anthropic-ai/sdk`, `openai`), loaded only when used. The key goes only to its provider:
     never into program files, GitHub saves, the journal or logs. Tests answer with a fake
     provider (`client.test.ts`); never use a real key in tests.
-  - `src/lib/github/`: saving and loading block programs in a GitHub repository
-    ([ADR 0011](docs/adr/0011-save-load-github.md)): the REST client (the only code that talks to
-    another origin), repository and folder names, and the save rule that never silently replaces
-    a teammate's newer file. The program file format is `src/lib/blocks/program-file.ts`.
+  - `src/lib/github/`: saving and loading block programs, robots and mats in a GitHub repository
+    ([ADR 0011](docs/adr/0011-save-load-github.md), extended by
+    [ADR 0016](docs/adr/0016-robots-and-mats.md)): the REST client (with `src/lib/ai/client.ts`,
+    the only code that talks to another origin; it reads files of 1 to 100 MB raw), repository
+    and folder names, the kinds of file in the one folder (`files.ts`), and the save rule that
+    never silently replaces a teammate's newer file. The program file format is
+    `src/lib/blocks/program-file.ts`. Robots and Mats share the Save and Load dialogs in
+    `src/components/files/`.
 - `src/hooks/`: the only React code that creates or calls `src/lib/` objects with side effects
   (the hub probe, the compatibility check, the hub connection in `useHubRunner`, live device
   values in `useLiveDevices`, the block editor in `useBlocksEditor`, editing a tab's Python in

@@ -93,9 +93,11 @@ export class GitHubClient {
     method: 'GET' | 'PUT',
     url: string,
     body?: object,
+    /** Ask for the file itself rather than JSON (files of 1 to 100 MB need it). */
+    raw = false,
   ): Promise<{ status: number; data: unknown; headers: Headers }> {
     const headers: Record<string, string> = {
-      Accept: 'application/vnd.github+json',
+      Accept: raw ? 'application/vnd.github.raw+json' : 'application/vnd.github+json',
       'X-GitHub-Api-Version': GITHUB_API_VERSION,
     };
     if (this.token) headers.Authorization = `Bearer ${this.token}`;
@@ -115,7 +117,7 @@ export class GitHubClient {
     }
     let data: unknown = null;
     try {
-      data = await response.json();
+      data = raw && response.ok ? await response.text() : await response.json();
     } catch {
       // Some errors have no JSON body.
     }
@@ -248,6 +250,20 @@ export class GitHubClient {
     }
     if (!isObject(data) || data.type !== 'file' || typeof data.sha !== 'string') {
       throw new GitHubError('invalid', `“${path}” on GitHub is not a file.`);
+    }
+    // Files of 1 to 100 MB come without their content; GitHub sends them raw when asked.
+    // https://docs.github.com/en/rest/repos/contents#get-repository-content (checked 2026-11-07)
+    if (data.encoding === 'none') {
+      const { data: raw } = await this.request(
+        'GET',
+        `${this.base}/contents/${encodePath(path)}`,
+        undefined,
+        true,
+      );
+      if (typeof raw !== 'string') {
+        throw new GitHubError('invalid', `“${path}” on GitHub is too large to open here.`);
+      }
+      return { path: String(data.path ?? path), sha: data.sha, text: raw };
     }
     if (data.encoding !== 'base64' || typeof data.content !== 'string') {
       throw new GitHubError('invalid', `“${path}” on GitHub is too large to open here.`);

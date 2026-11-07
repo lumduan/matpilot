@@ -1,7 +1,9 @@
 'use client';
 
 import { useCallback, useMemo, useSyncExternalStore } from 'react';
+import type { GitHubLink } from '@/lib/blocks/program-meta';
 import { GitHubClient, type RemoteFile, type RepositoryInfo } from '@/lib/github/client';
+import { listFiles, type FileKind, type RemoteEntry } from '@/lib/github/files';
 import {
   listPrograms,
   saveProgram,
@@ -23,6 +25,12 @@ import {
 
 const SETTINGS_KEY = 'matpilot.github.v1';
 const TOKEN_KEY = 'matpilot.github.token.v1';
+/**
+ * The GitHub file each robot and mat was last loaded from or saved to, by its id (ADR 0016): a
+ * save then replaces it only if no teammate changed it since. Programs keep theirs in their meta.
+ */
+const LINKS_KEY = 'matpilot.github.links.v1';
+const MAX_LINKS = 200;
 
 export interface GitHubSettings {
   /** As typed: `owner/repo` or a github.com link. */
@@ -43,9 +51,32 @@ export const DEFAULT_GITHUB_SETTINGS: GitHubSettings = {
 interface Snapshot {
   readonly settings: GitHubSettings;
   readonly token: string | null;
+  readonly links: Readonly<Record<string, GitHubLink>>;
 }
 
-const SERVER_SNAPSHOT: Snapshot = { settings: DEFAULT_GITHUB_SETTINGS, token: null };
+const SERVER_SNAPSHOT: Snapshot = { settings: DEFAULT_GITHUB_SETTINGS, token: null, links: {} };
+
+function parseLinks(raw: string | null): Record<string, GitHubLink> {
+  if (raw === null) return {};
+  try {
+    const data = JSON.parse(raw) as Record<string, unknown>;
+    const links: Record<string, GitHubLink> = {};
+    for (const [id, value] of Object.entries(data)) {
+      const link = value as Partial<Record<keyof GitHubLink, unknown>> | null;
+      if (
+        link &&
+        typeof link.repository === 'string' &&
+        typeof link.path === 'string' &&
+        typeof link.sha === 'string'
+      ) {
+        links[id] = { repository: link.repository, path: link.path, sha: link.sha };
+      }
+    }
+    return links;
+  } catch {
+    return {};
+  }
+}
 
 function parseSettings(raw: string | null): GitHubSettings {
   if (raw === null) return DEFAULT_GITHUB_SETTINGS;
@@ -66,7 +97,12 @@ const listeners = new Set<() => void>();
 /** The token when it is not remembered, and everything when storage is blocked. */
 let memoryToken: string | null = null;
 let memorySettings: string | null = null;
-let cache: { raw: string | null; token: string | null; snapshot: Snapshot } | null = null;
+let cache: {
+  raw: string | null;
+  token: string | null;
+  links: string | null;
+  snapshot: Snapshot;
+} | null = null;
 
 function readStorage(key: string): string | null {
   try {
@@ -89,10 +125,26 @@ function writeStorage(key: string, value: string | null): boolean {
 function getSnapshot(): Snapshot {
   const raw = memorySettings ?? readStorage(SETTINGS_KEY);
   const token = memoryToken ?? readStorage(TOKEN_KEY);
-  if (!cache || cache.raw !== raw || cache.token !== token) {
-    cache = { raw, token, snapshot: { settings: parseSettings(raw), token } };
+  const links = readStorage(LINKS_KEY);
+  if (!cache || cache.raw !== raw || cache.token !== token || cache.links !== links) {
+    cache = {
+      raw,
+      token,
+      links,
+      snapshot: { settings: parseSettings(raw), token, links: parseLinks(links) },
+    };
   }
   return cache.snapshot;
+}
+
+/** Remembers (or with `null` forgets) the GitHub file of a robot or mat. */
+function storeLink(id: string, link: GitHubLink | null): void {
+  const links = { ...getSnapshot().links };
+  if (link) links[id] = link;
+  else delete links[id];
+  const kept = Object.entries(links).slice(-MAX_LINKS);
+  writeStorage(LINKS_KEY, JSON.stringify(Object.fromEntries(kept)));
+  notify();
 }
 
 function subscribe(listener: () => void): () => void {
@@ -136,14 +188,23 @@ export interface GitHubStore {
   /** Checks a repository and token before they are saved. */
   readonly check: (repository: RepositoryName, token: string | null) => Promise<RepositoryInfo>;
   readonly list: () => Promise<RemoteProgram[]>;
+  /** Robots or mats in the folder (ADR 0016). */
+  readonly listKind: (kind: FileKind) => Promise<RemoteEntry[]>;
   readonly read: (path: string) => Promise<RemoteFile | null>;
   readonly write: (args: Parameters<typeof saveProgram>[1]) => Promise<SaveOutcome>;
+  /** The GitHub file a robot or mat (by id) was loaded from or saved to. */
+  readonly links: Readonly<Record<string, GitHubLink>>;
+  readonly setLink: (id: string, link: GitHubLink | null) => void;
 }
 
 const notConfigured = () => Promise.reject(new Error('GitHub is not set up.'));
 
 export function useGitHub(): GitHubStore {
-  const { settings, token } = useSyncExternalStore(subscribe, getSnapshot, () => SERVER_SNAPSHOT);
+  const { settings, token, links } = useSyncExternalStore(
+    subscribe,
+    getSnapshot,
+    () => SERVER_SNAPSHOT,
+  );
   const repository = useMemo(() => parseRepository(settings.repository), [settings.repository]);
   const folder = cleanFolder(settings.folder);
   const client = useMemo(
@@ -162,6 +223,11 @@ export function useGitHub(): GitHubStore {
   );
   const list = useCallback(
     () => (client && folder !== null ? listPrograms(client, folder) : notConfigured()),
+    [client, folder],
+  );
+  const listKind = useCallback(
+    (kind: FileKind) =>
+      client && folder !== null ? listFiles(client, folder, kind) : notConfigured(),
     [client, folder],
   );
   const read = useCallback(
@@ -184,7 +250,10 @@ export function useGitHub(): GitHubStore {
     forgetToken,
     check,
     list,
+    listKind,
     read,
     write,
+    links,
+    setLink: storeLink,
   };
 }

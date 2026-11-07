@@ -70,6 +70,8 @@ export interface MatsStore {
   readonly update: (mat: Mat) => void;
   readonly remove: (id: string) => Promise<void>;
   readonly exportFile: (mat: Mat) => Promise<string>;
+  /** The mat file's text (description and source file), for saving to GitHub. */
+  readonly fileText: (mat: Mat) => Promise<string>;
   readonly importFile: (text: string) => Promise<Mat>;
 }
 
@@ -285,15 +287,22 @@ export function useMats(): MatsStore {
     [mats],
   );
 
-  const exportFile = useCallback(async (mat: Mat) => {
+  const fileText = useCallback(async (mat: Mat) => {
     const files = await matFiles(mat.id);
     if (!files) throw new Error('The mat’s file is missing from this browser.');
-    const fileName = matFileName(mat.name);
     const mediaType =
       files.source.type || (mat.source.kind === 'pdf' ? 'application/pdf' : 'image/png');
-    downloadTextFile(fileName, serializeMatFile(mat, await toBase64(files.source), mediaType));
-    return fileName;
+    return serializeMatFile(mat, await toBase64(files.source), mediaType);
   }, []);
+
+  const exportFile = useCallback(
+    async (mat: Mat) => {
+      const fileName = matFileName(mat.name);
+      downloadTextFile(fileName, await fileText(mat));
+      return fileName;
+    },
+    [fileText],
+  );
 
   const importFile = useCallback(
     async (text: string): Promise<Mat> => {
@@ -332,6 +341,7 @@ export function useMats(): MatsStore {
     update,
     remove,
     exportFile,
+    fileText,
     importFile,
   };
 }

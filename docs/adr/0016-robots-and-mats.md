@@ -232,7 +232,8 @@ later: draw a path on the mat → blocks;  how sure is the robot (drift);  part 
 - **D4, programs and robots:** a program chooses a robot and its file keeps a copy; the "set
   movement motors" and "set wheel size" blocks still override it (recommended).
 - **D5, mats:** PDF at real size, and images with the size typed in; kept in this browser and as
-  files, not on GitHub by default (recommended).
+  files, not on GitHub by default (recommended). (Changed 2026-11-07: mats, like robots, can be
+  saved to GitHub; see the amendment.)
 - **D6, simulation engine:**
   - (a) the same Python as the hub, run by MicroPython in the page with a simulated Pybricks
     (recommended: one truth, whatever blocks or Python wrote it);
@@ -343,6 +344,38 @@ words: build the fields as recommended first; using them will show what to add o
   PDF (page 2, 420 × 297 mm); a picture (1200 × 600 mm typed); a phone (no sideways scroll); no
   errors, and no request outside this site. The real WRO PDF was not available to the test (its
   download link returned a web page), so it is the maintainer's check.
+
+## Amendment (2026-11-07): robots and mats on GitHub; D5 changed
+
+After trying the Mats page with the real WRO 2026 Elementary PDF (it worked), the maintainer asked
+for Load and Save on GitHub on the Robots and Mats pages too, in their words "using the GitHub
+already set up for the code, not setting it up again; or, if it was never set up, adding the
+token there", and usable on every page. This changes D5, which kept mats off GitHub by default.
+
+- **One GitHub setup for every page.** The repository, folder, name and token set up on Blocks
+  (ADR 0011) serve Robots and Mats as they are; each page's **Set up GitHub…** opens the same
+  settings. The folder holds programs (`.matpilot.json`), robots (`.matpilot-robot.json`) and
+  mats (`.matpilot-mat.json`) side by side, told apart by their endings (`src/lib/github/files.ts`);
+  its label now reads "Folder for programs, robots and mats".
+- **Load and Save** on both pages open one shared pair of dialogs (`src/components/files/`): this
+  computer, or GitHub. Saving follows ADR 0011's rule: a teammate's newer version is never
+  replaced without asking ("Save mine as a new …", "Replace it"). Which GitHub file each robot or
+  mat came from is remembered in this browser (`matpilot.github.links.v1`). A robot loaded from
+  GitHub that differs from the one here arrives beside it, as a copy.
+- **Large files.** GitHub's contents API sends files of 1 to 100 MB without their content; the
+  client then asks for them raw (`application/vnd.github.raw+json`), per
+  [GitHub's documentation](https://docs.github.com/en/rest/repos/contents#get-repository-content)
+  (checked 2026-11-07). A WRO mat's file is about 13 MB; GitHub states no size limit for saving
+  through this API, so the first real save of a full mat is the maintainer's check.
+- **Mats are the organiser's work.** Before a mat is saved, the dialog asks GitHub whether the
+  repository is private. If it is public, or GitHub cannot say, saving waits for a tick: "A
+  competition mat is the organiser's work: keep it for your own team, in a private repository."
+- **No new origin:** `https://api.github.com` is already allowed (ADR 0011).
+- **Tests:** unit tests for the raw read of a large file and for listing robots and mats apart.
+  Headless Chromium against a fake GitHub: a robot saved into the Blocks page's repository and
+  folder with no new setup; a teammate's change caught and replaced only when asked; their robot
+  loaded beside mine; a mat saved (private: no tick) and loaded back through the raw read; a
+  public repository needing the tick; the setup offered when GitHub is not set up.
 
 ## Consequences (as accepted)
 
