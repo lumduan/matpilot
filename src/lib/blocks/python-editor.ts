@@ -15,7 +15,7 @@ import {
 } from '@codemirror/autocomplete';
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
 import { python } from '@codemirror/lang-python';
-import { HighlightStyle, indentUnit, syntaxHighlighting, syntaxTree } from '@codemirror/language';
+import { indentUnit, syntaxTree } from '@codemirror/language';
 import { lintGutter, setDiagnostics, type Diagnostic } from '@codemirror/lint';
 import {
   EditorState,
@@ -34,9 +34,9 @@ import {
   lineNumbers,
   type DecorationSet,
 } from '@codemirror/view';
-import { tags } from '@lezer/highlight';
 import type { PythonProblem, TextRange } from './from-python/tab';
 import { wordFor, wordsAfter, type ProgramNames, type Word } from './from-python/vocabulary';
+import { pythonTokens, type TokenKind } from './python-colors';
 
 export interface PythonEditorOptions {
   readonly host: HTMLElement;
@@ -177,26 +177,29 @@ function lockedDecorations(doc: Text, ranges: readonly TextRange[]): DecorationS
   return builder.finish();
 }
 
-/** Colours from the page's own colour variables, so light and dark follow the page. */
-const highlight = HighlightStyle.define([
-  {
-    tag: [tags.keyword, tags.controlKeyword, tags.operatorKeyword, tags.definitionKeyword],
-    color: 'var(--code-keyword)',
-    fontWeight: '600',
-  },
-  { tag: [tags.string, tags.special(tags.string)], color: 'var(--code-string)' },
-  { tag: [tags.number, tags.bool, tags.null], color: 'var(--code-number)' },
-  { tag: tags.comment, color: 'var(--code-comment)', fontStyle: 'italic' },
-  {
-    tag: [tags.function(tags.variableName), tags.function(tags.propertyName)],
-    color: 'var(--code-call)',
-  },
-  {
-    tag: tags.definition(tags.function(tags.variableName)),
-    color: 'var(--code-call)',
-    fontWeight: '600',
-  },
-]);
+const tokenMarks = new Map<TokenKind, Decoration>();
+const markFor = (kind: TokenKind) => {
+  let mark = tokenMarks.get(kind);
+  if (!mark) {
+    mark = Decoration.mark({ class: `py-${kind}` });
+    tokenMarks.set(kind, mark);
+  }
+  return mark;
+};
+
+/** The colours of the Python (./python-colors.ts), the same as the read-only view's. */
+const colours = StateField.define<DecorationSet>({
+  create: (state) => colourDecorations(state.doc.toString()),
+  update: (decorations, tr) =>
+    tr.docChanged ? colourDecorations(tr.state.doc.toString()) : decorations,
+  provide: (field) => EditorView.decorations.from(field),
+});
+
+function colourDecorations(text: string): DecorationSet {
+  const builder = new RangeSetBuilder<Decoration>();
+  for (const token of pythonTokens(text)) builder.add(token.from, token.to, markFor(token.kind));
+  return builder.finish();
+}
 
 const theme = EditorView.theme({
   '&': {
@@ -222,7 +225,8 @@ const theme = EditorView.theme({
   '&.cm-focused .cm-selectionBackground, .cm-selectionBackground, ::selection': {
     backgroundColor: 'var(--code-selection)',
   },
-  '.cm-locked': { color: 'var(--muted)', backgroundColor: 'var(--code-locked)' },
+  // Made from the blocks: faded, on a grey band.
+  '.cm-locked': { opacity: '0.6', backgroundColor: 'var(--code-locked)' },
   '.cm-lintRange-error': { textDecorationColor: 'var(--error-border)' },
   '.cm-tooltip': {
     backgroundColor: 'var(--surface)',
@@ -260,7 +264,7 @@ export function createPythonEditor(options: PythonEditorOptions): PythonEditorHa
     indentUnit.of('    '),
     EditorState.tabSize.of(4),
     python(),
-    syntaxHighlighting(highlight),
+    colours,
     lintGutter(),
     autocompletion({ override: [suggestions(options.names)], icons: true }),
     explain(options.names),

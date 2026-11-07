@@ -2,7 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-11-07 (proposed; accepted the same day, with every recommended option, and built;
-  amended the same day after the maintainer's first try: suggestions, help, and comments kept)
+  amended the same day after the maintainer's tries: suggestions, help, comments kept, colours)
 - Builds on: [ADR 0006](0006-adopt-pybricks-mpy-cross.md) (the compiler in the browser),
   [ADR 0008](0008-block-editor.md) (block editor), [ADR 0010](0010-simple-blocks.md) (simple
   blocks), [ADR 0013](0013-block-tabs.md) (tabs, and changes undone from the notice)
@@ -139,6 +139,16 @@ The maintainer tried the checks and asked for two things:
     to "when the program starts".
   - Blockly already writes a block's comment into the Python as `#` lines above its code, so after
     Update blocks the comment is still there: above its line, and in the block's comment bubble.
+- **Colours like VS Code** (asked for after the second try): the Python had only a few colours
+  in the editor, and none in the read-only panel. Both now use one colouring,
+  `src/lib/blocks/python-colors.ts`, modelled on VS Code's Dark+ and Light+ themes:
+  - purple: flow keywords and imports;
+  - blue: `def`, `True`, `and` and the like;
+  - orange: text in quotes; light green: numbers; green: comments;
+  - yellow: functions; teal: classes and modules; light blue: constants and variables;
+  - brackets coloured by depth.
+    The colours are CSS variables, with one set for the light theme and one for the dark. The
+    read-only view loads the colouring after the page, so the plain text shows first.
 - **Found while testing it:** the editor's width changed when its scroll bar came and went (when
   the problem list below it grew or shrank). Long lines then wrapped differently than the editor
   had measured: the line numbers and the help under the pointer were a line off. The scroll bar's

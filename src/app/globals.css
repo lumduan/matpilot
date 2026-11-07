@@ -28,12 +28,21 @@
   --neutral-bg: #eef1f5;
   --neutral-border: #8a96a3;
   --neutral-text: #39424c;
-  /* Python editor (ADR 0014): colours of the code, the current line and the locked parts. */
-  --code-keyword: #6d28d9;
-  --code-string: #15803d;
-  --code-number: #b45309;
-  --code-comment: #6b7280;
-  --code-call: #1d4ed8;
+  /* Python colours, as VS Code's Light+ theme (src/lib/blocks/python-colors.ts). */
+  --py-control: #af00db;
+  --py-keyword: #0000ff;
+  --py-string: #a31515;
+  --py-escape: #ee0000;
+  --py-number: #098658;
+  --py-comment: #008000;
+  --py-function: #795e26;
+  --py-class: #267f99;
+  --py-constant: #0070c1;
+  --py-variable: #001080;
+  --py-bracket1: #0431fa;
+  --py-bracket2: #319331;
+  --py-bracket3: #7b3814;
+  /* Python editor (ADR 0014): the current line, the selection and the locked parts. */
   --code-active-line: rgba(31, 95, 191, 0.06);
   --code-selection: rgba(31, 95, 191, 0.22);
   --code-locked: rgba(128, 128, 128, 0.12);
@@ -73,11 +82,20 @@
     --neutral-bg: #222932;
     --neutral-border: #6b7783;
     --neutral-text: #c9d1d9;
-    --code-keyword: #c4b5fd;
-    --code-string: #86efac;
-    --code-number: #fcd34d;
-    --code-comment: #9ca3af;
-    --code-call: #93c5fd;
+    /* As VS Code's Dark+ theme. */
+    --py-control: #c586c0;
+    --py-keyword: #569cd6;
+    --py-string: #ce9178;
+    --py-escape: #d7ba7d;
+    --py-number: #b5cea8;
+    --py-comment: #6a9955;
+    --py-function: #dcdcaa;
+    --py-class: #4ec9b0;
+    --py-constant: #4fc1ff;
+    --py-variable: #9cdcfe;
+    --py-bracket1: #ffd700;
+    --py-bracket2: #da70d6;
+    --py-bracket3: #179fff;
     --code-active-line: rgba(91, 155, 240, 0.08);
     --code-selection: rgba(91, 155, 240, 0.3);
     --code-locked: rgba(255, 255, 255, 0.05);
@@ -2103,4 +2121,46 @@ code {
 .python-edit-status ul {
   margin: 0.4rem 0 0;
   padding-left: 1.2rem;
+}
+
+/* Python colours, for the read-only Python and the editor (src/lib/blocks/python-colors.ts). */
+.py-control {
+  color: var(--py-control);
+}
+.py-keyword {
+  color: var(--py-keyword);
+}
+.py-string {
+  color: var(--py-string);
+}
+.py-escape {
+  color: var(--py-escape);
+}
+.py-number {
+  color: var(--py-number);
+}
+.py-comment {
+  color: var(--py-comment);
+}
+.py-function {
+  color: var(--py-function);
+}
+.py-class,
+.py-module {
+  color: var(--py-class);
+}
+.py-constant {
+  color: var(--py-constant);
+}
+.py-variable {
+  color: var(--py-variable);
+}
+.py-bracket1 {
+  color: var(--py-bracket1);
+}
+.py-bracket2 {
+  color: var(--py-bracket2);
+}
+.py-bracket3 {
+  color: var(--py-bracket3);
 }
