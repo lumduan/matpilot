@@ -656,8 +656,13 @@ program works; the steps use the one from the tabs checks (main calls `shapes.sq
 
 ### AI helper results
 
-| Date | Browser | OS  | Provider and model | Result |
-| ---- | ------- | --- | ------------------ | ------ |
+| Date       | Browser    | OS         | Provider and model                   | Result                                                  |
+| ---------- | ---------- | ---------- | ------------------------------------ | ------------------------------------------------------- |
+| 2026-11-07 | not stated | not stated | Anthropic (Claude), model not stated | Passed with Claude. DeepSeek (check 2) not reported yet |
+
+Notes (2026-11-07; the maintainer, reported in conversation): "tried, passed with Claude". The
+browser, the operating system, the model and which of the ten checks were done one by one were not
+stated. DeepSeek is still to be tried.
 
 ## Keeping this file current
 
