@@ -181,7 +181,8 @@ const VALUE_INDEX = {
 } as const;
 
 /** The Python number for an input: ±100 for a button pair, else the stick or trigger value. */
-function inputCode(input: ControllerInput): string {
+/** The Python a controller input reads as, -100 to 100 (also read back by ../from-python). */
+export function inputCode(input: ControllerInput): string {
   const value = helper('controller_value', VALUE);
   switch (input.kind) {
     case 'pair':

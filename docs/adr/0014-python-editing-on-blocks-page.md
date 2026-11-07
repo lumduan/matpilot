@@ -1,7 +1,7 @@
 # ADR 0014: Editing the Python on the Blocks page
 
-- Status: Proposed (waits for the maintainer's decisions at the end of "Proposal")
-- Date: 2026-11-07
+- Status: Accepted
+- Date: 2026-11-07 (proposed; accepted the same day, with every recommended option, and built)
 - Builds on: [ADR 0006](0006-adopt-pybricks-mpy-cross.md) (the compiler in the browser),
   [ADR 0008](0008-block-editor.md) (block editor), [ADR 0010](0010-simple-blocks.md) (simple
   blocks), [ADR 0013](0013-block-tabs.md) (tabs, and changes undone from the notice)
@@ -58,7 +58,7 @@ What exists:
    detailed one (ADR 0010), the converter uses the kind the replaced blocks used. Where there were
    none, it uses the simple blocks.
 
-**Decisions for the maintainer:**
+**Decisions for the maintainer** (taken on 2026-11-07, see "Decision"):
 
 - **D1, Python that has no block:**
   - (a) refuse it with a red mark, as asked. Recommended for the first version;
@@ -75,6 +75,46 @@ What exists:
   - dropped in the first version (recommended);
   - or kept as block comments.
 
+## Decision
+
+The maintainer chose every recommended option on 2026-11-07 ("เอาตามที่แนะนำ", as recommended):
+
+- **D1:** Python that has no block is refused, with a red mark where it is.
+- **D2:** CodeMirror 6 is the editor.
+- **D3:** the open tab's file only; `setup.py` and the Config section stay read-only.
+- **D4:** comments are dropped when the blocks are updated.
+
+As built:
+
+- **Where the code is:**
+  - the converter: `src/lib/blocks/from-python/`
+    - `syntax.ts`: Lezer's Python parser, which the editor also uses for its colours;
+    - `reader.ts`: one reader per block;
+    - `shadows.ts`: each input's toolbox shadow;
+    - `tab.ts`: the editable parts, and the tab's new blocks;
+  - the editor: `src/lib/blocks/python-editor.ts`;
+  - the page: `src/hooks/usePythonEditing.ts` and `src/components/blocks/PythonEditPane.tsx`.
+- **The test** `from-python/tab.test.ts` reads every block of every toolbox category back, and
+  checks that the program makes the same Python. It also covers:
+  - directions, units and signs, and expressions in inputs;
+  - the controller blocks, and functions and calls across tabs;
+  - shared variables, in one file and in several;
+  - the problems and where they are marked.
+- **Locked parts:** the parts made from the blocks are grey, and the editor refuses edits there.
+  While Python is edited, that tab's blocks are locked; the other tabs, Run, Load and Start over
+  wait. The problems are checked 0.3 s after typing stops. **Update blocks** compiles with the
+  hub's compiler first, and its message is shown if it refuses.
+- **When two blocks make the same Python:** the reader keeps the kind the replaced blocks used
+  (their type and their fields: simple or detailed, rotations or degrees); where there were none,
+  it uses the first it lists.
+- **Blocks that make no Python of their own** ("use the controller", "set movement motors", "set
+  wheel size") are kept: they go first in the program, or in a tab's first function. Blocks that
+  were turned off are not in the Python, so they are gone; the notice says how many.
+- **The old Edit as Python button** (one file, as text, on the Program & Monitor page) is now
+  called **Open in Program page**, so that it is not confused with **Edit**.
+- **Loading:** the editor (CodeMirror, about 330 KB) and the converter (about 135 KB with
+  Lezer's parser) load when Edit is pressed. The Blocks page loads as before.
+
 ## Consequences
 
 - This is the largest feature so far. About 100 MatPilot blocks, plus Blockly's loop, logic,
@@ -83,4 +123,5 @@ What exists:
   from them.
 - A child can read the Python, change a number or a line, and watch the blocks follow, or see
   exactly what is wrong and where.
-- Once this is accepted, every new block needs its reader too. CLAUDE.md will say so.
+- Every new block needs its reader too, in `from-python/reader.ts`. CLAUDE.md says so, and the
+  round-trip test fails for a toolbox block without one.

@@ -74,6 +74,12 @@ Hub-direct gamepad path (planned)
    and Helpers sections ([ADR 0013](adr/0013-block-tabs.md)); every file uses a shared variable as
    `setup.name`. They are compiled one by one and uploaded as one program, main first.
 
+   The Python of a tab can also be edited on `/blocks` and turned back into blocks
+   ([ADR 0014](adr/0014-python-editing-on-blocks-page.md)): `src/lib/blocks/from-python/` reads
+   it with Lezer's Python parser and matches each line against the Python a block makes. Python
+   with no block is marked where it is, and the blocks stay as they were. The parts made from
+   the devices and settings (imports, Config, Setup, Helpers) stay read-only.
+
    With the Controller blocks ([ADR 0012](adr/0012-controller-blocks.md)), every controller read
    goes through one helper that catches `OSError` (a lost controller) and stops the program, so
    `finally` stops the motors. Problems such as a device used but not set up disable Run.
@@ -116,6 +122,7 @@ pane on `/blocks` ([ADR 0012](adr/0012-controller-blocks.md)). They never reach 
 | Compiler            | `src/lib/pybricks/compiler.ts`, `mpy.ts`            | Pybricks' mpy-cross WebAssembly build, self-hosted ([ADR 0006](adr/0006-adopt-pybricks-mpy-cross.md))                                                                                                                                                            |
 | Monitor and plotter | `src/lib/monitor/`                                  | Stream decoding, bounded log, Arduino-style plot parsing                                                                                                                                                                                                         |
 | Block editor        | `src/lib/blocks/`                                   | Blockly blocks, picture fields, toolbox, themes, the Python generator, and tabs of functions (`tabs.ts`, `functions.ts`, `shared.ts`, `clipboard.ts`) (ADRs [0008](adr/0008-block-editor.md), [0010](adr/0010-simple-blocks.md), [0013](adr/0013-block-tabs.md)) |
+| Python to blocks    | `src/lib/blocks/from-python/`, `python-editor.ts`   | The converter from a tab's Python back to its blocks, and the CodeMirror editor for it, both loaded when Edit is pressed ([ADR 0014](adr/0014-python-editing-on-blocks-page.md))                                                                                 |
 | Live device values  | `src/lib/devices/`                                  | The reader pasted into the hub's REPL, and its line parser ([ADR 0009](adr/0009-live-device-values.md))                                                                                                                                                          |
 | Pybricks constants  | `src/lib/pybricks/`                                 | UUIDs and version parsing, each cited to an upstream commit                                                                                                                                                                                                      |
 | Program files       | `src/lib/blocks/program-file.ts`, `program-meta.ts` | The `.matpilot.json` file format, version 2 with tabs ([ADR 0013](adr/0013-block-tabs.md)); the program's name and GitHub file ([ADR 0011](adr/0011-save-load-github.md))                                                                                        |

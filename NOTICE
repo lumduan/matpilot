@@ -178,3 +178,46 @@ its media (images and cursors, from node_modules/blockly/media/) are copied to
 /vendor/blockly-media/ by scripts/vendor-assets.mjs. MatPilot's blocks, their
 Python, the toolbox and the themes are MatPilot's own code
 (src/lib/blocks/); no Blockly source is modified.
+
+==============================================================================
+CodeMirror 6 and Lezer (npm packages, redistributed unmodified)
+https://codemirror.net/  https://lezer.codemirror.net/
+Packages: @codemirror/state 6.7.6, @codemirror/view 6.43.15,
+  @codemirror/commands 6.11.1, @codemirror/language 6.13.1,
+  @codemirror/lang-python 6.2.1, @codemirror/lint 6.9.7,
+  @codemirror/autocomplete 6.20.4 (a dependency of lang-python),
+  @lezer/python 1.1.19, @lezer/common 1.5.5, @lezer/highlight 1.2.5,
+  @lezer/lr 1.4.12, and their dependencies crelt 1.0.7, style-mod 4.1.4 and
+  w3c-keyname 2.2.8 (MIT, by the same author)
+Copyright (C) 2018-2021 by Marijn Haverbeke <marijn@haverbeke.berlin> and others
+Copyright (C) 2020 by Marijn Haverbeke <marijn@haverbeke.berlin> and others
+  (@lezer/python)
+License: MIT (full text below; each package ships it as LICENSE)
+==============================================================================
+
+MatPilot uses CodeMirror 6 as the Python editor on /blocks, and Lezer's Python
+parser to read that Python back into blocks
+(docs/adr/0014-python-editing-on-blocks-page.md). Their JavaScript is bundled
+into the site and loaded when someone edits Python; no source is modified.
+
+MIT License
+
+Copyright (C) 2018-2021 by Marijn Haverbeke <marijn@haverbeke.berlin> and others
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.

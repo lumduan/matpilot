@@ -93,6 +93,12 @@ entry in [NOTICE](NOTICE).
     Blockly is browser-loaded lazily (`editor.ts`); the generator also runs headless in tests,
     where every test program must compile with the real compiler. Keep the detailed blocks: the
     simple blocks sit beside them, not instead of them.
+  - `src/lib/blocks/from-python/`: the Python of a tab turned back into its blocks
+    ([ADR 0014](docs/adr/0014-python-editing-on-blocks-page.md)), and `python-editor.ts`, the
+    editor for it (CodeMirror 6, loaded only when Edit is pressed). **Every block needs a reader
+    in `from-python/reader.ts`:** when you add a block or change the Python it makes, change its
+    reader in the same change. `from-python/tab.test.ts` reads every toolbox block back and fails
+    when the Python differs.
   - `src/lib/devices/`: live device values ([ADR 0009](docs/adr/0009-live-device-values.md)): the
     reader that `HubConnection.runInRepl()` pastes into the hub's REPL (`hub-source.ts`; every
     Pybricks name it uses is cited there, and tests compile it with the real compiler) and the
@@ -110,7 +116,8 @@ entry in [NOTICE](NOTICE).
     a teammate's newer file. The program file format is `src/lib/blocks/program-file.ts`.
 - `src/hooks/`: the only React code that creates or calls `src/lib/` objects with side effects
   (the hub probe, the compatibility check, the hub connection in `useHubRunner`, live device
-  values in `useLiveDevices`, the block editor in `useBlocksEditor`, GitHub in `useGitHub`).
+  values in `useLiveDevices`, the block editor in `useBlocksEditor`, editing a tab's Python in
+  `usePythonEditing`, GitHub in `useGitHub`).
   Components may import types and pure helpers.
 - `src/components/`, `src/app/`: UI only. They must not touch `navigator.bluetooth` (ESLint
   enforces this).

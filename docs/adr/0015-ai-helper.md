@@ -1,7 +1,7 @@
 # ADR 0015: An AI helper for coding, review and learning to prompt, with any provider
 
-- Status: Proposed (waits for the maintainer's decisions at the end of "Proposal")
-- Date: 2026-11-07
+- Status: Accepted (not built yet: it comes after [ADR 0014](0014-python-editing-on-blocks-page.md))
+- Date: 2026-11-07 (proposed; accepted the same day, with every recommended option)
 - Would amend: the "no runtime requests to third-party origins" rule ([CLAUDE.md](../../CLAUDE.md)
   hard constraint 3) for a fixed list of AI provider origins, used only after an adult turns the
   helper on and enters a key. [ADR 0011](0011-save-load-github.md) made the same kind of
@@ -126,7 +126,7 @@ Also checked:
      the input part.
    - For other providers, see their price pages.
 
-**Decisions for the maintainer:**
+**Decisions for the maintainer** (taken on 2026-11-07, see "Decision"):
 
 - **D1, keys:**
   - (a) bring your own key in the browser. Recommended for home use and first trials;
@@ -144,6 +144,21 @@ Also checked:
 - **D5, order:**
   - ADR 0014 first, because the write mode needs it (recommended);
   - explain and review can be built alongside.
+
+## Decision
+
+The maintainer chose every recommended option on 2026-11-07:
+
+- **D1, keys:** an adult enters their own key in the browser. In their words, adults set this up
+  anyway, because children below the age limit cannot sign up for these services themselves. A
+  key-holding service for classrooms would be a separate decision later.
+- **D2, providers:** Anthropic, plus the OpenAI-style adapter for OpenAI and DeepSeek. Each origin
+  goes into the CSP by name.
+- **D3, modes:** explain and review with hints first. The write mode is turned on by an adult.
+- **D4, first users:** the maintainer's child at home; classrooms later.
+- **D5, order:** ADR 0014 first, then the helper.
+
+Until the helper is built, nothing in the site changes: no new origin is in the CSP.
 
 ## Consequences
 

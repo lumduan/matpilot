@@ -130,8 +130,8 @@ const RESERVED = [
   ...SIMPLE_RESERVED,
 ];
 
-/** Section headings, in the same style as the hand-written examples. */
-function rule(title: string): string {
+/** Section headings, in the same style as the hand-written examples (read by ./from-python). */
+export function rule(title: string): string {
   return `# --- ${title} `.padEnd(76, '-');
 }
 

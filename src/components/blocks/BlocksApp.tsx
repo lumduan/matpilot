@@ -12,6 +12,7 @@ import { useBlocksEditor } from '@/hooks/useBlocksEditor';
 import { useGitHub } from '@/hooks/useGitHub';
 import { useHubRunner } from '@/hooks/useHubRunner';
 import { useMounted } from '@/hooks/useMounted';
+import { usePythonEditing } from '@/hooks/usePythonEditing';
 import { saveProgramForEditor } from '@/hooks/useProgramRunner';
 import { useStoredState } from '@/hooks/useStoredState';
 import { hintsFromKey, hintsKey } from '@/lib/blocks/fields/hints';
@@ -20,6 +21,7 @@ import { CodeView } from './CodeView';
 import { ControllerPanel } from './ControllerPanel';
 import { GitHubSettingsDialog } from './GitHubSettingsDialog';
 import { LoadDialog } from './LoadDialog';
+import { PythonEditPane } from './PythonEditPane';
 import { SaveDialog } from './SaveDialog';
 import { TabBar } from './TabBar';
 
@@ -51,6 +53,9 @@ export function BlocksApp() {
   // A change to the program as a whole, with Undo: opened, started over, tab closed, moved.
   const [notice, setNotice] = useState<string | null>(null);
   const editor = useBlocksEditor(host, portHints, setNotice);
+  // Editing a tab's Python and turning it back into blocks (ADR 0014).
+  const pythonEditing = usePythonEditing(editor);
+  const editing = pythonEditing.active;
   const github = useGitHub();
   const [dialog, setDialog] = useState<{
     readonly name: DialogName;
@@ -153,11 +158,11 @@ export function BlocksApp() {
       event.preventDefault();
       if (!editorReady || document.querySelector('dialog[open]')) return;
       if (key === 's') setDialog({ name: 'save', back: null });
-      else if (!running) setDialog({ name: 'load', back: null });
+      else if (!running && !editing) setDialog({ name: 'load', back: null });
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [editorReady, running]);
+  }, [editorReady, running, editing]);
 
   const toggleMonitor = () => {
     if (monitorOpen) setSeenLineId(latestLineId);
@@ -184,6 +189,9 @@ export function BlocksApp() {
   };
 
   let statusText = programSummary(connection, runner.compiling);
+  if (!statusText && editing) {
+    statusText = `Editing ${pythonEditing.fileName}. Update blocks to keep it, or Cancel.`;
+  }
   if (!statusText) {
     if (editor.status === 'loading') statusText = 'Loading the block editor…';
     else if (problems.length > 0) statusText = 'Fix the problems above to run the program.';
@@ -202,8 +210,39 @@ export function BlocksApp() {
   const lostWhileRunning =
     link.status === 'disconnected' && link.reason === 'lost' && link.programWasRunning;
 
-  const pythonTools = (
+  const pythonTools = editing ? (
     <div className="button-row">
+      <button
+        type="button"
+        className="button button-small button-primary"
+        onClick={pythonEditing.update}
+        disabled={pythonEditing.updating}
+        data-testid="python-update"
+      >
+        {pythonEditing.updating ? 'Updating…' : 'Update blocks'}
+      </button>
+      <button
+        type="button"
+        className="button button-small"
+        onClick={pythonEditing.cancel}
+        disabled={pythonEditing.updating}
+        data-testid="python-cancel"
+      >
+        Cancel
+      </button>
+    </div>
+  ) : (
+    <div className="button-row">
+      <button
+        type="button"
+        className="button button-small"
+        onClick={pythonEditing.start}
+        disabled={!editorReady || running}
+        title="Edit this tab’s Python here, then turn it back into blocks"
+        data-testid="python-edit"
+      >
+        Edit
+      </button>
       <button
         type="button"
         className="button button-small"
@@ -220,11 +259,11 @@ export function BlocksApp() {
         disabled={code === '' || severalFiles}
         title={
           severalFiles
-            ? 'The Python editor holds one file, and this program has several.'
-            : 'Open this Python on the Program & Monitor page'
+            ? 'The Program page holds one file, and this program has several.'
+            : 'Open this Python as text on the Program & Monitor page'
         }
       >
-        Edit as Python
+        Open in Program page
       </button>
     </div>
   );
@@ -288,6 +327,7 @@ export function BlocksApp() {
               className="segmented-option"
               aria-pressed={view === option}
               onClick={() => setView(option)}
+              disabled={editing}
               data-testid={`view-${option}`}
             >
               {option === 'blocks' ? 'Blocks' : 'Python'}
@@ -300,7 +340,7 @@ export function BlocksApp() {
             type="button"
             className="button button-small button-file"
             onClick={() => openDialog('load')}
-            disabled={!editorReady || running}
+            disabled={!editorReady || running || editing}
             title={`Load a program (${mod}O)`}
             data-testid="load"
           >
@@ -331,7 +371,7 @@ export function BlocksApp() {
                 setNotice('Started a new program from the starter blocks.');
               }
             }}
-            disabled={!editorReady || running}
+            disabled={!editorReady || running || editing}
             title="Start a new program from the starter blocks"
             data-testid="start-over"
           >
@@ -352,7 +392,9 @@ export function BlocksApp() {
                 if (editor.program?.usesController) setControllerPane('open');
                 runner.runFiles(files);
               }}
-              disabled={!ready || runner.compiling || !editor.program || problems.length > 0}
+              disabled={
+                !ready || runner.compiling || !editor.program || problems.length > 0 || editing
+              }
               data-testid="run"
             >
               <PlayIcon />
@@ -485,8 +527,9 @@ export function BlocksApp() {
             tabs={editor.tabs}
             active={editor.activeTab}
             problemTabs={problemTabs}
-            disabled={!editorReady || running}
-            onSelect={editor.selectTab}
+            disabled={!editorReady || running || editing}
+            // While a tab's Python is edited, the other tabs wait (Update blocks or Cancel first).
+            onSelect={editing ? () => undefined : editor.selectTab}
             onAdd={editor.addTab}
             onRename={editor.renameTab}
             onClose={editor.closeTab}
@@ -499,7 +542,7 @@ export function BlocksApp() {
               data-status={editor.status}
               inert={view === 'python'}
             />
-            {view === 'blocks' && editorReady && (
+            {view === 'blocks' && editorReady && !editing && (
               <div className="history-buttons" role="group" aria-label="Undo and redo">
                 <button
                   type="button"
@@ -532,12 +575,24 @@ export function BlocksApp() {
                 <h2 id="python-full-heading">Python made from your blocks</h2>
                 {pythonTools}
               </div>
-              {pythonFiles}
-              <CodeView
-                code={code}
-                errorLine={errorLine}
-                label={shownFile ? `Python: ${shownFile.name}` : undefined}
-              />
+              {editing ? (
+                <PythonEditPane
+                  host={pythonEditing.host}
+                  problems={pythonEditing.problems}
+                  checking={pythonEditing.checking}
+                  lockedHint={pythonEditing.lockedHint}
+                  onReveal={pythonEditing.reveal}
+                />
+              ) : (
+                <>
+                  {pythonFiles}
+                  <CodeView
+                    code={code}
+                    errorLine={errorLine}
+                    label={shownFile ? `Python: ${shownFile.name}` : undefined}
+                  />
+                </>
+              )}
             </section>
           )}
         </div>
@@ -550,18 +605,31 @@ export function BlocksApp() {
                 type="button"
                 className="icon-button"
                 onClick={() => setPythonPanel('closed')}
+                disabled={editing}
                 title="Close the Python panel"
               >
                 <CloseIcon />
                 <span className="visually-hidden">Close the Python panel</span>
               </button>
             </div>
-            {pythonFiles}
-            <CodeView
-              code={code}
-              errorLine={errorLine}
-              label={shownFile ? `Python: ${shownFile.name}` : undefined}
-            />
+            {editing ? (
+              <PythonEditPane
+                host={pythonEditing.host}
+                problems={pythonEditing.problems}
+                checking={pythonEditing.checking}
+                lockedHint={pythonEditing.lockedHint}
+                onReveal={pythonEditing.reveal}
+              />
+            ) : (
+              <>
+                {pythonFiles}
+                <CodeView
+                  code={code}
+                  errorLine={errorLine}
+                  label={shownFile ? `Python: ${shownFile.name}` : undefined}
+                />
+              </>
+            )}
           </aside>
         )}
       </div>
@@ -675,6 +743,7 @@ export function BlocksApp() {
               className="toggle-button"
               aria-pressed={pythonOpen}
               onClick={() => setPythonPanel(pythonOpen ? 'closed' : 'open')}
+              disabled={editing}
               data-testid="toggle-python"
             >
               Python

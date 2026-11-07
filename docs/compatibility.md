@@ -550,6 +550,47 @@ controller assumed to be those of the earlier runs):
   works, and they were happy with that. Their opinion of driving comes once the car exists (no
   date).
 
+## Python editing checks (milestone 8)
+
+These check editing a tab's Python on `/blocks` and turning it back into blocks
+([ADR 0014](adr/0014-python-editing-on-blocks-page.md)). Checks 1 to 8 need no hub. Any program
+works; the steps use the one from the tabs checks (main calls `shapes.square(200)`).
+
+1. Open the **Python** panel and press **Edit**. The open tab's Python appears in colour. The
+   grey parts (imports, ports, devices, `try:` and `finally:`) refuse typing, and the page says
+   they are made from the blocks and the devices. Under the editor: "This Python can become
+   blocks." Run, Load, Start over and the other tabs wait, and the blocks cannot be moved.
+2. Under Main, change `shapes.square(200)` to `shapes.square(300)` and press **Update blocks**. The
+   editor closes, the block says 300, and the notice says "Updated the blocks of “main” from its
+   Python." Press **Undo** in the notice: 200 is back.
+3. Press **Edit** and add a line `robot.straigt(300)` under Main. It is underlined in red, and under
+   the editor: "There is no block for robot.straigt(). Did you mean robot.straight()?". **Update
+   blocks** changes nothing. Tap the problem: the cursor goes to it. Correct it to
+   `robot.straight(300)` and press **Update blocks**: a move block appears.
+4. Press **Edit** and delete a `)`: the place is marked "Python cannot read this (syntax error)."
+   Press **Cancel**: the blocks and the Python are as before, and the tabs work again.
+5. Press **Edit** and add, under Main:
+
+       speed = 3
+       for count in range(speed):
+           robot.turn(90)
+
+   **Update blocks**: a "set speed to 3" block (and `speed` under Variables), and a repeat block.
+
+6. Press **Edit**. Above Main, in the Functions part, type:
+
+       def wiggle():
+           hub.light.on(Color.RED)
+
+   and `wiggle()` under Main. **Update blocks**: a "define wiggle" block below the others, and a
+   block that calls it.
+
+7. Open the tab `shapes`, press **Edit**: the panel shows `shapes.py`. Change `robot.turn(90)` to
+   `robot.turn(120)` and press **Update blocks**: the turn block says 120°.
+8. Try a mistake a beginner makes: `print(speeed)` under Main says there is no variable
+   "speeed", with an example of how to set one.
+9. With the hub: press **Run** after an update. The program does what the new blocks say.
+
 ## Keeping this file current
 
 The supported and unsupported lists also live in `README.md` (copied matrix) and
