@@ -520,9 +520,9 @@ and B stand in for a robot's wheels, C for an arm.
 5. Hold **A**: motor C turns ↻. Hold **B**: it turns ↺. Let go: it stops and holds. The drawing
    lights A and B as you press them, and the triggers fill as you squeeze them.
 6. Stop. Tap "A ↻ and B ↺", then the right stick on the picture: the block says "right stick ↕".
-   Tap "C ↻" and tap **D**, then **C** twice more until it reads "C ↻ D ↺" (any two motors that
-   are not A or B work). Run: the right stick turns both motors, in opposite directions, faster
-   the further you push.
+   Tap "C ↻", then tap **D** twice: the block reads "C ↻ D ↻", then "C ↻ D ↺" (any two motors
+   that are not A or B work; a third tap on a motor takes it off). Run: the right stick turns both
+   motors, in opposite directions, faster the further you push.
 7. Open **Monitor**: no `@xbx` lines in it, and the page still says the hub is connected.
 8. Change "one stick" to "two sticks (tank)", then to "racing", and drive with each.
 9. Press **Menu** (☰): the program stops, the panel says Menu was pressed, and every motor stops.
