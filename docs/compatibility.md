@@ -384,7 +384,8 @@ be those of the earlier runs.
 - **Still open, simple check 8:** which way the drawn "up" arrow points on the hub's light matrix
   was not reported. Until it is, the orientation of the 5×5 picture on the hub is unverified.
   (➡️ The Xbox check on 2026-11-07 found the lights' top row, row 0, at the end with ports A and
-  B; check 8 still has to show that a drawn picture follows it.)
+  B; check 8 still has to show that a drawn picture follows it. Later that day the maintainer
+  called the remaining checks OK, without saying which way the arrow pointed.)
 - **Optional robot check: not run.** No two-wheel robot was built yet. From the motor turns in
   checks 5 to 7, the maintainer expects the movement blocks to be right once the wheel sizes are.
 
@@ -498,7 +499,8 @@ before the controller connected.
   as it shows: `left_y` reached about +50 and more, `left_x` about -100; which push made each was
   not stated. Controller blocks check 3 shows the number on the page.
 - **Pairing took several tries.** The reason was not reported. Pressing Run first leaves only
-  the 30 seconds of the search for pairing; the steps above pair first, then Run.
+  the 30 seconds of the search for pairing; the steps above pair first, then Run. (➡️ Later the
+  same day: once paired, the next Runs connected at once; see the controller blocks results.)
 
 ## Controller blocks checks (milestone 5)
 
@@ -530,6 +532,23 @@ and B stand in for a robot's wheels, C for an arm.
     panel says the controller was lost, the hub light turns red, and the motors stop.
 11. With the controller off, press Run: within about 45 seconds (the hub tries twice) the panel
     says no controller was found.
+
+### Controller blocks results
+
+| Date       | Browser    | OS         | Hub         | Firmware | Controller | Result                                                                  |
+| ---------- | ---------- | ---------- | ----------- | -------- | ---------- | ----------------------------------------------------------------------- |
+| 2026-11-07 | not stated | not stated | SPIKE Prime | 4.0.1    | Xbox       | Tried ("played with it"); no failure reported; details open (see notes) |
+
+Notes (2026-11-07; the maintainer, reported in conversation; browser, OS, hub, firmware and
+controller assumed to be those of the earlier runs):
+
+- The checks were tried after the Xbox check, and no failure was reported. Not reported: check
+  3's number, and whether "two sticks (tank)" or "racing" felt better (check 8).
+- **Pairing:** the first pairing took several tries, during the Xbox check. Once paired, the next
+  Runs connected at once.
+- **The maintainer's child** has not built a car yet. Seeing the motors turn showed them that it
+  works, and they were happy with that. Their opinion of driving comes once the car exists (no
+  date).
 
 ## Keeping this file current
 
