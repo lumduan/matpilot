@@ -3083,6 +3083,12 @@ code {
   stroke: #c82828;
 }
 
+.mat-area[data-kind='object'] rect {
+  fill: rgb(110 70 30 / 38%);
+  stroke: #6e461e;
+  stroke-dasharray: none;
+}
+
 .mat-area[data-selected='true'] rect {
   stroke-width: 3.5;
   stroke-dasharray: none;

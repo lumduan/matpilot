@@ -124,3 +124,30 @@ export function fromBase64(base64: string, mediaType: string): Blob {
   for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
   return new Blob([bytes], { type: mediaType });
 }
+
+/** Above this many pixels (mm²) the colour sensor does not read the picture: about 4 × 4 m. */
+export const MAX_SENSOR_PIXELS = 16_000_000;
+
+/**
+ * The mat's picture at 1 pixel per millimetre, as the simulated colour sensor reads it
+ * (../sim/sensors.ts): drawn over the whole mat, as the Mats page shows it. `null` when the mat
+ * is too large.
+ */
+export function matPixels(
+  picture: CanvasImageSource,
+  widthMm: number,
+  heightMm: number,
+): { width: number; height: number; data: Uint8ClampedArray } | null {
+  const width = Math.max(1, Math.round(widthMm));
+  const height = Math.max(1, Math.round(heightMm));
+  if (width * height > MAX_SENSOR_PIXELS) return null;
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext('2d', { willReadFrequently: true });
+  if (!context) return null;
+  context.fillStyle = '#fff';
+  context.fillRect(0, 0, width, height);
+  context.drawImage(picture, 0, 0, width, height);
+  return { width, height, data: context.getImageData(0, 0, width, height).data };
+}

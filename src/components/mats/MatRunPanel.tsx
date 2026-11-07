@@ -30,7 +30,10 @@ function Checks({ review }: { review: RunReview }) {
       : { ok: false, text: `Left the mat at ${seconds(review.leftMatAt)}` },
     ...review.touched.map((each) => ({
       ok: false,
-      text: `Touched “${each.name}” at ${seconds(each.at)}`,
+      text:
+        each.kind === 'object'
+          ? `Ran into “${each.name}” at ${seconds(each.at)} (on the mat it drives through)`
+          : `Touched “${each.name}” at ${seconds(each.at)}`,
     })),
     ...(review.targets > 0
       ? [
@@ -106,8 +109,10 @@ export function MatRunPanel({ run }: { run: MatRun }) {
       {fileError && <p className="notice notice-error">{fileError}</p>}
       <p className="field-hint">
         It runs the program’s own Python for at most {run.seconds} s, starting where the robot
-        stands. The robot moves exactly as told: no slipping, no bumping into things. Sensors do not
-        read the mat yet.
+        stands. The robot moves exactly as told: no slipping, and it drives through walls and
+        objects. Its sensors read the mat: the colour sensor sees the picture under it (a guess at
+        what the real one would see, so set numbers on the real mat), the distance sensor sees the
+        mat’s edges and the solid objects you mark, and a touch sensor presses against them.
       </p>
       <div className="button-row">
         <button
@@ -221,10 +226,11 @@ const RunResult = memo(function RunResult({
           </ul>
         </div>
       )}
-      {state.result.sensorsRead.length > 0 && (
-        <p className="field-hint" data-testid="run-sensors">
-          Read but not simulated yet: {state.result.sensorsRead.join(', ')}. They read nothing (no
-          colour, nothing in range, no press).
+      {state.result.sensorsMissing.length > 0 && (
+        <p className="notice notice-warn" data-testid="run-sensors">
+          The program reads a {state.result.sensorsMissing.join(', a ')}, which the robot does not
+          have. It read nothing there (no colour, nothing in range, no press). Add it on the Robots
+          page, or change the port in the program.
         </p>
       )}
       {state.result.events.length > 0 && (

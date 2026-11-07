@@ -730,8 +730,8 @@ mat's printing file from the WRO website) and a robot made on the Robots page.
 
 ## Running a program on a mat (milestone 7)
 
-These check step 7c ([ADR 0016](adr/0016-robots-and-mats.md)). No hub is needed for 1 to 4; 5
-compares with the real robot.
+These check steps 7c and 7d ([ADR 0016](adr/0016-robots-and-mats.md)). No hub is needed for 1
+to 4, 6, 8 and 9; 5 and 7 compare with the real robot.
 
 1. On **Blocks**, make a short program: move forward 300 mm, turn right 90°, move forward
    200 mm. Choose your robot in **Robot**.
@@ -745,6 +745,22 @@ compares with the real robot.
 5. Run the same program on the real robot on the real mat, from the same start. Compare where it
    ends with the simulation. A big difference usually means the wheel size or the axle track on
    the Robots page is off: the Robots checks show how to measure them.
+
+Checks 6 to 9 are step 7d (sensors read the mat). The robot needs its colour sensor on the Robots
+page, looking down, at the port the program uses.
+
+6. On **Blocks**, make: start moving forward; wait until the colour sensor's reflection is below
+   30; stop; print the distance driven. On a mat with a black line ahead of the robot, Run on the
+   mat: it stops on the line, and the printed distance is about the line's distance from the
+   sensor.
+7. Print the colour the sensor sees over a red, a green, a blue and a white part of the mat: the
+   page should say the same colours as the real robot over the same places. Reflection numbers
+   will differ from the real sensor (the page guesses them from the picture): note both.
+8. Draw an area and make it a **Solid object**. With a distance sensor looking forward, print its
+   distance with the robot facing the object: the distance from the sensor to the object, in mm.
+   Drive into it: the result says "Ran into …" (the robot drives through; it does not stop).
+9. Change the program's colour sensor to a port where the robot has none: the result names the
+   missing sensor, and the sensor reads nothing.
 
 ### Mats results
 

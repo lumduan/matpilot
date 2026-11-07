@@ -15,7 +15,7 @@ export async function runOnMat(input: SimInput, timeoutMs = 30_000): Promise<Sim
           events: [],
           end: { reason: 'busy' },
           timeMs: 0,
-          sensorsRead: [],
+          sensorsMissing: [],
           programDrive: null,
         });
       }, timeoutMs);

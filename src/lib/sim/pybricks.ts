@@ -6,8 +6,9 @@
  * block offers always exists here.
  *
  * Calls that only read (an angle, a sensor, the timer) cost 1 ms of virtual time, so a loop that
- * only reads still moves the clock on, as on the hub. Sensors read nothing yet (step 7d): the
- * colour sensor sees no colour, the distance sensor nothing in range, the touch sensor no press.
+ * only reads still moves the clock on, as on the hub. Sensors read the mat (./sensors.ts): the
+ * colour sensor its picture, the distance sensor its edges and solid objects, the touch sensor
+ * what it is pressed against.
  * Values come back as whole numbers, rounded, as Pybricks gives them.
  *
  * The package reaches the simulation through `_sim.py` (made by `simModule`), which calls the
@@ -185,7 +186,7 @@ class Motor:
         _sim.motor_run_target(self._port, _sim.limit_speed(self._port), target_angle, False)
 
     def run_until_stalled(self, speed, then=Stop.COAST, duty_limit=None):
-        _sim.unsupported('run until stalled (the mat has no walls yet)')
+        _sim.unsupported('run until stalled (the robot does not stop at walls or objects)')
 
     def dc(self, duty):
         _sim.motor_dc(self._port, duty)
@@ -210,15 +211,27 @@ class Motor:
         return 0
 
 
+class _HSV:
+    def __init__(self, h, s, v):
+        self.h = h
+        self.s = s
+        self.v = v
+
+    def __repr__(self):
+        return 'Color(h=' + str(self.h) + ', s=' + str(self.s) + ', v=' + str(self.v) + ')'
+
+
 class ColorSensor:
     def __init__(self, port):
         self._port = port.name
         _sim.sensor_new(self._port, 'color')
+        self._colors = None
         self.lights = _Lights()
 
     def color(self, surface=True):
         _sim.tick()
-        return getattr(Color, _sim.sensor_color(self._port))
+        names = '' if self._colors is None else ','.join(each.name for each in self._colors)
+        return getattr(Color, _sim.sensor_color(self._port, names))
 
     def reflection(self):
         _sim.tick()
@@ -230,10 +243,14 @@ class ColorSensor:
 
     def hsv(self, surface=True):
         _sim.tick()
-        return Color.NONE
+        return _HSV(round(_sim.sensor_hsv(self._port, 0)), round(_sim.sensor_hsv(self._port, 1)), round(_sim.sensor_hsv(self._port, 2)))
 
     def detectable_colors(self, colors=None):
-        return colors
+        if colors is None:
+            if self._colors is None:
+                return (Color.RED, Color.YELLOW, Color.GREEN, Color.BLUE, Color.WHITE, Color.NONE)
+            return self._colors
+        self._colors = tuple(colors)
 
 
 class UltrasonicSensor:
