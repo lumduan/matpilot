@@ -15,7 +15,8 @@ export default defineConfig([
   ...nextTypeScript,
   // Must come after the configs above: turns off rules that conflict with Prettier.
   prettier,
-  globalIgnores(['.next/**', 'out/**', 'coverage/**', 'next-env.d.ts']),
+  // public/vendor/ holds third-party files copied by scripts/vendor-assets.mjs (gitignored).
+  globalIgnores(['.next/**', 'out/**', 'coverage/**', 'next-env.d.ts', 'public/vendor/**']),
   {
     // React code must reach Web Bluetooth only through src/lib/ble/.
     files: UI_FILES,

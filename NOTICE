@@ -240,6 +240,34 @@ Anthropic SDK, and OpenAI and DeepSeek through the OpenAI SDK. Their
 JavaScript is bundled into the site and loaded only when someone asks the AI
 helper a question or lists a provider's models; no source is modified.
 
+==============================================================================
+PDF.js (npm package pdfjs-dist, redistributed unmodified)
+https://github.com/mozilla/pdf.js
+Copyright Mozilla Foundation and the PDF.js contributors
+Version used: 6.5.438
+License: Apache License, Version 2.0
+  https://www.apache.org/licenses/LICENSE-2.0
+  The full text ships in the package as node_modules/pdfjs-dist/LICENSE
+  (sha256 0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594)
+  and is copied to out/vendor/pdfjs/LICENSE. The package contains no NOTICE
+  file.
+Files it reads, copied unmodified to out/vendor/pdfjs/ with their licences:
+  wasm/openjpeg.wasm, openjpeg_nowasm_fallback.js: OpenJPEG, BSD 2-Clause
+    (wasm/LICENSE_OPENJPEG), built by Mozilla (wasm/LICENSE_PDFJS_OPENJPEG,
+    BSD 2-Clause)
+  wasm/jbig2.wasm, jbig2_nowasm_fallback.js: from PDFium, BSD 3-Clause
+    (wasm/LICENSE_JBIG2, wasm/LICENSE_PDFJS_JBIG2)
+  wasm/qcms_bg.wasm: qcms, MIT (wasm/LICENSE_QCMS, wasm/LICENSE_PDFJS_QCMS)
+  iccs/: an ICC colour profile, CC0 1.0 (iccs/LICENSE)
+  cmaps/: Adobe's character maps, BSD 3-Clause (cmaps/LICENSE)
+Not copied: its script engine (QuickJS) and its standard fonts.
+==============================================================================
+
+MatPilot's Mats page (docs/adr/0016-robots-and-mats.md) draws a mat's PDF with
+PDF.js. Its JavaScript is bundled into the site and loaded only when a mat is
+added or opened from a file; its worker and the files above are served from
+this site. No source is modified.
+
 MIT License
 
 Copyright (C) 2018-2021 by Marijn Haverbeke <marijn@haverbeke.berlin> and others
