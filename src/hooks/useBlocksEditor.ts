@@ -22,9 +22,11 @@ import {
 import {
   NEW_PROGRAM_META,
   parseProgramMeta,
+  programMetaData,
   type GitHubLink,
   type ProgramMeta,
 } from '@/lib/blocks/program-meta';
+import { downloadTextFile } from './downloadFile';
 
 /** The program in tabs (ADR 0013): `{ tabs: [{ name, workspace }], active }`. */
 const PROGRAM_STORAGE_KEY = 'matpilot.blocks.tabs.v2';
@@ -43,24 +45,10 @@ function readSavedMeta(): ProgramMeta {
 
 function saveMeta(meta: ProgramMeta): void {
   try {
-    window.localStorage.setItem(META_STORAGE_KEY, JSON.stringify(meta));
+    window.localStorage.setItem(META_STORAGE_KEY, JSON.stringify(programMetaData(meta)));
   } catch {
     // Not remembered; the page still works.
   }
-}
-
-/** Saves `text` as a file through the browser's download, usually into Downloads. */
-function downloadTextFile(fileName: string, text: string): void {
-  const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = fileName;
-  link.rel = 'noopener';
-  document.body.append(link);
-  link.click();
-  link.remove();
-  // Some browsers read the URL after click() returns.
-  setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }
 
 const isObject = (value: unknown): value is Record<string, unknown> =>
@@ -275,16 +263,18 @@ export function useBlocksEditor(
   const setLocked = useCallback((locked: boolean) => editor.current?.setLocked(locked), []);
 
   const files = program?.files;
+  const robot = meta.robot;
   const fileText = useCallback(
     (name: string, savedBy: string) =>
       serializeProgramFile({
         name,
         savedBy,
         savedAt: new Date().toISOString(),
+        robot,
         python: files ?? [],
         tabs: editor.current?.save().tabs ?? [],
       }),
-    [files],
+    [files, robot],
   );
 
   const saveToComputer = useCallback(
@@ -302,14 +292,16 @@ export function useBlocksEditor(
       if (!handle) return { ok: false, message: 'The block editor is still loading.' };
       const parsed = parseProgramFile(text, fileName);
       if (!parsed.ok) return parsed;
+      // A file saved before robots (ADR 0016) keeps the robot chosen here.
       const file: ProgramFile = {
         name: parsed.name,
         tabs: parsed.tabs,
         savedBy: parsed.savedBy,
         savedAt: parsed.savedAt,
+        robot: parsed.robot ?? handle.meta().robot,
       };
       try {
-        handle.open(file.tabs, { name: file.name, github });
+        handle.open(file.tabs, { name: file.name, github, robot: file.robot });
       } catch (error) {
         console.warn('A program file could not be opened.', error);
         return {

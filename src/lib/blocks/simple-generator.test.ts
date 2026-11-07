@@ -3,7 +3,8 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { compilePython } from '@/lib/pybricks/compiler';
 import { SMILE_MATRIX } from './fields/matrix-value';
 import { formatNumber, literal, negated, scaled } from './generator-context';
-import { generateProgram } from './generator';
+import { generateProgram, type GenerateOptions } from './generator';
+import { newRobot, type RobotProfile } from '../robots/profile';
 import { loadWorkspace, registerBlocks } from './register';
 
 type State = Record<string, unknown>;
@@ -41,11 +42,11 @@ function program(blocks: State[], extra: State[] = [], variables: State[] = []):
   };
 }
 
-function generate(state: State) {
+function generate(state: State, options: GenerateOptions = {}) {
   const workspace = new Blockly.Workspace();
   try {
     loadWorkspace(workspace, state);
-    return generateProgram(workspace);
+    return generateProgram(workspace, options);
   } finally {
     workspace.dispose();
   }
@@ -443,6 +444,59 @@ describe('simple block problems', () => {
       ]),
     );
     expect(problems.map((problem) => problem.blockId)).toEqual(['second', 'wheels']);
+  });
+
+  it('take the drive base from the program’s robot (ADR 0016)', async () => {
+    const base = newRobot('Rover');
+    const robot: RobotProfile = {
+      ...base,
+      wheels: { ...base.wheels, diameterMm: 62.4, trackMm: 120 },
+      drive: { ...base.drive, left: 'C', right: 'D', mirrored: 'right' },
+    };
+    const { code, problems, drive } = generate(program([{ type: 'mp_move_stop' }]), { robot });
+    expect(problems).toEqual([]);
+    expect(drive).toEqual({ portsFrom: 'robot', wheelsFrom: 'robot' });
+    expect(code).toContain('# The robot “Rover” (the Robots page).');
+    expect(code).toContain('LEFT_WHEEL_PORT = Port.C');
+    expect(code).toContain('RIGHT_WHEEL_PORT = Port.D');
+    expect(code).toContain('WHEEL_DIAMETER_MM = 62.4');
+    expect(code).toContain('AXLE_TRACK_MM = 120');
+    expect(code).toContain('left_wheel = Motor(LEFT_WHEEL_PORT)\n');
+    expect(code).toContain(
+      'right_wheel = Motor(RIGHT_WHEEL_PORT, positive_direction=Direction.COUNTERCLOCKWISE)',
+    );
+    await expectCompiles(code);
+  });
+
+  it('let the blocks override the robot, and name the robot in port problems', () => {
+    const robot = {
+      ...newRobot('Rover'),
+      drive: { ...newRobot().drive, left: 'C', right: 'D' },
+    } as RobotProfile;
+    const wheels = generate(
+      program([
+        { type: 'mp_move_wheels', fields: { WHEEL: 88, TRACK: 130 } },
+        { type: 'mp_move_stop' },
+      ]),
+      { robot },
+    );
+    expect(wheels.drive).toEqual({ portsFrom: 'robot', wheelsFrom: 'blocks' });
+    expect(wheels.code).toContain('WHEEL_DIAMETER_MM = 88');
+    expect(wheels.code).toContain('LEFT_WHEEL_PORT = Port.C');
+    const clash = generate(
+      program([
+        { type: 'mp_move_stop' },
+        {
+          type: 'mp_motor_run_for',
+          fields: { PORT: 'C', DIRECTION: 'CLOCKWISE', UNIT: 'ROTATIONS' },
+          inputs: { AMOUNT: num(1) },
+        },
+      ]),
+      { robot },
+    );
+    expect(clash.problems.map((problem) => problem.message)).toEqual([
+      expect.stringContaining('the robot “Rover” (C + D)') as string,
+    ]);
   });
 
   it('do not create a drive base for settings alone', () => {

@@ -5,11 +5,17 @@
  * the tabs; the Python is made again from the blocks.
  *
  * Version 1 (before tabs) had one `workspace` and the Python as one list of lines; it opens as a
- * program with only the main tab. Version 2 has `tabs` and `python` as a list of files.
+ * program with only the main tab. Version 2 has `tabs` and `python` as a list of files. Version 3
+ * adds `robot`, a copy of the robot the program is for (ADR 0016, D4); a program with no robot is
+ * still written as version 2, so older MatPilot pages can open it.
  */
+import { readRobot, robotData, type RobotProfile } from '../robots/profile';
 
 export const PROGRAM_FILE_FORMAT = 'matpilot-blocks';
-export const PROGRAM_FILE_VERSION = 2;
+/** The newest version this page reads and writes. */
+export const PROGRAM_FILE_VERSION = 3;
+/** The version written when a program has no robot. */
+const VERSION_WITHOUT_ROBOT = 2;
 
 /** The tab the program starts in (./tabs.ts). */
 export const MAIN_TAB_NAME = 'main';
@@ -34,6 +40,8 @@ export interface ProgramFile {
   readonly savedBy: string;
   /** ISO 8601 time, or empty when unknown. */
   readonly savedAt: string;
+  /** The robot the program is for (version 3), or `null`. */
+  readonly robot: RobotProfile | null;
 }
 
 export type ParsedProgramFile =
@@ -97,10 +105,11 @@ export function serializeProgramFile(
   return `${JSON.stringify(
     {
       format: PROGRAM_FILE_FORMAT,
-      version: PROGRAM_FILE_VERSION,
+      version: file.robot ? PROGRAM_FILE_VERSION : VERSION_WITHOUT_ROBOT,
       name: cleanProgramName(file.name) || DEFAULT_PROGRAM_NAME,
       savedBy: file.savedBy.trim(),
       savedAt: file.savedAt,
+      ...(file.robot ? { robot: robotData(file.robot) } : {}),
       python: file.python.map((each) => ({ file: each.name, lines: lines(each.code) })),
       tabs: file.tabs.map((tab) => ({ name: tab.name, workspace: tab.workspace })),
     },
@@ -142,6 +151,7 @@ export function parseProgramFile(text: string, fallbackName: string): ParsedProg
     tabs,
     savedBy: typeof data.savedBy === 'string' ? data.savedBy.trim() : '',
     savedAt: typeof data.savedAt === 'string' ? data.savedAt : '',
+    robot: readRobot(data.robot),
   };
 }
 

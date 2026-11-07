@@ -664,6 +664,43 @@ Notes (2026-11-07; the maintainer, reported in conversation): "tried, passed wit
 browser, the operating system, the model and which of the ten checks were done one by one were not
 stated. DeepSeek is still to be tried.
 
+## Robots checks (milestone 7)
+
+These check the Robots page and a program that uses a robot
+([ADR 0016](adr/0016-robots-and-mats.md), step 7a). Checks 1 to 6 need no hub; check 7 needs the
+hub and the robot, and a ruler.
+
+1. Open **Robots** in the top bar and press **Make a robot**. Measure your robot and type in its
+   width, length and height, how far the wheel axle is from the back, the wheel diameter (the
+   number on the tyre), the wheel width, the axle track (middle of one wheel to the middle of
+   the other), the drive ports, and which motor is mounted turned round. The drawing on the right
+   looks like your robot seen from above, front up.
+2. Under **Speed**, "Work it out" shows the speeds the hub uses by default for these motors and
+   wheels (195 mm/s and 167 °/s for 56 mm wheels 112 mm apart). The numbers on the right show the
+   footprint, the circle the robot needs to turn on the spot, and the top speed.
+3. With **WRO 2026 RoboMission, Elementary**, the checks say whether the robot fits the 250 mm
+   cube and the start area; move the slider to see the start area at an angle. Type the mass to
+   check the weight. **Where these come from** quotes the rules.
+4. Add the colour sensor where it is (ahead of the wheels, left or right of the middle): a C
+   appears in the drawing at that place. Type a wrong value (an axle track of 5): it turns red
+   and says what to type.
+5. **Save robot file**, then **Load robot file** with that file: the page opens the same robot and
+   does not make a second one.
+6. Open **Blocks**. At the end of the tab row, **Robot**: choose yours. In the Python (the
+   `setup.py` file when the program has tabs), Config says `# The robot “…” (the Robots page).`,
+   with its ports and wheel sizes. Change something on the Robots page and come back:
+   **Update** appears beside the choice.
+7. With the hub and the robot: a program with "move forward 200 mm", then "turn right 90°". Run
+   it and measure. If it drives a different distance, make the wheel diameter
+   `diameter × measured / 200` on the Robots page (190 mm with 56 mm wheels gives 53.2) and
+   press **Update** on Blocks. Then, if the turn is off, make the axle track
+   `track × 90 / measured angle` (80° with 112 mm gives 126). Run again: it should be close.
+
+### Robots results
+
+| Date | Browser | OS  | Hub | Firmware | Result |
+| ---- | ------- | --- | --- | -------- | ------ |
+
 ## Keeping this file current
 
 The supported and unsupported lists also live in `README.md` (copied matrix) and

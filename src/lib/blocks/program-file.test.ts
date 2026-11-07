@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { newRobot } from '../robots/profile';
 import {
   DEFAULT_PROGRAM_NAME,
   PROGRAM_NAME_MAX_LENGTH,
@@ -42,6 +43,7 @@ describe('program files', () => {
     name: 'Robot car',
     savedBy: ' Ploy ',
     savedAt: '2026-11-06T03:42:00.000Z',
+    robot: null,
     python: [
       { name: 'main.py', code: 'import moves\nmoves.square(200)\n' },
       { name: 'moves.py', code: 'def square(side):\n    pass\n' },
@@ -72,10 +74,27 @@ describe('program files', () => {
       name: 'Robot car',
       savedBy: 'Ploy',
       savedAt: '2026-11-06T03:42:00.000Z',
+      robot: null,
       tabs: [
         { name: 'main', workspace: starter },
         { name: 'moves', workspace: moves },
       ],
+    });
+  });
+
+  it('keeps a copy of the program’s robot, as version 3 (ADR 0016)', () => {
+    const robot = { ...newRobot('Rover'), id: 'r-1' };
+    const text = serializeProgramFile({ ...file, robot });
+    const data = JSON.parse(text) as Record<string, unknown>;
+    expect(data).toMatchObject({ version: 3, robot: { id: 'r-1', name: 'Rover' } });
+    const parsed = parseProgramFile(text, 'x');
+    expect(parsed.ok && parsed.robot).toEqual(robot);
+    // Without a robot it stays version 2, which older pages open.
+    expect(JSON.parse(serializeProgramFile(file))).not.toHaveProperty('robot');
+    // A version this page does not know yet is refused.
+    expect(parseProgramFile(JSON.stringify({ ...data, version: 4 }), 'x')).toMatchObject({
+      ok: false,
+      message: /newer MatPilot/,
     });
   });
 

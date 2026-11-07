@@ -599,6 +599,71 @@ code {
   border-left: 1px solid var(--border);
 }
 
+/* The pages in the top bar (ADR 0016): links on a wide screen, a menu on a phone. */
+.studio-nav {
+  display: flex;
+  gap: 0.15rem;
+  padding-left: 0.6rem;
+  border-left: 1px solid var(--border);
+}
+
+.studio-nav-link {
+  padding: 0.25rem 0.6rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-decoration: none;
+  border-radius: 0.4rem;
+}
+
+.studio-nav-link:hover {
+  color: var(--text);
+  background: var(--bg);
+}
+
+.studio-nav-link[aria-current='page'] {
+  color: var(--text);
+  background: var(--bg);
+  box-shadow: inset 0 -2px 0 var(--accent);
+}
+
+.studio-nav-menu {
+  display: none;
+  position: relative;
+}
+
+.studio-nav-menu summary {
+  padding: 0.2rem 0.5rem;
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+}
+
+.studio-nav-menu summary::after {
+  content: ' ▾';
+  color: var(--muted);
+}
+
+.studio-nav-menu summary::-webkit-details-marker {
+  display: none;
+}
+
+.studio-nav-menu nav {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  left: 0;
+  z-index: 120;
+  display: flex;
+  flex-direction: column;
+  min-width: 9rem;
+  padding: 0.25rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  box-shadow: 0 6px 18px rgb(0 0 0 / 18%);
+}
+
 .studio-actions {
   display: flex;
   flex-wrap: wrap;
@@ -1761,8 +1826,13 @@ code {
 @media (max-width: 48rem) {
   /* Two rows: home and hub; then the view switch, Start over and Run. */
   .studio-bar .status-pill,
-  .studio-title {
+  .studio-title,
+  .studio-nav {
     display: none;
+  }
+
+  .studio-nav-menu {
+    display: block;
   }
 
   .studio-bar {
@@ -2433,4 +2503,387 @@ code {
 
 .ai-limit {
   max-width: 8rem;
+}
+
+/* Form problems: a red border and the message under the field. */
+.field-input[aria-invalid='true'] {
+  border-color: var(--error-text);
+}
+
+.field-problem {
+  font-size: 0.8rem;
+  color: var(--error-text);
+}
+
+/* The program's robot, at the end of the tab row on /blocks (ADR 0016, D4). */
+.block-tabs-trailing {
+  display: flex;
+  align-items: center;
+  flex: none;
+  margin-left: auto;
+  padding: 0 0 0.3rem 0.75rem;
+}
+
+.robot-picker {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+}
+
+.robot-picker-label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.robot-picker-name {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.robot-picker-select {
+  max-width: 12rem;
+  padding: 0.2rem 0.4rem;
+  font: inherit;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 0.35rem;
+}
+
+.robot-picker-link {
+  white-space: nowrap;
+}
+
+.robot-picker-note {
+  color: var(--warn-text);
+  white-space: nowrap;
+}
+
+/* The Robots page (ADR 0016, step 7a). */
+.robots-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  background: var(--bg);
+}
+
+.robots-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(18rem, 26rem);
+  gap: 1rem 1.5rem;
+  align-items: start;
+  width: 100%;
+  max-width: 76rem;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.robots-picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.5rem 1rem;
+}
+
+.robots-choice {
+  margin-top: 0;
+  min-width: 14rem;
+}
+
+.robots-picker .button-row {
+  margin: 0;
+}
+
+.robots-confirm {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 600;
+}
+
+.robots-list > .notice {
+  margin: 0.75rem 0 0;
+}
+
+.robots-empty {
+  margin-top: 1rem;
+  padding: 1.25rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+}
+
+.robots-empty h2 {
+  margin-top: 0;
+}
+
+.robot-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  margin-top: 1rem;
+}
+
+.robot-section {
+  margin: 0;
+  padding: 0.6rem 0.9rem 0.9rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+}
+
+.robot-section legend {
+  padding: 0 0.3rem;
+  font-weight: 700;
+}
+
+.robot-section-hint {
+  margin: 0;
+}
+
+.robot-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  gap: 0 0.9rem;
+  align-items: start;
+}
+
+.robot-fields > .button {
+  justify-self: start;
+  margin-top: 0.75rem;
+}
+
+.robot-name,
+.robot-notes,
+.robot-mirrored,
+.robot-speed-mode,
+.robot-auto-speed,
+.robot-row {
+  grid-column: 1 / -1;
+}
+
+.robot-number-input {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.robot-number-input .field-input {
+  min-width: 0;
+}
+
+.robot-unit {
+  flex: none;
+  min-width: 2.2rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.robot-mirrored,
+.robot-speed-mode {
+  margin: 0.6rem 0 0;
+  padding: 0;
+  border: 0;
+}
+
+.robot-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
+  gap: 0 0.75rem;
+  align-items: end;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px dashed var(--border);
+}
+
+.robot-remove {
+  justify-self: start;
+  margin-top: 0.6rem;
+}
+
+.robot-auto-speed {
+  margin: 0.6rem 0 0;
+  font-size: 0.9rem;
+}
+
+.robots-facts {
+  position: sticky;
+  top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.robots-facts .notice {
+  margin: 0;
+}
+
+.robot-drawing {
+  width: 100%;
+  aspect-ratio: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+}
+
+.robot-turn-circle {
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 1.5;
+  stroke-dasharray: 6 5;
+  vector-effect: non-scaling-stroke;
+}
+
+.robot-body {
+  fill: var(--code-active-line);
+  stroke: var(--accent);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.robot-wheel {
+  fill: var(--text);
+  opacity: 0.8;
+}
+
+.robot-axle {
+  stroke: var(--muted);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+  vector-effect: non-scaling-stroke;
+}
+
+.robot-pivot {
+  fill: var(--accent);
+}
+
+.robot-front {
+  fill: var(--accent);
+}
+
+.robot-sensor circle {
+  fill: var(--surface);
+  stroke: var(--series-2, var(--accent));
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.robot-sensor text,
+.robot-dimension {
+  fill: var(--text);
+  font-weight: 700;
+  text-anchor: middle;
+}
+
+.robot-dimension {
+  fill: var(--muted);
+  font-weight: 600;
+}
+
+.robot-numbers {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.3rem 0.75rem;
+  margin: 0;
+  padding: 0.75rem 0.9rem;
+  font-size: 0.9rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+}
+
+.robot-numbers dt {
+  color: var(--muted);
+}
+
+.robot-numbers dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.robot-rules {
+  padding: 0.25rem 0.9rem 0.9rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+}
+
+.robot-heading input {
+  width: 100%;
+}
+
+.robot-checks {
+  margin: 0.75rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.9rem;
+}
+
+.robot-checks li {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.robot-checks li + li {
+  margin-top: 0.5rem;
+}
+
+.robot-check-mark {
+  flex: none;
+  width: 1.2rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.robot-checks li[data-ok='true'] .robot-check-mark {
+  color: var(--ok-text);
+}
+
+.robot-checks li[data-ok='false'] .robot-check-mark {
+  color: var(--error-text);
+}
+
+.robot-checks li[data-ok='unknown'] .robot-check-mark {
+  color: var(--warn-text);
+}
+
+.robot-rule-quotes {
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+}
+
+.robot-rule-quotes summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.robot-rule-quotes ul {
+  margin: 0.4rem 0;
+  padding-left: 1.1rem;
+}
+
+@media (max-width: 48rem) {
+  .robots-body {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 0.75rem 1rem;
+  }
+
+  .robots-facts {
+    position: static;
+  }
+
+  .robots-choice {
+    min-width: 0;
+    flex: 1 1 100%;
+  }
+
+  .robot-picker-name {
+    display: none;
+  }
+
+  .robot-picker-select {
+    max-width: 8rem;
+  }
 }

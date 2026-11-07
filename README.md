@@ -37,6 +37,10 @@ What works today:
   (the Xbox controller for now); buttons and sticks are picked on a picture of the controller, and
   a Controller panel shows them live while the program runs. Built with
   Blockly.
+- **Robots** (`/robots`): describe your robot: its size, wheels, motors and sensors. MatPilot
+  draws it to scale, works out how fast it drives (by the hub's own rules) and how much room it
+  needs to turn, and checks it against the WRO 2026 RoboMission rules. A block program chooses its
+  robot, and the drive base in its Python follows it.
 - **AI helper** (on `/blocks`, off until an adult sets it up): explains the open tab's program, or
   reviews it with hints rather than answers, using Anthropic, OpenAI or DeepSeek with the adult's
   own key. Children learn to prompt: a checklist ticks the habits of a good prompt as they type,
@@ -49,7 +53,7 @@ What works today:
   hub, records the results in the browser, and produces a report for the
   [compatibility table](docs/compatibility.md).
 
-More blocks (tasks that run at the same time), offline use, and **Robots** and **Mats** pages (robot profiles, real-size mats, running a program on a mat; [ADR 0016](docs/adr/0016-robots-and-mats.md), proposed) are planned. See the [roadmap](docs/roadmap.md).
+More blocks (tasks that run at the same time), offline use, and a **Mats** page (a real-size mat from a PDF, placing the robot on it, and running a program on it; [ADR 0016](docs/adr/0016-robots-and-mats.md)) are planned. See the [roadmap](docs/roadmap.md).
 
 Tested firmware baseline: **Pybricks v4.0.1** on LEGO SPIKE Prime. This is the version MatPilot is
 tested against, not a hard requirement.

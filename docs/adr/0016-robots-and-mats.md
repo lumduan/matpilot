@@ -1,6 +1,6 @@
 # ADR 0016: Robots and Mats: robot profiles, mats at real size, and running a program on a mat
 
-- Status: Proposed (decisions D1 to D9 below are the maintainer's)
+- Status: Accepted 2026-11-07, every recommended option. Step 7a built the same day (see "Built")
 - Date: 2026-11-07
 - Replaces: the one-line plan for milestone 7 ("Mat profiles with drag-and-drop objects") in
   [docs/roadmap.md](../roadmap.md)
@@ -248,9 +248,53 @@ later: draw a path on the mat → blocks;  how sure is the robot (drift);  part 
 
 ## Decision
 
-Not taken yet.
+The maintainer accepted every recommended option on 2026-11-07 (D1 to D9). On D2, in their
+words: build the fields as recommended first; using them will show what to add or drop.
 
-## Consequences (if accepted as recommended)
+## Built (2026-11-07): step 7a, the Robots page and a program that uses a robot
+
+- **Pages:** `/robots` beside `/blocks`; the top bar has **Blocks · Robots** (Mats comes with
+  7b), as links on a wide screen and a small menu on a phone (`src/components/StudioNav.tsx`).
+- **Robot profiles** (`src/lib/robots/profile.ts`): every field of section 3, kept in this browser
+  (`src/hooks/useRobots.ts`, `matpilot.robots.v1`) and saved and loaded as
+  `.matpilot-robot.json` files. A loaded robot that is already here is opened, not added twice.
+  Every change is kept at once; a value out of range is marked in red with what to type, and
+  such a robot cannot be chosen for a program until it is fixed.
+- **Speeds** (`src/lib/robots/motion.ts`): auto, by the firmware's rules, each cited at v4.0.1:
+  top speed from the motor's rating, 2000 °/s² motor acceleration, the drive base's ¾ of it, its
+  40 % and ⅓ defaults, and the mm and degree scales. With SPIKE motors, 56 mm wheels and a 112 mm
+  axle track: 195 mm/s and 733 mm/s² straight, 167 °/s and 750 °/s² turning, top 489 mm/s and
+  500 °/s. "Type it in" starts from those numbers.
+- **Shape and checks** (`src/lib/robots/shape.ts`, `rules.ts`): the footprint of body and wheels,
+  the turning circle (152.6 mm for the default robot), and the WRO 2026 RoboMission Elementary
+  checks (250 mm cube, the start area at a heading from 0° to 90°, 1.5 kg, 4 motors), each with
+  its quoted rule. `src/lib/geometry/rect.ts` is the port of wro-2026's oriented rectangles,
+  ready for the mats.
+- **The drawing** (`src/components/robots/RobotDrawing.tsx`): to scale, front up, with the
+  wheels, the turning point, the sensors and the turning circle.
+- **A program uses a robot (D4):** a **Robot** choice at the end of the tab row on `/blocks`. The
+  program's meta keeps a copy of the robot (so Undo, Save, Load and GitHub carry it), and the
+  program file becomes version 3 only when it has a robot. The generator takes the drive ports,
+  wheel diameter, axle track and which motor is mounted turned round from the robot; "set
+  movement motors" and "set wheel size" in the program still win, and the choice says "blocks
+  win" when they do. When the robot changes on the Robots page, the choice offers **Update**; a
+  program loaded with a robot that is not here offers **Keep**.
+- **Decided while building:**
+  - a program file saved before robots keeps the robot chosen in this browser (a family usually
+    has one robot), instead of dropping it;
+  - Start over keeps the robot: a new program for the same robot;
+  - the other motors' names are kept and shown on the Robots page; the blocks do not use them
+    yet;
+  - the calibration helper (section 3) is not built yet.
+- **Tests:** unit tests for the profile, its file, the speeds (against the firmware's numbers
+  above), the shape, the checks, the geometry, the generator with a robot (compiled with the
+  real compiler), and the program file and meta with a robot. Headless Chromium on the production
+  build: make and edit a robot, the checks, file save and load, the nav, choosing the robot on
+  `/blocks` (the drive base in `setup.py` follows it, it survives a reload, **Update** works), a
+  program file saved with it (version 3), phone width with no sideways scroll, and the dark
+  theme.
+
+## Consequences (as accepted)
 
 - Two new libraries, each loaded only on the page that needs it: pdf.js on Mats, MicroPython on a
   run. Both self-hosted; NOTICE grows; `verify-export.mjs` checks their files are present.

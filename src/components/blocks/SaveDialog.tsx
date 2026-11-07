@@ -85,7 +85,11 @@ export function SaveDialog({
         setState({ kind: 'conflict', reason: outcome.reason, name: saveName, path });
         return;
       }
-      editor.setMeta({ name: saveName, github: { repository: label, path, sha: outcome.sha } });
+      editor.setMeta({
+        ...editor.meta,
+        name: saveName,
+        github: { repository: label, path, sha: outcome.sha },
+      });
       setName(saveName);
       setNote('');
       setState({ kind: 'saved', name: saveName, url: outcome.commitUrl });
