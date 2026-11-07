@@ -26,6 +26,7 @@ import {
   type GitHubLink,
   type ProgramMeta,
 } from '@/lib/blocks/program-meta';
+import { HANDOFF_KEY, type ProgramHandoff } from '@/lib/sim/handoff';
 import { downloadTextFile } from './downloadFile';
 
 /** The program in tabs (ADR 0013): `{ tabs: [{ name, workspace }], active }`. */
@@ -261,6 +262,22 @@ export function useBlocksEditor(
     [],
   );
   const setLocked = useCallback((locked: boolean) => editor.current?.setLocked(locked), []);
+
+  // The Mats page runs the program the blocks last made (ADR 0016, step 7c).
+  useEffect(() => {
+    if (!program) return;
+    const handoff: ProgramHandoff = {
+      name: meta.name,
+      files: program.files.map((file) => ({ name: file.name, code: file.code })),
+      problems: program.problems.length,
+      robotId: meta.robot?.id ?? null,
+    };
+    try {
+      window.localStorage.setItem(HANDOFF_KEY, JSON.stringify(handoff));
+    } catch {
+      // The Mats page then says it has no program.
+    }
+  }, [program, meta.name, meta.robot]);
 
   const files = program?.files;
   const robot = meta.robot;

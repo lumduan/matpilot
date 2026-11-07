@@ -4,6 +4,7 @@ import { compilePython } from '@/lib/pybricks/compiler';
 import { SMILE_MATRIX } from './fields/matrix-value';
 import { formatNumber, literal, negated, scaled } from './generator-context';
 import { generateProgram, type GenerateOptions } from './generator';
+import { runOnTestMat } from '../sim/expect-runs';
 import { newRobot, type RobotProfile } from '../robots/profile';
 import { loadWorkspace, registerBlocks } from './register';
 
@@ -276,6 +277,8 @@ finally:
     expect(code.indexOf('# --- Setup')).toBeLessThan(code.indexOf('# --- Helpers'));
     expect(code.indexOf('# --- Helpers')).toBeLessThan(code.indexOf('# --- Main'));
     await expectCompiles(code);
+    // And it runs on a simulated mat, through the simulated pybricks (ADR 0016, 7c).
+    expect(await runOnTestMat(code)).not.toMatchObject({ reason: 'error' });
   });
 
   it('turn amounts that are not plain numbers into expressions', async () => {

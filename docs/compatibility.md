@@ -728,6 +728,24 @@ mat's printing file from the WRO website) and a robot made on the Robots page.
    folder on github.com. **Load** lists it under **From GitHub**: open it, and a copy of the mat
    opens.
 
+## Running a program on a mat (milestone 7)
+
+These check step 7c ([ADR 0016](adr/0016-robots-and-mats.md)). No hub is needed for 1 to 4; 5
+compares with the real robot.
+
+1. On **Blocks**, make a short program: move forward 300 mm, turn right 90°, move forward
+   200 mm. Choose your robot in **Robot**.
+2. Open **Mats**, place the robot (facing right, 0°). Under **Run a program on the mat** the
+   program is "On the Blocks page: …". Press **▶ Run on the mat**: in a moment the page says how
+   long it took, draws the path in red, and plays it back; the robot ends 300 mm right and 200 mm
+   down from where it started, facing down (−90°).
+3. Drag the slider under the mat: the robot stands where it was at that moment. Try 4×.
+4. Add `print` blocks: what they print shows under the run, with the time. Make a program that
+   drives forever: it stops at 120 s (WRO's 2 minutes), and the motors stop.
+5. Run the same program on the real robot on the real mat, from the same start. Compare where it
+   ends with the simulation. A big difference usually means the wheel size or the axle track on
+   the Robots page is off: the Robots checks show how to measure them.
+
 ### Mats results
 
 | Date       | Browser    | OS         | Mat                                             | Result                                                       |

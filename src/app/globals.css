@@ -2890,6 +2890,8 @@ code {
 
 /* The Mats page (ADR 0016, step 7b): the mat fills the window, the panel beside it. */
 .mats-page {
+  /* Like .studio: the window's height, not the panel's content (body is a flex column). */
+  flex: none;
   display: flex;
   flex-direction: column;
   height: 100dvh;
@@ -3213,4 +3215,113 @@ code {
     border-top: 1px solid var(--border);
     overflow: visible;
   }
+}
+
+/* A run on the mat (ADR 0016, step 7c): its path, the playback bar, the results. */
+.mat-path-all {
+  fill: none;
+  stroke: rgb(208 2 27 / 35%);
+  stroke-width: 3;
+  stroke-dasharray: 6 5;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.mat-path-done {
+  fill: none;
+  stroke: #d0021b;
+  stroke-width: 3;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.mat-robot[data-locked='true'] .mat-robot-body {
+  cursor: default;
+}
+
+.mat-playback {
+  position: absolute;
+  left: 50%;
+  bottom: 0.6rem;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: min(36rem, calc(100% - 1.2rem));
+  padding: 0.35rem 0.6rem;
+  transform: translateX(-50%);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 14px rgb(0 0 0 / 14%);
+}
+
+.mat-playback input[type='range'] {
+  flex: 1;
+  min-width: 0;
+}
+
+.mat-playback-time {
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.mat-playback-speed {
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 0.35rem;
+}
+
+/* The pointer readout moves up while the playback bar is shown. */
+.mats-stage:has(.mat-playback) .mat-readout {
+  bottom: 3.6rem;
+}
+
+.run-result {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+}
+
+.run-result .notice,
+.run-result .robot-checks {
+  margin: 0;
+}
+
+.run-result .notice ul {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.run-output summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.run-output ol {
+  max-height: 14rem;
+  overflow-y: auto;
+  margin: 0.4rem 0 0;
+  padding: 0.4rem 0.5rem;
+  list-style: none;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+}
+
+.run-output li[data-kind]:not([data-kind='print']) {
+  color: var(--muted);
+}
+
+.run-time {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
 }
