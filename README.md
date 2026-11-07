@@ -49,7 +49,7 @@ What works today:
   hub, records the results in the browser, and produces a report for the
   [compatibility table](docs/compatibility.md).
 
-More blocks (tasks that run at the same time), offline use, and mat profiles are planned. See the [roadmap](docs/roadmap.md).
+More blocks (tasks that run at the same time), offline use, and **Robots** and **Mats** pages (robot profiles, real-size mats, running a program on a mat; [ADR 0016](docs/adr/0016-robots-and-mats.md), proposed) are planned. See the [roadmap](docs/roadmap.md).
 
 Tested firmware baseline: **Pybricks v4.0.1** on LEGO SPIKE Prime. This is the version MatPilot is
 tested against, not a hard requirement.

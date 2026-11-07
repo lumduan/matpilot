@@ -166,7 +166,9 @@ What was built, and what was decided while building it. The write mode is not bu
   The button shows even before setup, so an adult can find the settings; until an adult turns the
   helper on with a key and a model, the panel only says what it is and offers **Set up (for
   adults)**, and nothing is sent. (The proposal said the helper stays hidden without a key; this
-  is the smallest change that still lets an adult find it.)
+  is the smallest change that still lets an adult find it.) **Confirmed by the maintainer on
+  2026-11-07:** the button stays visible. In their words, a child who cannot find it would ask a
+  free AI chat on the web anyway, only having to write the context themselves.
 - **Code:** `src/lib/ai/` (providers, settings, usage and journal, prompt, checklist, answer,
   client), `src/hooks/useAiHelper.ts`, `src/components/blocks/AiPanel.tsx` and
   `AiSettingsDialog.tsx`. The panel's code loads when it opens (about 19 KB gzipped).
@@ -212,9 +214,9 @@ What was built, and what was decided while building it. The write mode is not bu
   SDKs' `fetch` option, so the real SDK code builds the requests. A headless Chromium run on the
   production build (with its CSP) answers the providers' requests with a fake through the
   DevTools protocol: setup, model list, ask, Line link, journal, a 402 from DeepSeek, the daily
-  limit, and only the providers' origins called. No real key was used; the
+  limit, and only the providers' origins called. No real key was used here; the
   [checks with a real key](../compatibility.md#ai-helper-checks-milestone-9) are the
-  maintainer's.
+  maintainer's, and they passed with Claude on 2026-11-07 (DeepSeek not tried yet).
 - **Not built:** the write mode, streaming answers, Google's OpenAI-style route, and a model on
   this computer.
 
