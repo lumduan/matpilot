@@ -39,13 +39,17 @@ What works today:
   Blockly.
 - **Robots** (`/robots`): describe your robot: its size, wheels, motors and sensors. MatPilot
   draws it to scale, works out how fast it drives (by the hub's own rules) and how much room it
-  needs to turn, and checks it against the WRO 2026 RoboMission rules. A block program chooses its
+  needs to turn, and checks it against the WRO 2026 RoboMission rules. **Measure on the floor**
+  runs two short programs on the robot (drive 1 metre, turn ten times) and corrects the wheel size
+  and the gap between the wheels from what a tape measure says. A block program chooses its
   robot, and the drive base in its Python follows it.
 - **Mats** (`/mats`): add the mat's printing PDF and MatPilot reads its real size from the file
   (a photo works too, with its size typed in). Place your robot on it, drag and turn it, see
   whether it fits the start area, measure distances, and mark areas. **Run a program on the
   mat**: the program's own Python runs in the browser and the robot's path is played back, with
-  a warning when it leaves the mat or runs out of time. Robots and mats are saved on this
+  a warning when it leaves the mat or runs out of time. Its sensors read the mat: the colour
+  sensor sees the picture under it (by the hub's own colour rules), the distance and touch
+  sensors find the mat's edges and the solid objects you mark. Robots and mats are saved on this
   computer, or on GitHub with the same setup as programs.
 - **AI helper** (on `/blocks`, off until an adult sets it up): explains the open tab's program, or
   reviews it with hints rather than answers, using Anthropic, OpenAI or DeepSeek with the adult's
@@ -59,7 +63,7 @@ What works today:
   hub, records the results in the browser, and produces a report for the
   [compatibility table](docs/compatibility.md).
 
-More blocks (tasks that run at the same time), offline use, and sensors that read the mat in a run ([ADR 0016](docs/adr/0016-robots-and-mats.md)) are planned. See the [roadmap](docs/roadmap.md).
+More blocks (tasks that run at the same time), offline use, how sure a run is (the spread of where the real robot may end) and drawing a path on the mat to make blocks ([ADR 0016](docs/adr/0016-robots-and-mats.md)) are planned. See the [roadmap](docs/roadmap.md).
 
 Tested firmware baseline: **Pybricks v4.0.1** on LEGO SPIKE Prime. This is the version MatPilot is
 tested against, not a hard requirement.

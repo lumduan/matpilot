@@ -151,7 +151,8 @@ Shown, computed, never typed:
   250 × 250 × 250 mm envelope (§5.1), and fits the 250 mm start area at a chosen heading;
 - a calibration helper, later in this milestone: MatPilot makes two short programs (drive
   1000 mm; turn ten times), the child runs them and types what they measured, and MatPilot
-  corrects the wheel diameter and the axle track. A ruler beats a typed guess.
+  corrects the wheel diameter and the axle track. A ruler beats a typed guess. ➡️ Built
+  2026-11-07: see "Built: the calibration helper" below.
 
 The profile is the **contract** that the Mats page reads, and that a future part builder (section 7) would write. Building it first wastes nothing.
 
@@ -287,7 +288,8 @@ words: build the fields as recommended first; using them will show what to add o
   - Start over keeps the robot: a new program for the same robot;
   - the other motors' names are kept and shown on the Robots page; the blocks do not use them
     yet;
-  - the calibration helper (section 3) is not built yet.
+  - the calibration helper (section 3) is not built yet. ➡️ Built later the same day (see "Built:
+    the calibration helper").
 - **Tests:** unit tests for the profile, its file, the speeds (against the firmware's numbers
   above), the shape, the checks, the geometry, the generator with a robot (compiled with the
   real compiler), and the program file and meta with a robot. Headless Chromium on the production
@@ -435,6 +437,36 @@ words: build the fields as recommended first; using them will show what to add o
   drawn and named Box; the program prints `start Color.WHITE 100 680`, `patch 95 Color.BLUE`,
   `line 393 Color.NONE 287`, `end 0`, and the result says it ran into "Box" at 4.3 s; with the
   robot's colour sensor moved to port F, the page names the missing sensor on port C.
+
+## Built (2026-11-07): the calibration helper
+
+- **Where:** **Measure on the floor…** on the Robots page (for a robot with no problems), a
+  dialog with its own hub connection: it connects, runs each program, stops it, and lets the hub
+  go when it closes.
+- **The two programs** (`src/lib/robots/calibrate.ts`, each Pybricks name cited there) follow the
+  hub code rules (config block, ports named once, every motor stopped in `finally`), wait 1 s so
+  hands can come away, and use the robot's numbers on the page now, which the dialog shows:
+  1. **drive 1000 mm** (`DriveBase.straight`): the child marks the front of the robot and
+     measures how far it went, and, if they like, how far to the side it ended;
+  2. **turn ten times on the spot**, clockwise (`DriveBase.turn(3600)`): the child counts the
+     turns (about 8 to 12) and says whether it stopped before or past the way it started, and by
+     how many degrees, with a picture that turns as they type. The drive base steers by its
+     motors' encoders unless told to use the gyro (cited), so a wrong axle track shows.
+- **The corrections:** new wheel diameter = diameter × driven / 1000; new axle track =
+  track × (new diameter / old diameter) × 3600 / turned, because the turn depends on the wheels
+  too. Either test can be done alone: a number not measured is kept. Numbers that cannot be right
+  (driven under 500 or over 2000 mm, fewer than 5 or more than 15 turns, an impossible robot) ask
+  for a new measurement. The sideways distance becomes the robot's drift per metre (D2's optional
+  field). **Use these numbers** saves them; programs on Blocks that use the robot then offer
+  **Update** (section 4), and the dialog suggests running both again to check.
+- **Without Web Bluetooth** each program is shown as Python, to paste into the Pybricks app.
+- **Tests:** the programs compile with the real compiler and follow the hub code rules; run in
+  the simulator (MicroPython in Node), they drive 1000 mm and turn −3600° on the MAT frame; on a
+  simulated robot with 62.4 mm wheels 120 mm apart told 56 and 112, they drive 1114 mm and turn
+  3744°, and the helper gives back exactly 62.4 and 120. Headless Chromium on the production
+  build with a fake hub: connect, run (the uploaded program is the 1000 mm one), stop, type 1114
+  and 8 mm, then 10 turns and 144° past: 62.4 mm and 120 mm and a drift of 8 mm, saved to the
+  robot and shown in the form; closing the dialog disconnects; a phone (no sideways scroll).
 
 ## Amendment (2026-11-07): robots and mats on GitHub; D5 changed
 

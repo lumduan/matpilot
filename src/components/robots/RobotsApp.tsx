@@ -30,6 +30,7 @@ import {
 } from '@/lib/robots/profile';
 import { RULES_PROFILES, robotChecks } from '@/lib/robots/rules';
 import { boxLength, boxWidth, footprint, overallHeight, turningRadius } from '@/lib/robots/shape';
+import { CalibrateDialog } from './CalibrateDialog';
 import { NumberField } from './NumberField';
 import { RobotDrawing } from './RobotDrawing';
 
@@ -216,7 +217,7 @@ export function RobotsApp() {
             </div>
           )}
         </section>
-        {robot && <RobotFacts robot={robot} />}
+        {robot && <RobotFacts robot={robot} onChange={library.save} />}
       </div>
       {dialog?.name === 'save' && robot && (
         <FileSaveDialog
@@ -753,8 +754,15 @@ function freePort(robot: RobotProfile): PortName {
 }
 
 /** The drawing, the numbers that follow from the robot, and the rules checks. */
-function RobotFacts({ robot }: { robot: RobotProfile }) {
+function RobotFacts({
+  robot,
+  onChange,
+}: {
+  robot: RobotProfile;
+  onChange: (robot: RobotProfile) => void;
+}) {
   const [rulesId, setRulesId] = useState<string>(RULES_PROFILES[0]!.id);
+  const [calibrating, setCalibrating] = useState(false);
   const [heading, setHeading] = useState(0);
   const rules = RULES_PROFILES.find((each) => each.id === rulesId) ?? null;
   const motion = robotMotion(robot);
@@ -792,6 +800,27 @@ function RobotFacts({ robot }: { robot: RobotProfile }) {
           {motion.source === 'auto' ? ' (the hub’s defaults)' : ' (typed in)'}
         </dd>
       </dl>
+
+      <section className="robot-calibrate" aria-labelledby="robot-calibrate-title">
+        <h2 id="robot-calibrate-title">Measure it on the floor</h2>
+        <p className="muted">
+          Wheel sizes printed on the tyre and a gap measured with a ruler are close, not exact. Two
+          short runs on the floor make them right, so the robot drives as far and turns as much as
+          the program says.
+        </p>
+        <button
+          type="button"
+          className="button"
+          disabled={problems.length > 0}
+          onClick={() => setCalibrating(true)}
+          data-testid="robot-calibrate"
+        >
+          Measure on the floor…
+        </button>
+      </section>
+      {calibrating && (
+        <CalibrateDialog robot={robot} onApply={onChange} onClose={() => setCalibrating(false)} />
+      )}
 
       <div className="robot-rules">
         <label className="field">

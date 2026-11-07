@@ -3331,3 +3331,139 @@ code {
   color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
+
+/* The calibration helper on the Robots page (ADR 0016, section 3). */
+.robot-calibrate {
+  padding: 0.75rem 0.9rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+}
+
+.robot-calibrate h2 {
+  margin: 0 0 0.3rem;
+  font-size: 1rem;
+}
+
+.robot-calibrate p {
+  margin: 0 0 0.6rem;
+  font-size: 0.9rem;
+}
+
+.dialog:has(.calibrate) {
+  width: min(42rem, calc(100vw - 2rem));
+}
+
+.calibrate {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.calibrate > p,
+.calibrate-step p {
+  margin: 0;
+}
+
+.calibrate-hub {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+
+.calibrate-step {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+}
+
+.calibrate-step h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.calibrate-step .button-row {
+  margin: 0;
+}
+
+.calibrate-program pre {
+  max-height: 14rem;
+  overflow: auto;
+  margin: 0.4rem 0 0;
+  padding: 0.6rem;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+}
+
+.calibrate-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 1rem;
+  align-items: flex-start;
+}
+
+.calibrate-fields .field {
+  margin: 0;
+}
+
+.calibrate-turn {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.calibrate-turn .calibrate-fields {
+  flex: 1 1 16rem;
+  flex-direction: column;
+}
+
+.calibrate-dial {
+  flex: none;
+  width: 7.5rem;
+  height: 7.5rem;
+}
+
+.calibrate-dial-ring {
+  fill: var(--bg);
+  stroke: var(--border);
+  stroke-width: 1.5;
+}
+
+.calibrate-dial-start {
+  stroke: var(--muted);
+  stroke-width: 2;
+  stroke-dasharray: 4 3;
+}
+
+.calibrate-dial-end {
+  stroke: var(--accent);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.calibrate-dial-head {
+  fill: var(--accent);
+}
+
+.calibrate-dial-robot {
+  fill: var(--surface);
+  stroke: var(--text);
+  stroke-width: 1.5;
+}
+
+.calibrate-changes {
+  margin: 0 0 0.6rem;
+  padding-left: 1.2rem;
+}
+
+.calibrate-result .notice {
+  margin: 0.6rem 0 0;
+}

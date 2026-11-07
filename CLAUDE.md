@@ -121,7 +121,9 @@ entry in [NOTICE](NOTICE).
     controller; the page only displays it.
   - `src/lib/robots/`: robot profiles ([ADR 0016](docs/adr/0016-robots-and-mats.md)): the
     profile and its `.matpilot-robot.json` file (`profile.ts`), its speeds by the firmware's
-    rules (`motion.ts`, every Pybricks fact cited there), its shape and turning circle
+    rules (`motion.ts`, every Pybricks fact cited there), the calibration helper's two programs
+    and corrections (`calibrate.ts`, cited; its dialog runs them through `useHubRunner`), its
+    shape and turning circle
     (`shape.ts`), and competition rules checks with quoted rules (`rules.ts`). Frames: ROBOT
     (origin between the drive wheels, +x forward, +y left) and MAT (origin bottom-left, +x right,
     +y up), counter-clockwise positive; Pybricks turns clockwise positive, so negate at the
