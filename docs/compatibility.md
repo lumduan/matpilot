@@ -298,8 +298,8 @@ These check undo and redo, and saving and loading programs
 ### Tabs and functions checks (milestone 4)
 
 These check tabs and functions ([ADR 0013](adr/0013-block-tabs.md)). Checks 1 to 5, 8 to 13 and
-15 need no hub; checks 6, 7 and 14 run a program of several files on the hub, which has not been
-tried yet. Use the bench layout (motors A and B as wheels).
+15 need no hub; checks 6, 7 and 14 run a program of several files on the hub (first done on
+2026-11-07, see the results). Use the bench layout (motors A and B as wheels).
 
 1. Press **+** next to the tabs. A tab `tab2` opens with its name selected: type `moves` and press
    Enter. Try the name `math`: the page says it is already a name, and the tab keeps its name.
@@ -356,6 +356,7 @@ tried yet. Use the bench layout (motors A and B as wheels).
 | 2026-11-06 | Chrome 156 | macOS 27.0.1 | (none)      | —        | Undo, Save and Load checks 1 to 8 passed, GitHub ones included (notes below)             |
 | 2026-11-06 | not stated | not stated   | (none)      | —        | Tabs and functions checks 1 to 5 tried; two requests came out of them (notes below)      |
 | 2026-11-06 | not stated | not stated   | (none)      | —        | Tabs and functions checks 11 to 13 passed; two more requests (notes below)               |
+| 2026-11-07 | not stated | not stated   | SPIKE Prime | 4.0.1    | Tabs and functions checks 6, 7, 14 and 15 passed: several files on the hub (notes below) |
 
 The 2026-11-05 row uses the numbering of the list before it was reorganised (see the start of this
 section): its checks 1 and 2 are simple-block checks 1 and 2 today, run then with the earlier
@@ -402,8 +403,8 @@ were tried, and two things came out of them, both built the same day
   function with its name (check 12).
 
 The maintainer also agreed that variables belong to their tab, and asked for shared (global)
-variables as well, for when one is really needed (decision 11, check 13). Checks 6 and 7 wait for
-the hub.
+variables as well, for when one is really needed (decision 11, check 13). Checks 6 and 7 waited
+for the hub (➡️ passed on 2026-11-07, see the notes on the hub run below).
 
 Notes on the second tabs and functions run (2026-11-06, the maintainer, reported in conversation
 with a screenshot; browser and OS not stated). Checks 11 to 13 worked. Two requests came out of
@@ -414,6 +415,21 @@ them, both built the same day (decision 11, check 15):
   right-click on a 🌐 block there offers Delete and Rename too.
 - **The 🌐 blocks had the plain variable blocks' colour.** Now they are a brighter pink of the same
   family.
+
+Notes on the tabs and functions run on the hub (2026-11-07, the maintainer's bench, reported in
+conversation with the Monitor's text; browser, OS, hub and firmware not restated, assumed to be
+those of the earlier runs). To save rebuilding the blocks, the program was a file made with the
+generator for this run and opened with **Load**: `main` sets 🌐 `laps` to 0, calls `square` with
+side 200 from the tab `shapes`, and prints `laps`; `square` drives the square and changes `laps` by
+1 after the repeat.
+
+- **Checks 6 and 14, in one Run:** the Monitor showed `# Program started.` at 16:27:03.147, `1` at
+  16:27:11.548 and `# Program stopped.` at 16:27:11.550, with no error. This was the first program
+  of several files on a hub: `main.py` imported `shapes` and `setup`, and a shared variable was
+  changed in one module and read in another.
+- **Checks 7 and 15** were reported done, with no failure. Asked whether the motors turned as
+  described, the maintainer answered that it was done, without detail.
+- **Not reported:** checks 8 to 10 (closing a tab, Save and Load of tabs, reload).
 
 ## Xbox controller check (milestone 5)
 
