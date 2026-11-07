@@ -49,6 +49,7 @@ import {
   type FunctionInfo,
 } from './functions';
 import { DEVICES, PORTS, isDeviceType, type DeviceType, type PortName } from './pybricks';
+import type { RobotProfile } from '../robots/profile';
 import { registerSharedGenerators, sharedProblems, usedSharedVariables } from './shared';
 import { SETUP_MODULE, programTabsOf, type ProgramTab } from './tabs';
 import { DEFAULT_CONTROLLER, controllerProfile, type ControllerId } from '../controller/layout';
@@ -94,6 +95,16 @@ export interface GeneratedProgram {
   readonly controller: ControllerId | null;
   /** What each control does in this program, for the Controller pane. */
   readonly controls: readonly ControllerControl[];
+  /** Where the drive base's ports and wheel sizes came from (ADR 0016, D4). */
+  readonly drive: { readonly portsFrom: DriveSource; readonly wheelsFrom: DriveSource };
+}
+
+/** Where a drive base setting comes from: MatPilot's default, the program's robot, or a block. */
+export type DriveSource = 'default' | 'robot' | 'blocks';
+
+export interface GenerateOptions {
+  /** The robot the program is for (ADR 0016, D4); its blocks may still set the drive base. */
+  readonly robot?: RobotProfile | null;
 }
 
 export interface SetUpDevice {
@@ -345,14 +356,23 @@ function usageProblems(
   return problems;
 }
 
-/** The drive base of the simple blocks: ports from "set movement motors", sizes in mm. */
+/**
+ * The drive base of the simple blocks: ports from the program's robot or "set movement motors",
+ * sizes in mm from the robot or "set wheel size".
+ */
 interface Movement {
   readonly left: PortName;
   readonly right: PortName;
   readonly wheelDiameterMm: number;
   readonly axleTrackMm: number;
+  /** The motor mounted turned round, so it counts counterclockwise as forward. */
+  readonly mirrored: 'left' | 'right';
   /** The "set movement motors" block, if there is one. */
   readonly blockId: string | null;
+  readonly portsFrom: DriveSource;
+  readonly wheelsFrom: DriveSource;
+  /** The robot's name, when the robot sets something. */
+  readonly robotName: string | null;
 }
 
 /** MatPilot's defaults: the bench layout's A and B; the wheels of the SPIKE Prime set. */
@@ -361,15 +381,39 @@ export const DEFAULT_MOVEMENT: Movement = {
   right: 'B',
   wheelDiameterMm: 56,
   axleTrackMm: 112,
+  mirrored: 'left',
   blockId: null,
+  portsFrom: 'default',
+  wheelsFrom: 'default',
+  robotName: null,
 };
+
+/** The drive base a robot profile describes (ADR 0016, D4). */
+function robotMovement(robot: RobotProfile | null | undefined): Movement {
+  if (!robot) return DEFAULT_MOVEMENT;
+  return {
+    left: robot.drive.left,
+    right: robot.drive.right,
+    wheelDiameterMm: robot.wheels.diameterMm,
+    axleTrackMm: robot.wheels.trackMm,
+    mirrored: robot.drive.mirrored,
+    blockId: null,
+    portsFrom: 'robot',
+    wheelsFrom: 'robot',
+    robotName: robot.name,
+  };
+}
 
 /**
  * Reads "set movement motors" and "set wheel size" from the program and its functions, in every
- * tab; they apply to all of it.
+ * tab; they apply to all of it, and override the program's robot (`base`).
  */
-function movementSettings(roots: readonly Blockly.Block[], problems: DraftProblem[]): Movement {
-  let movement = DEFAULT_MOVEMENT;
+function movementSettings(
+  roots: readonly Blockly.Block[],
+  problems: DraftProblem[],
+  base: Movement,
+): Movement {
+  let movement = base;
   let motors: Blockly.Block | null = null;
   let wheels: Blockly.Block | null = null;
   for (const block of roots.flatMap((root) => root.getDescendants(true))) {
@@ -383,6 +427,7 @@ function movementSettings(roots: readonly Blockly.Block[], problems: DraftProble
           left: ports[0] as PortName,
           right: ports[1] as PortName,
           blockId: block.id,
+          portsFrom: 'blocks',
         };
       } else if (ports !== motors.getFieldValue('PORTS')) {
         problems.push({
@@ -396,7 +441,12 @@ function movementSettings(roots: readonly Blockly.Block[], problems: DraftProble
       const track = Number(block.getFieldValue('TRACK'));
       if (!wheels) {
         wheels = block;
-        movement = { ...movement, wheelDiameterMm: wheel, axleTrackMm: track };
+        movement = {
+          ...movement,
+          wheelDiameterMm: wheel,
+          axleTrackMm: track,
+          wheelsFrom: 'blocks',
+        };
       } else if (
         wheel !== Number(wheels.getFieldValue('WHEEL')) ||
         track !== Number(wheels.getFieldValue('TRACK'))
@@ -445,7 +495,9 @@ function portProblems(
       if (device) {
         add(
           movement.blockId ?? robotBlockId,
-          `Port ${port} is set up as “${device.name}”, so it cannot also drive the ${side} wheel. Choose other movement motors.`,
+          movement.portsFrom === 'robot'
+            ? `Port ${port} is set up as “${device.name}”, so it cannot also drive the ${side} wheel of the robot “${movement.robotName}”. Change the robot’s drive motors on the Robots page, or choose another port in “set up”.`
+            : `Port ${port} is set up as “${device.name}”, so it cannot also drive the ${side} wheel. Choose other movement motors.`,
         );
       }
     }
@@ -464,7 +516,9 @@ function portProblems(
     } else if (movement && side) {
       add(
         use.blockId,
-        `Port ${use.port} drives the robot’s ${side} wheel (movement motors ${movement.left} + ${movement.right}). Choose another port for this ${label}, or change “set movement motors”.`,
+        movement.portsFrom === 'robot'
+          ? `Port ${use.port} drives the ${side} wheel of the robot “${movement.robotName}” (${movement.left} + ${movement.right}). Choose another port for this ${label}, or change the robot’s drive motors on the Robots page.`
+          : `Port ${use.port} drives the robot’s ${side} wheel (movement motors ${movement.left} + ${movement.right}). Choose another port for this ${label}, or change “set movement motors”.`,
       );
     } else if (!earlier) {
       ports.set(use.port, use);
@@ -701,15 +755,21 @@ function placeProblems(drafts: readonly DraftProblem[], tabs: readonly ProgramTa
  * Generates the program of the tab `workspace` belongs to (./tabs.ts): every tab, main first.
  * A workspace on its own is a program with one tab.
  */
-export function generateProgram(workspace: Blockly.Workspace): GeneratedProgram {
-  return generateTabs(programTabsOf(workspace));
+export function generateProgram(
+  workspace: Blockly.Workspace,
+  options: GenerateOptions = {},
+): GeneratedProgram {
+  return generateTabs(programTabsOf(workspace), options);
 }
 
 /**
  * Generates a program in tabs, main first. Problems never throw: the code is still returned so
  * the user can see it, and the page refuses to run it until the problems are fixed.
  */
-export function generateTabs(tabs: readonly ProgramTab[]): GeneratedProgram {
+export function generateTabs(
+  tabs: readonly ProgramTab[],
+  options: GenerateOptions = {},
+): GeneratedProgram {
   registerGenerators();
   const g = pythonGenerator;
   const problems: DraftProblem[] = [];
@@ -785,7 +845,7 @@ export function generateTabs(tabs: readonly ProgramTab[]): GeneratedProgram {
       ...tabs.flatMap((tab) => enabledDefinitions(tab)),
     ];
     problems.push(...usageProblems(roots, devices));
-    const movement = movementSettings(roots, problems);
+    const movement = movementSettings(roots, problems, robotMovement(options.robot));
     let body = '';
     const deviceNames = new Map<string, string>();
     const mainCode = generateTab(main, functions, globals, () => {
@@ -847,12 +907,16 @@ export function generateTabs(tabs: readonly ProgramTab[]): GeneratedProgram {
       }
     }
 
-    // The drive base. The left motor is mounted mirrored, so it counts counterclockwise as forward.
+    // The drive base. One motor is mounted mirrored (the left one, unless the program's robot says
+    // otherwise), so it counts counterclockwise as forward.
     if (robot) {
       need('pybricks.parameters', 'Port');
       need('pybricks.parameters', 'Direction');
       need('pybricks.pupdevices', 'Motor');
       need('pybricks.robotics', 'DriveBase');
+      if (movement.portsFrom === 'robot' || movement.wheelsFrom === 'robot') {
+        config.push(`# The robot “${movement.robotName}” (the Robots page).`);
+      }
       config.push(
         `${ROBOT.leftPort} = Port.${movement.left}`,
         `${ROBOT.rightPort} = Port.${movement.right}`,
@@ -860,8 +924,12 @@ export function generateTabs(tabs: readonly ProgramTab[]): GeneratedProgram {
         `${ROBOT.axleTrack} = ${movement.axleTrackMm}`,
       );
       setup.push(
-        `${ROBOT.left} = Motor(${ROBOT.leftPort}, positive_direction=Direction.COUNTERCLOCKWISE)`,
-        `${ROBOT.right} = Motor(${ROBOT.rightPort})`,
+        movement.mirrored === 'left'
+          ? `${ROBOT.left} = Motor(${ROBOT.leftPort}, positive_direction=Direction.COUNTERCLOCKWISE)`
+          : `${ROBOT.left} = Motor(${ROBOT.leftPort})`,
+        movement.mirrored === 'right'
+          ? `${ROBOT.right} = Motor(${ROBOT.rightPort}, positive_direction=Direction.COUNTERCLOCKWISE)`
+          : `${ROBOT.right} = Motor(${ROBOT.rightPort})`,
         `${ROBOT.robot} = DriveBase(${ROBOT.left}, ${ROBOT.right}, ${ROBOT.wheelDiameter}, ${ROBOT.axleTrack})`,
       );
       motors.push(ROBOT.left, ROBOT.right);
@@ -998,6 +1066,7 @@ export function generateTabs(tabs: readonly ProgramTab[]): GeneratedProgram {
       usesController,
       controller: usesController ? controllerProfile(chosen).id : null,
       controls,
+      drive: { portsFrom: movement.portsFrom, wheelsFrom: movement.wheelsFrom },
     };
   } finally {
     endNeeds();

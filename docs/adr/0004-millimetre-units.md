@@ -24,7 +24,8 @@ to generated hub code.
 - The UI may show other units only as a display conversion at the edge; the model stays in
   millimetres.
 - Angles and time are not spatial lengths and are outside this decision; they will be specified when
-  first needed.
+  first needed. (Specified in [ADR 0016](0016-robots-and-mats.md), section 2: degrees and
+  seconds, with the MAT and ROBOT frames.)
 
 ## Consequences
 

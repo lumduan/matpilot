@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ConnectButton } from '@/components/hub/ConnectButton';
 import { DeviceBar } from '@/components/hub/DeviceBar';
+import { StudioNav } from '@/components/StudioNav';
 import { MonitorPanel } from '@/components/hub/MonitorPanel';
 import { PlotterCard } from '@/components/hub/PlotterCard';
 import { linkSummary, programSummary } from '@/components/hub/status';
@@ -23,6 +24,7 @@ import { ControllerPanel } from './ControllerPanel';
 import { GitHubSettingsDialog } from './GitHubSettingsDialog';
 import { LoadDialog } from './LoadDialog';
 import { PythonEditPane } from './PythonEditPane';
+import { RobotPicker } from './RobotPicker';
 import { SaveDialog } from './SaveDialog';
 import { TabBar } from './TabBar';
 
@@ -330,7 +332,7 @@ export function BlocksApp() {
             {PROJECT_NAME}
           </Link>
           <span className="status-pill">{PROJECT_STATUS}</span>
-          <h1 className="studio-title">Blocks</h1>
+          <StudioNav current="blocks" />
           <button
             type="button"
             className="icon-button"
@@ -559,6 +561,14 @@ export function BlocksApp() {
             onAdd={editor.addTab}
             onRename={editor.renameTab}
             onClose={editor.closeTab}
+            trailing={
+              <RobotPicker
+                robot={editor.meta.robot}
+                drive={editor.program?.drive ?? null}
+                disabled={!editorReady || running || editing}
+                onChoose={(robot) => editor.setMeta({ ...editor.meta, robot })}
+              />
+            }
           />
           <div className="blocks-area">
             <div

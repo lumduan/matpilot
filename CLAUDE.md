@@ -119,6 +119,17 @@ entry in [NOTICE](NOTICE).
     ([ADR 0012](docs/adr/0012-controller-blocks.md)): the `@xbx` lines, their button order (the
     generator writes the same list), and the state the Controller pane shows. The hub reads the
     controller; the page only displays it.
+  - `src/lib/robots/`: robot profiles ([ADR 0016](docs/adr/0016-robots-and-mats.md)): the
+    profile and its `.matpilot-robot.json` file (`profile.ts`), its speeds by the firmware's
+    rules (`motion.ts`, every Pybricks fact cited there), its shape and turning circle
+    (`shape.ts`), and competition rules checks with quoted rules (`rules.ts`). Frames: ROBOT
+    (origin between the drive wheels, +x forward, +y left) and MAT (origin bottom-left, +x right,
+    +y up), counter-clockwise positive; Pybricks turns clockwise positive, so negate at the
+    boundary. A program keeps a copy of its robot in its meta (`blocks/program-meta.ts`), and
+    `generateTabs(tabs, { robot })` takes the drive base from it; "set movement motors" and "set
+    wheel size" still win.
+  - `src/lib/geometry/`: rectangles that may be turned, and inside/overlap tests (from
+    lumduan/wro-2026), for robots and mats.
   - `src/lib/ai/`: the AI helper ([ADR 0015](docs/adr/0015-ai-helper.md)): the providers
     (`providers.ts`, also the CSP's list), the settings and keys' format, the daily limit and the
     prompt journal (`usage.ts`), the request (`prompt.ts`: fixed instructions first, with the
@@ -134,7 +145,8 @@ entry in [NOTICE](NOTICE).
 - `src/hooks/`: the only React code that creates or calls `src/lib/` objects with side effects
   (the hub probe, the compatibility check, the hub connection in `useHubRunner`, live device
   values in `useLiveDevices`, the block editor in `useBlocksEditor`, editing a tab's Python in
-  `usePythonEditing`, GitHub in `useGitHub`, the AI helper in `useAiHelper`).
+  `usePythonEditing`, GitHub in `useGitHub`, the AI helper in `useAiHelper`, the robots in
+  `useRobots`).
   Components may import types and pure helpers.
 - `src/components/`, `src/app/`: UI only. They must not touch `navigator.bluetooth` (ESLint
   enforces this).

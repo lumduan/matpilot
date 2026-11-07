@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { AddTabResult, EditorTab } from '@/lib/blocks/editor';
 import type { TabNameCheck } from '@/lib/blocks/tabs';
 
@@ -23,6 +23,7 @@ export function TabBar({
   onAdd,
   onRename,
   onClose,
+  trailing,
 }: {
   readonly tabs: readonly EditorTab[];
   readonly active: string;
@@ -33,6 +34,8 @@ export function TabBar({
   readonly onAdd: () => AddTabResult;
   readonly onRename: (id: string, text: string) => TabNameCheck;
   readonly onClose: (id: string) => void;
+  /** Shown at the right end of the bar (the program's robot). */
+  readonly trailing?: ReactNode;
 }) {
   const [renaming, setRenamingState] = useState<Renaming | null>(null);
   // What is being renamed right now, also for a blur that fires as the input goes away.
@@ -187,6 +190,7 @@ export function TabBar({
           <PlusIcon />
           <span className="visually-hidden">New tab</span>
         </button>
+        {trailing && <div className="block-tabs-trailing">{trailing}</div>}
       </div>
       {error && (
         <p className="block-tabs-error" role="alert" data-testid="tab-error">

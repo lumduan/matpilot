@@ -31,6 +31,7 @@ import {
 } from './generator';
 import type { ProgramTabState } from './program-file';
 import { NEW_PROGRAM_META, sameMeta, type ProgramMeta } from './program-meta';
+import { sameRobot } from '../robots/profile';
 import { DEVICE_TYPES, type DeviceType, type PortName } from './pybricks';
 import { ensureRequiredBlocks, registerBlocks } from './register';
 import {
@@ -143,6 +144,8 @@ export interface EditorHandle {
   save(): SavedProgram;
   /** Changes the name or GitHub file (after saving). */
   setMeta(meta: ProgramMeta): void;
+  /** The open program's meta. */
+  meta(): ProgramMeta;
   selectTab(id: string): void;
   addTab(): AddTabResult;
   /** Renames a tab other than main; returns the name it got, or why not. */
@@ -323,8 +326,11 @@ export function createEditor(options: EditorOptions): EditorHandle {
   let meta = options.meta;
   const applyMeta = (next: ProgramMeta) => {
     if (sameMeta(meta, next)) return;
+    const robotChanged = !sameRobot(meta.robot, next.robot);
     meta = next;
     options.onMeta(next);
+    // The robot sets the drive base, so the Python changes with it (ADR 0016, D4).
+    if (robotChanged) schedule();
   };
 
   let history: EditorHistory = { canUndo: false, canRedo: false };
@@ -351,7 +357,7 @@ export function createEditor(options: EditorOptions): EditorHandle {
     syncDeviceVariables(tabs);
     syncSharedVariables(programTabs);
     syncFunctionBlocks(programTabs);
-    const program = generateTabs(programTabs);
+    const program = generateTabs(programTabs, { robot: meta.robot });
     const byBlock = new Map<string, { tab: Tab; messages: string[] }>();
     for (const problem of program.problems) {
       const tab = tabs.find((each) => each.id === problem.tabId);
@@ -616,7 +622,8 @@ export function createEditor(options: EditorOptions): EditorHandle {
       setTimeout(reportHistory, 0);
     },
     reset() {
-      replace(STARTER_PROGRAM, NEW_PROGRAM_META);
+      // A new program for the same robot.
+      replace(STARTER_PROGRAM, { ...NEW_PROGRAM_META, robot: meta.robot });
     },
     open(next, nextMeta) {
       replace({ tabs: next }, nextMeta);
@@ -631,6 +638,7 @@ export function createEditor(options: EditorOptions): EditorHandle {
     },
     save,
     setMeta: applyMeta,
+    meta: () => meta,
     selectTab,
     addTab() {
       if (tabs.length >= MAX_TABS) {
@@ -698,7 +706,7 @@ export function createEditor(options: EditorOptions): EditorHandle {
     },
     async pythonEdit(tabId) {
       const { pythonForEditing } = await loadPythonTools();
-      return pythonForEditing(programTabs, tabId);
+      return pythonForEditing(programTabs, tabId, { robot: meta.robot });
     },
     async checkPython(tabId, text) {
       const { readTabPython } = await loadPythonTools();
