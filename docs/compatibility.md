@@ -555,7 +555,8 @@ controller assumed to be those of the earlier runs):
 These check editing a tab's Python on `/blocks` and turning it back into blocks
 ([ADR 0014](adr/0014-python-editing-on-blocks-page.md)). All but check 9 need no hub. Any program
 works; the steps use the one from the tabs checks (main calls `shapes.square(200)`). Checks 10
-to 12 came after the maintainer's first try (suggestions, help and comments).
+to 12 came after the maintainer's first try (suggestions, help and comments), check 13 after the
+second (colours).
 
 1. Open the **Python** panel and press **Edit**. The open tab's Python appears in colour. The
    grey parts (imports, ports, devices, `try:` and `finally:`) refuse typing, and the page says
@@ -601,6 +602,10 @@ to 12 came after the maintainer's first try (suggestions, help and comments).
 12. Comments: above a line under Main, type `# go forward a bit`, and at the end of another line
     `# turn here`. **Update blocks**: both are still there, above their lines, and the blocks
     show a comment bubble (right-click a block, Add Comment, does the same from the blocks).
+13. Colours: the Python panel, the **Python** view and the editor colour the code as VS Code does
+    (purple `import`/`if`/`for`, blue `def`/`True`, orange text, green numbers and comments,
+    yellow functions, teal `Color`/`setup`, light blue names, brackets by depth), in the light
+    and the dark theme.
 
 ### Python editing results
 
@@ -612,7 +617,9 @@ Notes (2026-11-07; the maintainer, reported in conversation): the checks were tr
 requests came out of them, both built the same day
 ([ADR 0014](adr/0014-python-editing-on-blocks-page.md), amendment): suggestions with help, as in
 an editor such as VS Code, because a beginner does not know the names (checks 10 and 11); and a
-way to leave comments in the Python (check 12).
+way to leave comments in the Python (check 12). On the second try, checks 10 to 12 worked well,
+and the maintainer asked for the colours of VS Code and similar editors, in the editor and in the
+read-only Python panel too (check 13).
 
 ## Keeping this file current
 
