@@ -125,6 +125,36 @@ describe('listing and reading', () => {
     await expect(client.readFile('m/gone.matpilot.json')).resolves.toBeNull();
   });
 
+  it('reads a file of 1 to 100 MB raw, keeping the sha from the first answer', async () => {
+    const big = '{"format":"matpilot-mat"}';
+    const accepts: string[] = [];
+    const fetch = ((url: string, init: RequestInit) => {
+      accepts.push(String((init.headers as Record<string, string>).Accept));
+      return Promise.resolve(
+        accepts.length === 1
+          ? new Response(
+              JSON.stringify({
+                type: 'file',
+                path: 'm/Big.matpilot-mat.json',
+                sha: 'sha-big',
+                encoding: 'none',
+                content: '',
+                size: 13_000_000,
+              }),
+              { status: 200 },
+            )
+          : new Response(big, { status: 200 }),
+      );
+    }) as unknown as typeof globalThis.fetch;
+    const client = new GitHubClient({ repository: REPO, token: 't', fetch });
+    await expect(client.readFile('m/Big.matpilot-mat.json')).resolves.toEqual({
+      path: 'm/Big.matpilot-mat.json',
+      sha: 'sha-big',
+      text: big,
+    });
+    expect(accepts).toEqual(['application/vnd.github+json', 'application/vnd.github.raw+json']);
+  });
+
   it('refuses a folder where a file is expected, and the reverse', async () => {
     const { fetch } = fakeFetch(
       { status: 200, body: [] },

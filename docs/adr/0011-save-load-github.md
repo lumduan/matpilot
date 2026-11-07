@@ -1,6 +1,7 @@
 # ADR 0011: Undo and redo, Save and Load, and programs on GitHub
 
 - Status: Accepted
+- Extended by: [ADR 0016](0016-robots-and-mats.md) (amendment of 2026-11-07): the same GitHub setup also saves and loads robots and mats, in the same folder
 - Date: 2026-11-06
 - Amends: the "no runtime requests to third-party origins" rule ([CLAUDE.md](../../CLAUDE.md) hard
   constraint 3), for one origin, only when the user asks.

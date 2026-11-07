@@ -695,6 +695,8 @@ hub and the robot, and a ruler.
    `diameter × measured / 200` on the Robots page (190 mm with 56 mm wheels gives 53.2) and
    press **Update** on Blocks. Then, if the turn is off, make the axle track
    `track × 90 / measured angle` (80° with 112 mm gives 126). Run again: it should be close.
+8. GitHub (with the GitHub set up on Blocks): **Save**, then **Save to GitHub**: the robot goes
+   into the same folder as the programs. **Load** lists it under **From GitHub**.
 
 ## Mats checks (milestone 7)
 
@@ -718,13 +720,24 @@ mat's printing file from the WRO website) and a robot made on the Robots page.
    the 250 mm limit no longer fits the start area.
 6. Choose **Ruler** and drag between two marks on the mat whose distance you know (the rules or a
    tape measure on the printed mat): the distance shows in mm.
-7. Reload the page: the mat, the area and the robot are still there. **Save mat file**, then
-   **Load mat file** with it: a second copy of the mat opens.
+7. Reload the page: the mat, the area and the robot are still there. **Save**, then **Save to
+   this computer**; **Load**, then **Choose a file…** with it: a second copy of the mat opens.
+8. GitHub (with the GitHub set up on Blocks): **Save**, then **Save to GitHub**. The dialog names
+   the same repository and folder as on Blocks, without asking for anything again; if the
+   repository is public it asks for a tick first. The full WRO mat (about 13 MB) appears in the
+   folder on github.com. **Load** lists it under **From GitHub**: open it, and a copy of the mat
+   opens.
 
 ### Mats results
 
-| Date | Browser | OS  | Mat | Result |
-| ---- | ------- | --- | --- | ------ |
+| Date       | Browser    | OS         | Mat                                             | Result                                                       |
+| ---------- | ---------- | ---------- | ----------------------------------------------- | ------------------------------------------------------------ |
+| 2026-11-07 | not stated | not stated | WRO 2026 Elementary printing PDF (the real one) | Checks 1 to 7 tried, "works"; asked for GitHub (now check 8) |
+
+Notes (2026-11-07; the maintainer, reported in conversation): tried with the real WRO 2026
+Elementary PDF and it works. They asked for Load and Save on GitHub on the Mats page (and every
+page), using the GitHub already set up for programs; built the same day (ADR 0016, amendment), so
+check 8 is new.
 
 ### Robots results
 

@@ -2,12 +2,20 @@
 
 import Link from 'next/link';
 import { useRef, useState } from 'react';
+import { GitHubSettingsDialog } from '@/components/blocks/GitHubSettingsDialog';
+import { FileLoadDialog } from '@/components/files/FileLoadDialog';
+import { FileSaveDialog } from '@/components/files/FileSaveDialog';
 import { NumberField } from '@/components/robots/NumberField';
 import { StudioNav } from '@/components/StudioNav';
+import { useGitHub } from '@/hooks/useGitHub';
 import { useMats, type MatDraft } from '@/hooks/useMats';
+import { MAT_FILES } from '@/lib/github/files';
 import { useRobots } from '@/hooks/useRobots';
 import {
   AREA_KINDS,
+  DEFAULT_MAT_NAME,
+  MAT_NAME_MAX_LENGTH,
+  cleanMatName,
   newAreaId,
   type AreaKind,
   type Mat,
@@ -57,7 +65,20 @@ export function MatsApp() {
   const [dragging, setDragging] = useState<MatPlacement | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const addInput = useRef<HTMLInputElement>(null);
-  const loadInput = useRef<HTMLInputElement>(null);
+  const github = useGitHub();
+  const [dialog, setDialog] = useState<{
+    readonly name: 'save' | 'load' | 'github';
+    readonly back: 'save' | 'load' | null;
+  } | null>(null);
+  const setUpGitHub = () =>
+    setDialog((current) => ({
+      name: 'github',
+      back: current && current.name !== 'github' ? current.name : null,
+    }));
+  const closeDialog = () =>
+    setDialog((current) =>
+      current?.name === 'github' && current.back ? { name: current.back, back: null } : null,
+    );
 
   const mat = mats.open;
   const usable = library.robots.filter((robot) => robotProblems(robot).length === 0);
@@ -131,35 +152,23 @@ export function MatsApp() {
           </button>
           <button
             type="button"
-            className="button button-small"
-            onClick={() => loadInput.current?.click()}
+            className="button button-small button-file"
+            onClick={() => setDialog({ name: 'load', back: null })}
             disabled={mats.status !== 'ready' || mats.busy}
+            title="Load a mat from this computer or from GitHub"
             data-testid="mat-load"
           >
-            Load mat file
+            Load
           </button>
           <button
             type="button"
-            className="button button-small"
+            className="button button-small button-file"
             disabled={!mat || mats.busy}
-            onClick={() =>
-              mat &&
-              void mats.exportFile(mat).then(
-                (name) =>
-                  setNotice({
-                    kind: 'ok',
-                    text: `Saved “${name}” to your downloads (it holds the mat’s file, so it can be large).`,
-                  }),
-                (reason: unknown) =>
-                  setNotice({
-                    kind: 'error',
-                    text: reason instanceof Error ? reason.message : String(reason),
-                  }),
-              )
-            }
+            onClick={() => setDialog({ name: 'save', back: null })}
+            title="Save this mat on this computer or on GitHub"
             data-testid="mat-save"
           >
-            Save mat file
+            Save
           </button>
           <input
             ref={addInput}
@@ -181,27 +190,6 @@ export function MatsApp() {
               }
             }}
             data-testid="mat-add-input"
-          />
-          <input
-            ref={loadInput}
-            type="file"
-            accept=".json,application/json"
-            hidden
-            onChange={async (event) => {
-              const file = event.target.files?.[0];
-              event.target.value = '';
-              if (!file) return;
-              try {
-                const loaded = await mats.importFile(await file.text());
-                setNotice({ kind: 'ok', text: `Opened the mat “${loaded.name}”.` });
-              } catch (reason) {
-                setNotice({
-                  kind: 'error',
-                  text: reason instanceof Error ? reason.message : String(reason),
-                });
-              }
-            }}
-            data-testid="mat-load-input"
           />
         </div>
       </header>
@@ -525,6 +513,51 @@ export function MatsApp() {
           )}
         </aside>
       </div>
+      {dialog?.name === 'save' && mat && (
+        <FileSaveDialog
+          title="Save this mat"
+          kind={MAT_FILES}
+          github={github}
+          id={mat.id}
+          name={mat.name}
+          maxLength={MAT_NAME_MAX_LENGTH}
+          clean={cleanMatName}
+          fallbackName={DEFAULT_MAT_NAME}
+          onRename={(name) => name !== mat.name && mats.update({ ...mat, name })}
+          saveToComputer={(name) => mats.exportFile({ ...mat, name })}
+          fileText={(name) => mats.fileText({ ...mat, name })}
+          publicWarning="A competition mat is the organiser’s work: keep it for your own team, in a private repository."
+          onClose={closeDialog}
+          onSetUpGitHub={setUpGitHub}
+        />
+      )}
+      {dialog?.name === 'load' && (
+        <FileLoadDialog
+          title="Load a mat"
+          kind={MAT_FILES}
+          github={github}
+          maxBytes={150_000_000}
+          open={async (text) => {
+            try {
+              const loaded = await mats.importFile(text);
+              setSelectedArea(null);
+              return { ok: true, id: loaded.id, name: loaded.name };
+            } catch (reason) {
+              return {
+                ok: false,
+                message: reason instanceof Error ? reason.message : String(reason),
+              };
+            }
+          }}
+          onOpened={(message) => {
+            setDialog(null);
+            setNotice({ kind: 'ok', text: message });
+          }}
+          onClose={closeDialog}
+          onSetUpGitHub={setUpGitHub}
+        />
+      )}
+      {dialog?.name === 'github' && <GitHubSettingsDialog github={github} onClose={closeDialog} />}
       {draft && (
         <AddMatDialog
           draft={draft}

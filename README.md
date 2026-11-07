@@ -43,8 +43,8 @@ What works today:
   robot, and the drive base in its Python follows it.
 - **Mats** (`/mats`): add the mat's printing PDF and MatPilot reads its real size from the file
   (a photo works too, with its size typed in). Place your robot on it, drag and turn it, see
-  whether it fits the start area, measure distances, and mark areas. Everything stays in the
-  browser.
+  whether it fits the start area, measure distances, and mark areas. Robots and mats are saved
+  on this computer, or on GitHub with the same setup as programs.
 - **AI helper** (on `/blocks`, off until an adult sets it up): explains the open tab's program, or
   reviews it with hints rather than answers, using Anthropic, OpenAI or DeepSeek with the adult's
   own key. Children learn to prompt: a checklist ticks the habits of a good prompt as they type,

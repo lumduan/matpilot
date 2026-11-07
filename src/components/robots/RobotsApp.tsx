@@ -1,19 +1,28 @@
 'use client';
 
 import Link from 'next/link';
-import { useRef, useState, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
+import { GitHubSettingsDialog } from '@/components/blocks/GitHubSettingsDialog';
+import { FileLoadDialog } from '@/components/files/FileLoadDialog';
+import { FileSaveDialog } from '@/components/files/FileSaveDialog';
 import { StudioNav } from '@/components/StudioNav';
+import { useGitHub } from '@/hooks/useGitHub';
 import { useRobots } from '@/hooks/useRobots';
+import { ROBOT_FILES } from '@/lib/github/files';
 import { PORTS, type PortName } from '@/lib/blocks/pybricks';
 import { PROJECT_NAME, PROJECT_STATUS } from '@/lib/project';
 import { autoSpeed, robotMotion } from '@/lib/robots/motion';
 import {
+  DEFAULT_ROBOT_NAME,
   FACINGS,
   MOTOR_TYPES,
+  ROBOT_NAME_MAX_LENGTH,
   SENSOR_TYPES,
+  cleanRobotName,
   newRobot,
   newRobotId,
   robotProblems,
+  serializeRobotFile,
   type Facing,
   type MotorType,
   type RobotProfile,
@@ -39,7 +48,21 @@ export function RobotsApp() {
   const robot = library.open;
   const [notice, setNotice] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const fileInput = useRef<HTMLInputElement>(null);
+  const github = useGitHub();
+  const [dialog, setDialog] = useState<{
+    readonly name: 'save' | 'load' | 'github';
+    /** The dialog to go back to when GitHub settings close. */
+    readonly back: 'save' | 'load' | null;
+  } | null>(null);
+  const setUpGitHub = () =>
+    setDialog((current) => ({
+      name: 'github',
+      back: current && current.name !== 'github' ? current.name : null,
+    }));
+  const closeDialog = () =>
+    setDialog((current) =>
+      current?.name === 'github' && current.back ? { name: current.back, back: null } : null,
+    );
 
   const create = () => {
     library.save(newRobot(`Robot ${library.robots.length + 1}`));
@@ -59,43 +82,23 @@ export function RobotsApp() {
         <div className="studio-actions">
           <button
             type="button"
-            className="button button-small"
-            onClick={() => fileInput.current?.click()}
+            className="button button-small button-file"
+            onClick={() => setDialog({ name: 'load', back: null })}
+            title="Load a robot from this computer or from GitHub"
             data-testid="robot-load"
           >
-            Load robot file
+            Load
           </button>
           <button
             type="button"
-            className="button button-small"
+            className="button button-small button-file"
             disabled={!robot}
-            onClick={() => {
-              if (!robot) return;
-              const name = library.exportFile(robot);
-              setNotice({ kind: 'ok', text: `Saved “${name}” to your downloads.` });
-            }}
+            onClick={() => setDialog({ name: 'save', back: null })}
+            title="Save this robot on this computer or on GitHub"
             data-testid="robot-save"
           >
-            Save robot file
+            Save
           </button>
-          <input
-            ref={fileInput}
-            type="file"
-            accept=".json,application/json"
-            hidden
-            onChange={async (event) => {
-              const file = event.target.files?.[0];
-              event.target.value = '';
-              if (!file) return;
-              const result = library.importFile(await file.text());
-              setNotice(
-                result.ok
-                  ? { kind: 'ok', text: `Opened the robot “${result.robot.name}”.` }
-                  : { kind: 'error', text: result.message },
-              );
-            }}
-            data-testid="robot-file-input"
-          />
         </div>
       </header>
 
@@ -215,6 +218,45 @@ export function RobotsApp() {
         </section>
         {robot && <RobotFacts robot={robot} />}
       </div>
+      {dialog?.name === 'save' && robot && (
+        <FileSaveDialog
+          title="Save your robot"
+          kind={ROBOT_FILES}
+          github={github}
+          id={robot.id}
+          name={robot.name}
+          maxLength={ROBOT_NAME_MAX_LENGTH}
+          clean={cleanRobotName}
+          fallbackName={DEFAULT_ROBOT_NAME}
+          onRename={(name) => name !== robot.name && library.save({ ...robot, name })}
+          saveToComputer={(name) => Promise.resolve(library.exportFile({ ...robot, name }))}
+          fileText={(name) => Promise.resolve(serializeRobotFile({ ...robot, name }))}
+          onClose={closeDialog}
+          onSetUpGitHub={setUpGitHub}
+        />
+      )}
+      {dialog?.name === 'load' && (
+        <FileLoadDialog
+          title="Load a robot"
+          kind={ROBOT_FILES}
+          github={github}
+          maxBytes={1_000_000}
+          open={(text) => {
+            const result = library.importFile(text);
+            return Promise.resolve(
+              result.ok ? { ok: true, id: result.robot.id, name: result.robot.name } : result,
+            );
+          }}
+          onOpened={(message) => {
+            setDialog(null);
+            setConfirmDelete(false);
+            setNotice({ kind: 'ok', text: message });
+          }}
+          onClose={closeDialog}
+          onSetUpGitHub={setUpGitHub}
+        />
+      )}
+      {dialog?.name === 'github' && <GitHubSettingsDialog github={github} onClose={closeDialog} />}
     </main>
   );
 }

@@ -109,7 +109,7 @@ export function GitHubSettingsDialog({
           />
         </label>
         <label className="field">
-          <span className="field-label">Folder for programs</span>
+          <span className="field-label">Folder for programs, robots and mats</span>
           <input
             className="field-input"
             value={folder}
