@@ -1,6 +1,6 @@
 # ADR 0016: Robots and Mats: robot profiles, mats at real size, and running a program on a mat
 
-- Status: Accepted 2026-11-07, every recommended option. Step 7a built the same day (see "Built")
+- Status: Accepted 2026-11-07, every recommended option. Steps 7a and 7b built the same day (see "Built")
 - Date: 2026-11-07
 - Replaces: the one-line plan for milestone 7 ("Mat profiles with drag-and-drop objects") in
   [docs/roadmap.md](../roadmap.md)
@@ -293,6 +293,56 @@ words: build the fields as recommended first; using them will show what to add o
   `/blocks` (the drive base in `setup.py` follows it, it survives a reload, **Update** works), a
   program file saved with it (version 3), phone width with no sideways scroll, and the dark
   theme.
+
+## Built (2026-11-07): step 7b, the Mats page
+
+- **Page:** `/mats`, and **Mats** in the top bar. The mat fills the window; a panel beside it
+  (below it on a phone) holds the mat, the robot and the tools.
+- **Adding a mat** (`src/hooks/useMats.ts`, `src/components/mats/AddMatDialog.tsx`): a PDF's real
+  size comes from its TrimBox, read from the file's bytes when written as plain text, else from
+  the page pdf.js shows (`src/lib/mats/pdf-box.ts`); a page with a bleed is cut to the trim box. A
+  PDF with several pages asks which. A picture (PNG, JPEG, WebP) gets its width typed in, the
+  height following its shape. The dialog says where the size came from, and the page shows it.
+- **pdf.js** (`src/lib/mats/picture.ts`): `pdfjs-dist` 6.5.438, loaded only when a mat is added or
+  read from a file. Its worker, WebAssembly decoders, ICC profile and character maps are copied to
+  `out/vendor/pdfjs/` by `scripts/vendor-assets.mjs`, with their licences; `verify-export.mjs`
+  requires the worker. Decided while building:
+  - the worker is served as `pdf.worker.min.js`, not `.mjs`, because some static hosts (this
+    project's own preview, nginx) serve `.mjs` as plain bytes, which browsers refuse for a
+    module worker;
+  - pdf.js's standard fonts are not served (some are under a GPL-based licence); fonts a PDF names
+    without carrying are drawn with the computer's own, which a mat's pictures do not need;
+  - pdf.js 6 has no `eval` path, and its script engine is not served.
+    No CSP change was needed: the worker and the decoders come from this site.
+- **The picture** is drawn once at 2 pixels per mm (less when it would pass 16 million pixels),
+  kept as a PNG in IndexedDB with the source file (`src/lib/mats/store.ts`), so reopening is
+  fast and a colour sensor can read exact colours later.
+- **The view** (`src/components/mats/MatView.tsx`): the picture on a canvas, and over it, in the
+  MAT frame, a 100 mm grid, the areas, the robot, and a ruler. Drag the mat to move it, wheel or
+  two fingers to zoom, **Fit** to see it all; the pointer's x and y in mm show in a corner.
+  Tools: **Move** (drag the robot, or turn it by its round handle; 1° steps, 15° with Shift),
+  **Ruler** (distance and angle), **Area** (draw a rectangle: the first is the start area, the
+  next ones targets; each can be renamed or made a keep-out area). With the keyboard: arrows move
+  the robot 1 mm (10 with Shift), `[` and `]` turn it.
+- **The robot on the mat** (`src/lib/mats/pose.ts`): chosen from the Robots page (only robots
+  with no problems); placed in the start area if there is one; its pose as x, y and facing; checks
+  "on the mat" and "wholly inside the start area" (body and wheels, with the oriented-rectangle
+  test); **Put it in the start area** centres its outline there.
+- **Files:** a `.matpilot-mat.json` holds the description and the source file (base64), so the
+  mat can be drawn again elsewhere; a WRO mat's file is about 13 MB. Mats are not saved to GitHub
+  (D5).
+- **Not built yet:** running a program on the mat (7c), the colour sensor (7d), objects on the
+  mat, and turned areas (areas are square to the mat's edges).
+- **Tests:** unit tests for the PDF size rules (wro-2026's WRO 2026 figure, a bleed, no trim box,
+  a turned page, finding the trim box in bytes), the picture resolution, the mat file, and the
+  robot on a mat. Headless Chromium on the production build with the CSP, with generated PDFs: a
+  WRO-size trim box inside a 3 mm bleed becomes a 2362 × 1143 mm mat with the bleed cut off and
+  its green start square, black line and red target at their places; a start area drawn; the
+  robot placed in it, dragged 300 mm out (the check turns ✗), turned, put back, turned by the
+  handle; the ruler (1500 mm, 0°); a reload (all kept); a mat file saved and loaded; a two-page
+  PDF (page 2, 420 × 297 mm); a picture (1200 × 600 mm typed); a phone (no sideways scroll); no
+  errors, and no request outside this site. The real WRO PDF was not available to the test (its
+  download link returned a web page), so it is the maintainer's check.
 
 ## Consequences (as accepted)
 

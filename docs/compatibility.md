@@ -696,6 +696,36 @@ hub and the robot, and a ruler.
    press **Update** on Blocks. Then, if the turn is off, make the axle track
    `track × 90 / measured angle` (80° with 112 mm gives 126). Run again: it should be close.
 
+## Mats checks (milestone 7)
+
+These check the Mats page ([ADR 0016](adr/0016-robots-and-mats.md), step 7b) with your own mat. No
+hub is needed. Have the competition's printing PDF for the mat (for WRO 2026, the Elementary game
+mat's printing file from the WRO website) and a robot made on the Robots page.
+
+1. Open **Mats** and press **Add a mat**. Choose the PDF. The dialog says its real size and where
+   it came from; for the WRO 2026 Elementary mat, 2362 × 1143 mm from the trim box. Choose
+   **WRO 2026 RoboMission, Elementary** under Rules and press **Add the mat**. The mat appears in a
+   few seconds, looking like the printed one, with a 100 mm grid over it.
+2. Move the pointer over the mat: the corner shows x and y in mm, 0, 0 being the bottom-left
+   corner. Zoom with the wheel (two fingers on a phone), drag to look around, **Fit** to see it
+   all.
+3. Choose **Area** and drag a rectangle over the start area printed on the mat: it is drawn and
+   listed as "Start". Its size shows under it (WRO's is about 250 × 250 mm).
+4. Under **Robot**, choose your robot: it appears in the start area, facing right. The checks say
+   "On the mat ✓" and "Wholly inside “Start” ✓". Drag it out of the start area: the second check
+   turns ✗. **Put it in the start area** brings it back.
+5. Drag the round handle in front of the robot to turn it; type 45 in **Facing**: a robot near
+   the 250 mm limit no longer fits the start area.
+6. Choose **Ruler** and drag between two marks on the mat whose distance you know (the rules or a
+   tape measure on the printed mat): the distance shows in mm.
+7. Reload the page: the mat, the area and the robot are still there. **Save mat file**, then
+   **Load mat file** with it: a second copy of the mat opens.
+
+### Mats results
+
+| Date | Browser | OS  | Mat | Result |
+| ---- | ------- | --- | --- | ------ |
+
 ### Robots results
 
 | Date | Browser | OS  | Hub | Firmware | Result |

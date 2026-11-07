@@ -16,7 +16,7 @@ flowchart TD
     M4["4 · Blockly code generation<br/>with enforced safety rules<br/>ACTIVE — hub checks passed 2026-11-06,<br/>tabs and functions ran on the hub 2026-11-07,<br/>Tasks later"]
     M5["5 · Xbox controller blocks<br/>with a live controller view<br/>ACTIVE — built, Xbox check passed 2026-11-07,<br/>controller blocks tried on the hub"]
     M6["6 · Offline PWA<br/>BLOCKED — needs 2"]
-    M7["7 · Robots and Mats<br/>robot profiles, real-size mats, run a program on a mat<br/>ACTIVE — Robots page built 2026-11-07, Mats next"]
+    M7["7 · Robots and Mats<br/>robot profiles, real-size mats, run a program on a mat<br/>ACTIVE — Robots and Mats pages built 2026-11-07,<br/>running a program on a mat next"]
     M10["10 · Build a robot from LEGO parts<br/>own ADR after research<br/>BLOCKED — needs 7"]
     M8["8 · Edit the Python on the Blocks page<br/>back to blocks, errors marked<br/>ACTIVE — built and tried 2026-11-07,<br/>suggestions and comments added"]
     M9["9 · AI helper, any provider<br/>explain, review, write, learn to prompt<br/>ACTIVE — explain and review built 2026-11-07,<br/>passed with Claude, write mode later"]
@@ -66,7 +66,7 @@ flowchart TD
 | **4 · Blockly code generation**  | 🟡 ACTIVE  | `/blocks` ([ADR 0008](adr/0008-block-editor.md)): Blockly editor that generates Pybricks MicroPython and enforces the hub code rules (`try`/`finally` motor stop, config block, no hardcoded ports); tabs of functions become Python files ([ADR 0013](adr/0013-block-tabs.md)) | Hardware checks passed 2026-11-06, and the undo, save and load checks too ([results](compatibility.md#blocks-results)). Tabs and functions are built ([ADR 0013](adr/0013-block-tabs.md)); the maintainer tried their first [checks](compatibility.md#tabs-and-functions-checks-milestone-4), copy and paste between tabs and shared variables followed, and the hub checks passed 2026-11-07. Left: Tasks (an `await`-aware generator) |
 | **5 · Xbox controller**          | 🟡 ACTIVE  | Controller blocks: the hub reads an Xbox controller (hub-direct, [ADR 0003](adr/0003-hub-direct-gamepad.md)) and the page shows it live ([ADR 0012](adr/0012-controller-blocks.md))                                                                                             | The [controller blocks checks](compatibility.md#controller-blocks-checks-milestone-5) on a hub. The Xbox check (2026-11-07) showed that the link to the page holds, and the controller blocks were tried on the hub the same day with no failure reported. Xbox only                                                                                                                                                                    |
 | **6 · Offline PWA**              | ⬜ BLOCKED | Service worker and manifest so the app, including the WebAssembly compiler, works without a network                                                                                                                                                                             | Needs 2 (the compiler must be cacheable to compile offline)                                                                                                                                                                                                                                                                                                                                                                             |
-| **7 · Robots and Mats**          | 🟡 ACTIVE  | Robots page (profiles: size, wheels, motors, sensors, speed), Mats page (a PDF or picture at real size, place and measure the robot), and running a block program on a mat in the page ([ADR 0016](adr/0016-robots-and-mats.md), accepted)                                      | 7a (the Robots page, and a program that uses a robot) built 2026-11-07, waiting for the maintainer's [checks](compatibility.md#robots-checks-milestone-7); next 7b (Mats), then 7c (run on a mat, which also needs 4) and 7d                                                                                                                                                                                                            |
+| **7 · Robots and Mats**          | 🟡 ACTIVE  | Robots page (profiles: size, wheels, motors, sensors, speed), Mats page (a PDF or picture at real size, place and measure the robot), and running a block program on a mat in the page ([ADR 0016](adr/0016-robots-and-mats.md), accepted)                                      | 7a (Robots, and a program that uses a robot) and 7b (Mats) built 2026-11-07, waiting for the maintainer's [Robots](compatibility.md#robots-checks-milestone-7) and [Mats](compatibility.md#mats-checks-milestone-7) checks; next 7c (run a program on a mat), then 7d (the colour sensor)                                                                                                                                               |
 | **8 · Python editing**           | 🟡 ACTIVE  | Edit a tab's Python on `/blocks`; it goes back to blocks only when correct, with errors marked where they are; suggestions with help, and comments kept ([ADR 0014](adr/0014-python-editing-on-blocks-page.md))                                                                 | Tried 2026-11-07; suggestions, help and comments added the same day ([checks](compatibility.md#python-editing-checks-milestone-8) 10 to 12)                                                                                                                                                                                                                                                                                             |
 | **9 · AI helper**                | 🟡 ACTIVE  | Explain, review and write code with any AI provider, and learn to prompt ([ADR 0015](adr/0015-ai-helper.md))                                                                                                                                                                    | Explain and review are built; the [checks](compatibility.md#ai-helper-checks-milestone-9) with a real key passed with Claude on 2026-11-07, DeepSeek not tried yet. Left: the write mode, which uses 8                                                                                                                                                                                                                                  |
 | **10 · LEGO part builder**       | ⬜ BLOCKED | Build a robot from LEGO parts, like BrickLink's tools, and get its profile from the model ([ADR 0016](adr/0016-robots-and-mats.md) section 7)                                                                                                                                   | Needs 7's robot profiles; its own ADR after research (the LDraw part library's licence and formats, imports from BrickLink's tools)                                                                                                                                                                                                                                                                                                     |
@@ -91,8 +91,8 @@ release unless the maintainer says so.
 
 **Milestone 7, which the first release needs, is being built.** Planned and accepted on
 2026-11-07 as Robots and Mats ([ADR 0016](adr/0016-robots-and-mats.md)); its first step, the
-Robots page, was built the same day. Mats come next. Its later steps (running a program on a mat)
-also need milestone 4, which is built.
+Robots page, and its second, the Mats page, were built the same day. Running a program on a mat
+comes next; it also needs milestone 4, which is built.
 
 ## Milestones in planned order
 
@@ -253,7 +253,7 @@ from Python before, in
 Make the app installable and usable offline, including compilation. This milestone adds the service
 worker that earlier milestones deliberately leave out.
 
-### 7 · Robots and Mats (accepted 2026-11-07; 7a built)
+### 7 · Robots and Mats (accepted 2026-11-07; 7a and 7b built)
 
 Asked for on 2026-11-07: **Robots** and **Mats** beside **Blocks** in the top bar. A robot has
 clear dimensions, wheels, motors, sensors and speed; a mat is a real-size PDF or picture; a robot
@@ -271,7 +271,11 @@ recommended option on 2026-11-07, plans it in steps:
 7a was built on 2026-11-07: the Robots page (profiles, a drawing to scale, speeds by the
 firmware's cited rules, the turning circle, WRO 2026 checks, robot files) and the **Robot** choice
 on `/blocks`, which sets the drive base of the program. Its
-[checks](compatibility.md#robots-checks-milestone-7) are the maintainer's; 7b (Mats) is next.
+[checks](compatibility.md#robots-checks-milestone-7) are the maintainer's. 7b followed the same
+day: the Mats page (a PDF at real size from its trim box, drawn by self-hosted pdf.js, or a
+picture with its size typed in; areas; the robot placed, moved and turned, with the start-area
+check; a ruler; mat files), with its own [checks](compatibility.md#mats-checks-milestone-7). 7c,
+running a program on a mat, is next.
 Building a robot from LEGO parts is milestone 10, with its own ADR later.
 
 ### 10 · Build a robot from LEGO parts (later)

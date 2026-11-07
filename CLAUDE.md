@@ -130,6 +130,11 @@ entry in [NOTICE](NOTICE).
     wheel size" still win.
   - `src/lib/geometry/`: rectangles that may be turned, and inside/overlap tests (from
     lumduan/wro-2026), for robots and mats.
+  - `src/lib/mats/`: mats ([ADR 0016](docs/adr/0016-robots-and-mats.md)): the mat, its areas and
+    the robot's pose (`mat.ts`, MAT frame), a PDF's real size from its TrimBox (`pdf-box.ts`),
+    drawing it with pdf.js (`picture.ts`, loaded only on demand; its worker and decoders are
+    served from `/vendor/pdfjs/`, copied by `scripts/vendor-assets.mjs`), IndexedDB storage
+    (`store.ts`), and the robot on a mat (`pose.ts`).
   - `src/lib/ai/`: the AI helper ([ADR 0015](docs/adr/0015-ai-helper.md)): the providers
     (`providers.ts`, also the CSP's list), the settings and keys' format, the daily limit and the
     prompt journal (`usage.ts`), the request (`prompt.ts`: fixed instructions first, with the
@@ -146,7 +151,7 @@ entry in [NOTICE](NOTICE).
   (the hub probe, the compatibility check, the hub connection in `useHubRunner`, live device
   values in `useLiveDevices`, the block editor in `useBlocksEditor`, editing a tab's Python in
   `usePythonEditing`, GitHub in `useGitHub`, the AI helper in `useAiHelper`, the robots in
-  `useRobots`).
+  `useRobots`, the mats in `useMats`).
   Components may import types and pure helpers.
 - `src/components/`, `src/app/`: UI only. They must not touch `navigator.bluetooth` (ESLint
   enforces this).

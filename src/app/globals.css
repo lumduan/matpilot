@@ -2887,3 +2887,330 @@ code {
     max-width: 8rem;
   }
 }
+
+/* The Mats page (ADR 0016, step 7b): the mat fills the window, the panel beside it. */
+.mats-page {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  min-height: 30rem;
+  background: var(--bg);
+}
+
+.mats-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.mats-stage {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.mats-message {
+  position: absolute;
+  top: 0.75rem;
+  left: 50%;
+  z-index: 5;
+  transform: translateX(-50%);
+}
+
+.mats-empty {
+  max-width: 34rem;
+  margin: 2rem auto;
+  padding: 1.25rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+}
+
+.mats-empty h2 {
+  margin-top: 0;
+}
+
+.mats-side {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: clamp(18rem, 26vw, 24rem);
+  padding: 0.75rem;
+  overflow-y: auto;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+}
+
+.mats-side .notice {
+  margin: 0;
+}
+
+.mats-section {
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.mats-section > .field:first-child {
+  margin-top: 0;
+}
+
+.mats-section > .button {
+  margin-top: 0.6rem;
+}
+
+.mats-size {
+  margin: 0.4rem 0 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.mats-confirm {
+  margin: 0.6rem 0 0;
+}
+
+.mats-pose {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0 0.5rem;
+  align-items: start;
+}
+
+.robot-number {
+  align-content: start;
+}
+
+.mats-heading {
+  margin: 0 0 0.4rem;
+  font-size: 0.95rem;
+}
+
+.mats-areas {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mats-areas li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.35rem;
+  padding: 0.4rem;
+  border-radius: 0.4rem;
+}
+
+.mats-areas li[data-selected='true'] {
+  background: var(--bg);
+}
+
+.mats-areas li + li {
+  margin-top: 0.3rem;
+}
+
+.mats-areas .field-input {
+  padding: 0.3rem 0.45rem;
+}
+
+.mats-area-size {
+  grid-column: 1 / -1;
+  font-size: 0.8rem;
+}
+
+.mats-areas .button {
+  justify-self: start;
+}
+
+.mat-view {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--bg);
+  touch-action: none;
+}
+
+.mat-canvas,
+.mat-overlay {
+  position: absolute;
+  inset: 0;
+}
+
+.mat-overlay {
+  cursor: grab;
+  outline: none;
+}
+
+.mat-overlay:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.mat-view[data-tool='ruler'] .mat-overlay,
+.mat-view[data-tool='area'] .mat-overlay {
+  cursor: crosshair;
+}
+
+.mat-edge {
+  fill: none;
+  stroke: var(--text);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.mat-grid line {
+  stroke: rgb(31 95 191 / 28%);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.mat-area rect {
+  fill: rgb(31 95 191 / 8%);
+  stroke: #1f5fbf;
+  stroke-width: 2;
+  stroke-dasharray: 8 5;
+  vector-effect: non-scaling-stroke;
+}
+
+.mat-area[data-kind='start'] rect {
+  fill: rgb(29 140 70 / 12%);
+  stroke: #1d8c46;
+}
+
+.mat-area[data-kind='avoid'] rect {
+  fill: rgb(200 40 40 / 12%);
+  stroke: #c82828;
+}
+
+.mat-area[data-selected='true'] rect {
+  stroke-width: 3.5;
+  stroke-dasharray: none;
+}
+
+.mat-area text,
+.mat-ruler text {
+  fill: #111;
+  font-weight: 700;
+  paint-order: stroke;
+  stroke: #fff;
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+
+.mat-drawing {
+  fill: rgb(31 95 191 / 15%);
+  stroke: #1f5fbf;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.mat-robot-outline {
+  fill: none;
+  stroke: #111;
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+  vector-effect: non-scaling-stroke;
+}
+
+.mat-robot-body {
+  fill: rgb(31 95 191 / 35%);
+  stroke: #1f5fbf;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+  cursor: move;
+}
+
+.mat-robot-wheel {
+  fill: #222;
+}
+
+.mat-robot-sensor {
+  fill: #eb6834;
+  stroke: #fff;
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.mat-robot-heading {
+  stroke: #1f5fbf;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.mat-robot-pivot {
+  fill: #1f5fbf;
+}
+
+.mat-robot-handle {
+  fill: #fff;
+  stroke: #1f5fbf;
+  stroke-width: 2.5;
+  vector-effect: non-scaling-stroke;
+  cursor: grab;
+}
+
+.mat-ruler line {
+  stroke: #d0021b;
+  stroke-width: 2.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.mat-zoom {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+  display: flex;
+  gap: 0.3rem;
+  align-items: center;
+  padding: 0.25rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+}
+
+.mat-zoom .icon-button {
+  width: 2rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.mat-readout {
+  position: absolute;
+  left: 0.6rem;
+  bottom: 0.6rem;
+  margin: 0;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+}
+
+.add-mat-size {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 0.75rem;
+}
+
+@media (max-width: 48rem) {
+  .mats-page {
+    height: auto;
+    min-height: 100dvh;
+  }
+
+  .mats-body {
+    flex-direction: column;
+  }
+
+  .mats-stage {
+    height: 58dvh;
+    flex: none;
+  }
+
+  .mats-side {
+    width: auto;
+    border-left: 0;
+    border-top: 1px solid var(--border);
+    overflow: visible;
+  }
+}
