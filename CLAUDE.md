@@ -98,7 +98,8 @@ entry in [NOTICE](NOTICE).
     editor for it (CodeMirror 6, loaded only when Edit is pressed). **Every block needs a reader
     in `from-python/reader.ts`:** when you add a block or change the Python it makes, change its
     reader in the same change. `from-python/tab.test.ts` reads every toolbox block back and fails
-    when the Python differs.
+    when the Python differs. Give the block a word in `from-python/vocabulary.ts` too, so the
+    editor suggests and explains it; its example must become the block (the test checks).
   - `src/lib/devices/`: live device values ([ADR 0009](docs/adr/0009-live-device-values.md)): the
     reader that `HubConnection.runInRepl()` pastes into the hub's REPL (`hub-source.ts`; every
     Pybricks name it uses is cited there, and tests compile it with the real compiler) and the

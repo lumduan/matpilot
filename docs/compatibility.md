@@ -553,8 +553,9 @@ controller assumed to be those of the earlier runs):
 ## Python editing checks (milestone 8)
 
 These check editing a tab's Python on `/blocks` and turning it back into blocks
-([ADR 0014](adr/0014-python-editing-on-blocks-page.md)). Checks 1 to 8 need no hub. Any program
-works; the steps use the one from the tabs checks (main calls `shapes.square(200)`).
+([ADR 0014](adr/0014-python-editing-on-blocks-page.md)). All but check 9 need no hub. Any program
+works; the steps use the one from the tabs checks (main calls `shapes.square(200)`). Checks 10
+to 12 came after the maintainer's first try (suggestions, help and comments).
 
 1. Open the **Python** panel and press **Edit**. The open tab's Python appears in colour. The
    grey parts (imports, ports, devices, `try:` and `finally:`) refuse typing, and the page says
@@ -590,6 +591,28 @@ works; the steps use the one from the tabs checks (main calls `shapes.square(200
 8. Try a mistake a beginner makes: `print(speeed)` under Main says there is no variable
    "speeed", with an example of how to set one.
 9. With the hub: press **Run** after an update. The program does what the new blocks say.
+10. Suggestions: on a new line under Main, type `robot.`. A list opens: straight, turn, brake,
+    drive. Beside the chosen one, a help box says what it does, the block it becomes
+    ("move forward for … mm") and an example. Press Enter: `robot.straight(200)` appears with
+    200 selected, so typing a number replaces it. Ctrl+Space on an empty line lists your
+    variables, functions and tabs, and `print`, `wait`, `for`, `if` and more.
+11. Help: rest the pointer on `straight` (or `print`, `square`, `Color.RED`). The same help box
+    opens.
+12. Comments: above a line under Main, type `# go forward a bit`, and at the end of another line
+    `# turn here`. **Update blocks**: both are still there, above their lines, and the blocks
+    show a comment bubble (right-click a block, Add Comment, does the same from the blocks).
+
+### Python editing results
+
+| Date       | Browser    | OS         | Hub    | Firmware | Result                                                                       |
+| ---------- | ---------- | ---------- | ------ | -------- | ---------------------------------------------------------------------------- |
+| 2026-11-07 | not stated | not stated | (none) | —        | Checks 1 to 9 tried, no failure reported; two requests (notes), now 10 to 12 |
+
+Notes (2026-11-07; the maintainer, reported in conversation): the checks were tried. Two
+requests came out of them, both built the same day
+([ADR 0014](adr/0014-python-editing-on-blocks-page.md), amendment): suggestions with help, as in
+an editor such as VS Code, because a beginner does not know the names (checks 10 and 11); and a
+way to leave comments in the Python (check 12).
 
 ## Keeping this file current
 

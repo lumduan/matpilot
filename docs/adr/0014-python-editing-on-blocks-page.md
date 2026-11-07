@@ -1,7 +1,8 @@
 # ADR 0014: Editing the Python on the Blocks page
 
 - Status: Accepted
-- Date: 2026-11-07 (proposed; accepted the same day, with every recommended option, and built)
+- Date: 2026-11-07 (proposed; accepted the same day, with every recommended option, and built;
+  amended the same day after the maintainer's first try: suggestions, help, and comments kept)
 - Builds on: [ADR 0006](0006-adopt-pybricks-mpy-cross.md) (the compiler in the browser),
   [ADR 0008](0008-block-editor.md) (block editor), [ADR 0010](0010-simple-blocks.md) (simple
   blocks), [ADR 0013](0013-block-tabs.md) (tabs, and changes undone from the notice)
@@ -82,7 +83,8 @@ The maintainer chose every recommended option on 2026-11-07 ("เอาตาม
 - **D1:** Python that has no block is refused, with a red mark where it is.
 - **D2:** CodeMirror 6 is the editor.
 - **D3:** the open tab's file only; `setup.py` and the Config section stay read-only.
-- **D4:** comments are dropped when the blocks are updated.
+- **D4:** comments are dropped when the blocks are updated. (➡️ Changed the same day, at the
+  maintainer's request: comments are kept as block comments; see the amendment below.)
 
 As built:
 
@@ -114,6 +116,33 @@ As built:
   called **Open in Program page**, so that it is not confused with **Edit**.
 - **Loading:** the editor (CodeMirror, about 330 KB) and the converter (about 135 KB with
   Lezer's parser) load when Edit is pressed. The Blocks page loads as before.
+
+## Amendment, after the maintainer's first try (2026-11-07)
+
+The maintainer tried the checks and asked for two things:
+
+- **Suggestions and help, like an editor such as VS Code,** because a beginner does not know the
+  names. While typing, the editor now suggests what may come next: after `robot.` what the robot
+  can do, after `hub.display.` what the 5×5 lights can do, and on its own the program's
+  variables, devices, functions and tabs as well as `print`, `wait`, `for`, `if` and the rest.
+  Ctrl+Space shows them at any time. A suggestion, and the name under the pointer, show a short
+  help: the call's shape, what it does with its units, the block it becomes, and an example.
+  - The words are in `from-python/vocabulary.ts`. Each example is read back into its block by a
+    test, so the help cannot promise Python the converter refuses.
+  - The units are the ones the blocks themselves show. The Pybricks calls are cited in
+    `pybricks.ts`.
+- **How to leave a comment in the Python.** D4 is changed: comments are kept.
+  - A `#` line becomes the comment of the block below it.
+  - A `#` at the end of a line, or indented under the last line of a loop, goes to that line's
+    block.
+  - Comments after the last line go to the last block; under Main with no block at all, they go
+    to "when the program starts".
+  - Blockly already writes a block's comment into the Python as `#` lines above its code, so after
+    Update blocks the comment is still there: above its line, and in the block's comment bubble.
+- **Found while testing it:** the editor's width changed when its scroll bar came and went (when
+  the problem list below it grew or shrank). Long lines then wrapped differently than the editor
+  had measured: the line numbers and the help under the pointer were a line off. The scroll bar's
+  room is now always kept, and the error-marker column has a fixed width.
 
 ## Consequences
 

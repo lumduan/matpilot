@@ -24,7 +24,8 @@ import {
   type FlyoutItem,
   type ToolboxState,
 } from '../toolbox';
-import { editableRanges, pythonForEditing, readTabPython } from './tab';
+import { editableRanges, programNames, pythonForEditing, readTabPython } from './tab';
+import { wordFor, wordsAfter } from './vocabulary';
 
 type State = Record<string, unknown>;
 
@@ -712,5 +713,147 @@ describe('the parts of a file that can be edited', () => {
     expect(tab.fileName).toBe('empty.py');
     expect(tab.editable.map((range) => tab.text.slice(range.from, range.to))).toEqual(['\n\n']);
     expect(editableRanges(tab.text, false)).toEqual(tab.editable);
+  });
+});
+
+describe('Python back to blocks: comments', () => {
+  const note = (text: string) => ({ comment: { text, pinned: false, height: 80, width: 160 } });
+
+  it('keeps the comments of blocks, which the Python shows as # lines', () => {
+    const program = openProgram([
+      {
+        name: 'main',
+        variables: [...COUNT, ...LAPS],
+        program: [
+          { type: 'mp_move_stop', icons: note('stop first\nthen go on') },
+          {
+            type: 'controls_repeat_ext',
+            icons: note('three times'),
+            inputs: {
+              TIMES: num(3),
+              DO: {
+                block: { type: 'mp_print', icons: note('inside'), inputs: { VALUE: txt('hi') } },
+              },
+            },
+          },
+          callSquare(100),
+        ],
+        blocks: [{ ...square(), icons: note('a square of any size') }],
+      },
+    ]);
+    expect(generateTabs(program).code).toContain('# a square of any size\ndef square(side):');
+    expectRoundTrip(program);
+  });
+
+  it('turns # lines in Python into the comments of the blocks they are about', () => {
+    const program = openProgram([
+      { name: 'main', bare: true, program: [{ type: 'mp_light_off' }] },
+    ]);
+    const text = withMain(
+      program,
+      [
+        '# start with the light',
+        'hub.light.on(Color.GREEN)  # green means go',
+        'for count in range(2):',
+        '    # say it twice',
+        "    print('go')",
+        '    # end of the loop',
+        '# the last line',
+        'hub.display.off()',
+        '# nothing after this',
+      ].join('\n'),
+    ).replace(
+      /(# --- Functions -+\n)\n/,
+      "$1\n# says hello\ndef hello():\n    print('hello')  # once\n",
+    );
+    const read = readTabPython(program, MAIN_TAB_ID, text);
+    expect(read.problems).toEqual([]);
+    Blockly.serialization.workspaces.load(read.state!, program[0]!.workspace);
+    const code = generateTabs(program).code;
+    expect(code).toContain("# says hello\ndef hello():\n    # once\n    print('hello')\n");
+    expect(code).toContain(
+      [
+        '# start with the light',
+        '# green means go',
+        'hub.light.on(Color.GREEN)',
+        'for count in range(2):',
+        '    # say it twice',
+        '    # end of the loop',
+        "    print('go')",
+        '# the last line',
+        '# nothing after this',
+        'hub.display.off()',
+      ].join('\n'),
+    );
+    const light = program[0]!.workspace.getBlocksByType('mp_light_button', false)[0]!;
+    expect(light.getCommentText()).toBe('start with the light\ngreen means go');
+    // Read again, the Python stays the same.
+    expectRoundTrip(program);
+  });
+});
+
+describe('the editor’s suggestions and help', () => {
+  it('know this program’s names', () => {
+    const program = openProgram([
+      { name: 'main', variables: [...COUNT, ...LAPS], program: [callSquare(10)] },
+      { name: 'shapes', variables: LAPS, blocks: [square()] },
+    ]);
+    expect(programNames(program, program[0]!)).toEqual({
+      variables: ['count'],
+      shared: ['laps'],
+      devices: [
+        { name: 'arm', type: 'Motor' },
+        { name: 'eye', type: 'ColorSensor' },
+        { name: 'sonar', type: 'UltrasonicSensor' },
+        { name: 'button', type: 'ForceSensor' },
+      ],
+      functions: [{ name: 'square', inputs: ['side'], tab: 'shapes' }],
+      tabs: ['shapes'],
+    });
+    expect(
+      wordsAfter('shapes', programNames(program, program[0]!)).map((word) => word.insert),
+    ).toEqual(['square(${side})']);
+  });
+
+  it('give examples that become the blocks they name', () => {
+    const program = openProgram([
+      { name: 'main', variables: [...COUNT, ...LAPS], program: [{ type: 'mp_light_off' }] },
+    ]);
+    const names = programNames(program, program[0]!);
+    const contexts = [
+      ...['', 'robot', 'hub', 'hub.light', 'hub.display', 'hub.speaker', 'hub.imu', 'hub.buttons'],
+      ...['timer', 'random', 'math', 'motor_c', 'colour_sensor_d', 'distance_sensor_e'],
+      ...['touch_sensor_f', 'arm', 'eye', 'sonar', 'button'],
+    ];
+    let checked = 0;
+    for (const context of contexts) {
+      for (const word of wordsAfter(context, names)) {
+        if (!word.example || !word.blockType) continue;
+        const read = readTabPython(program, MAIN_TAB_ID, withMain(program, word.example));
+        expect(read.problems, `${context}.${word.label}: ${word.example}`).toEqual([]);
+        expect(JSON.stringify(read.state), `${context}.${word.label}`).toContain(
+          `"type":"${word.blockType}"`,
+        );
+        checked += 1;
+      }
+    }
+    expect(checked).toBeGreaterThan(80);
+  });
+
+  it('explain the name under the pointer', () => {
+    const names = {
+      variables: [],
+      shared: [],
+      devices: [{ name: 'arm', type: 'Motor' as const }],
+      functions: [],
+      tabs: [],
+    };
+    expect(wordFor(['robot', 'straight'])?.blockType).toBe('mp_move');
+    expect(wordFor(['hub', 'display', 'icon'])?.blockType).toBe('mp_hub_display_icon');
+    expect(wordFor(['motor_a', 'run_angle'])?.blockType).toBe('mp_motor_run_for');
+    expect(wordFor(['arm', 'run_target'], names)?.blockType).toBe('mp_motor_run_target');
+    expect(wordFor(['print'])?.blockType).toBe('mp_print');
+    expect(wordFor(['Color', 'RED'])?.info).toMatch(/hub light.*colour sensor/);
+    expect(wordFor(['robot', 'nothing'])).toBeNull();
   });
 });
