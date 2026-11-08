@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { DocsNext } from '@/components/docs/DocsNav';
 import { PybricksInstall } from '@/components/docs/PybricksInstall';
+import { PybricksInstallEv3 } from '@/components/docs/PybricksInstallEv3';
 import { Shot } from '@/components/docs/Shot';
 import { CableIcon, ComputerIcon, HubIcon } from '@/components/docs/icons';
 import { PROJECT_NAME } from '@/lib/project';
@@ -9,7 +10,7 @@ import { PROJECT_NAME } from '@/lib/project';
 export const metadata: Metadata = {
   title: `Get started – ${PROJECT_NAME}`,
   description:
-    'What you need, putting Pybricks on a SPIKE Prime hub, connecting, and a first program.',
+    'What you need, putting Pybricks on a SPIKE Prime hub, connecting, a first program, and getting a LEGO MINDSTORMS EV3 ready.',
 };
 
 export default function GetStarted() {
@@ -127,6 +128,8 @@ export default function GetStarted() {
           </li>
         </ul>
       </section>
+
+      <PybricksInstallEv3 />
       <DocsNext from="/docs/get-started" />
     </>
   );
