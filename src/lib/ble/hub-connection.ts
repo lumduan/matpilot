@@ -11,6 +11,10 @@
  * - A lost connection cannot stop the program: the firmware stops programs only on the stop
  *   command, the stop button, or shutdown, never on a disconnect. The UI says so.
  *
+ * It connects over Bluetooth (connect()) or, for hubs on Pybricks v4.1.1 or newer, over a USB
+ * cable (connectUsb(), docs/adr/0018-usb-connection.md, ../usb/serial-link.ts). The commands and
+ * events are the same bytes on both; only how they travel differs.
+ *
  * Besides uploaded programs, it can run source text in the hub's built-in REPL (runInRepl), which
  * leaves the stored program slots untouched (docs/adr/0009-live-device-values.md). The REPL's
  * output goes to onReplOutput(), never to onOutput().
@@ -56,6 +60,14 @@ import {
   type ProbeError,
 } from './errors';
 import { createHubRequestOptions } from './hub-probe';
+import { classifyRequestPortError, describeUsbError, usbUnavailableError } from '../usb/errors';
+import {
+  READ,
+  SerialLink,
+  USB_PORT_FILTERS,
+  type SerialLike,
+  type SerialPortLike,
+} from '../usb/serial-link';
 
 // ---------------------------------------------------------------------------------------------
 // Minimal views of the Web Bluetooth objects this module uses (including writes)
@@ -99,6 +111,8 @@ export interface ControlBluetoothLike {
 // ---------------------------------------------------------------------------------------------
 
 export interface ConnectedHub {
+  /** How the page reaches the hub. */
+  readonly via: 'bluetooth' | 'usb';
   readonly name: string | null;
   readonly firmwareRevision: string;
   readonly firmwareVersion: FirmwareVersion | null;
@@ -226,6 +240,8 @@ export const PROGRAM_END_TIMEOUT_MS = 2000;
 const MIN_PROTOCOL_MINOR = 3;
 /** START with a program id, and so the REPL by id, needs protocol 1.4.0 (section 3). */
 const REPL_PROTOCOL_MINOR = 4;
+/** USB came with protocol 1.6.0 (docs/protocol/pybricks-usb.md section 1). */
+const USB_PROTOCOL_MINOR = 6;
 
 /** How long disconnect() waits for STOP to be acknowledged before disconnecting anyway. */
 export const STOP_BEFORE_DISCONNECT_TIMEOUT_MS = 1500;
@@ -235,6 +251,16 @@ type Listener<T> = (value: T) => void;
 function defaultBluetooth(): ControlBluetoothLike | undefined {
   if (typeof navigator === 'undefined') return undefined;
   return (navigator as Navigator & { bluetooth?: ControlBluetoothLike }).bluetooth;
+}
+
+function defaultSerial(): SerialLike | undefined {
+  if (typeof navigator === 'undefined') return undefined;
+  return (navigator as Navigator & { serial?: SerialLike }).serial;
+}
+
+/** A characteristic's bytes as the DataView the decoders take. */
+function view(bytes: Uint8Array): DataView {
+  return new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
 }
 
 function normalizeName(name: string | undefined): string | null {
@@ -253,10 +279,14 @@ export class HubConnection {
   readonly #outputListeners = new Set<Listener<Uint8Array>>();
   readonly #getBluetooth: () => ControlBluetoothLike | undefined;
   readonly #replListeners = new Set<Listener<Uint8Array>>();
+  readonly #getSerial: () => SerialLike | undefined;
   #device: ControlDeviceLike | null = null;
   #control: ControlCharacteristicLike | null = null;
+  /** The USB link, when connected over USB; then #device and #control are null. */
+  #usb: SerialLink | null = null;
+  #usbName: string | null = null;
   #attempt = 0;
-  /** Serialises GATT operations. */
+  /** Serialises writes to the hub. */
   #queue: Promise<unknown> = Promise.resolve();
   /** Re-checked after every notification and on disconnect (see #waitFor). */
   readonly #waiters = new Set<() => void>();
@@ -267,11 +297,20 @@ export class HubConnection {
   #replStartSent = false;
   #replSeenRunning = false;
 
-  constructor(bluetooth?: ControlBluetoothLike | (() => ControlBluetoothLike | undefined)) {
+  constructor(
+    bluetooth?: ControlBluetoothLike | (() => ControlBluetoothLike | undefined),
+    serial?: SerialLike | (() => SerialLike | undefined),
+  ) {
     if (typeof bluetooth === 'function') this.#getBluetooth = bluetooth;
     else if (bluetooth) this.#getBluetooth = () => bluetooth;
     else this.#getBluetooth = defaultBluetooth;
+    if (typeof serial === 'function') this.#getSerial = serial;
+    else if (serial) this.#getSerial = () => serial;
+    else this.#getSerial = defaultSerial;
   }
+
+  /** Whether this browser can connect with a USB cable (Web Serial). */
+  readonly canUseUsb = (): boolean => this.#getSerial() !== undefined;
 
   readonly getSnapshot = (): ConnectionSnapshot => this.#snapshot;
 
@@ -386,6 +425,7 @@ export class HubConnection {
       this.#setLink({
         status: 'ready',
         hub: {
+          via: 'bluetooth',
           name: deviceName,
           firmwareRevision,
           firmwareVersion: parseFirmwareVersion(firmwareRevision),
@@ -409,12 +449,117 @@ export class HubConnection {
   }
 
   /**
+   * Opens the browser's port picker and connects with a USB cable. The hub needs Pybricks v4.1.1
+   * or newer (docs/protocol/pybricks-usb.md). Call from a click handler. Never rejects.
+   */
+  async connectUsb(): Promise<void> {
+    const { status } = this.#snapshot.link;
+    if (status === 'requesting' || status === 'connecting' || status === 'ready') return;
+    const serial = this.#getSerial();
+    if (!serial) {
+      this.#setLink({ status: 'error', error: usbUnavailableError(), deviceName: null });
+      return;
+    }
+    const attempt = ++this.#attempt;
+    this.#set({
+      link: { status: 'requesting' },
+      program: { phase: 'idle' },
+      flags: INITIAL_FLAGS,
+      repl: REPL_OFF,
+    });
+
+    let port: SerialPortLike;
+    try {
+      // requestPort() must be the first awaited call so it runs inside the user gesture.
+      port = await serial.requestPort({ filters: USB_PORT_FILTERS });
+    } catch (error) {
+      if (attempt !== this.#attempt) return;
+      const outcome = classifyRequestPortError(error);
+      this.#setLink(
+        outcome.kind === 'cancelled'
+          ? { status: 'no-device-selected' }
+          : { status: 'error', error: outcome.error, deviceName: null },
+      );
+      return;
+    }
+    if (attempt !== this.#attempt) return;
+    this.#setLink({ status: 'connecting', deviceName: null });
+
+    let link: SerialLink | null = null;
+    try {
+      const opened = await SerialLink.open(port, {
+        onEvent: (data) => {
+          if (link !== null && this.#usb === link) this.#handleEvent(view(data));
+        },
+        onLost: () => {
+          if (link !== null) this.#handleUsbLost(link);
+        },
+      });
+      link = opened;
+      if (attempt !== this.#attempt) {
+        void opened.close();
+        return;
+      }
+      this.#usb = opened;
+      this.#usbName = normalizeName(decodeRevisionString(await opened.read(READ.name)));
+      const firmwareRevision = decodeRevisionString(await opened.read(READ.firmwareRevision));
+      const protocolRevision = decodeRevisionString(await opened.read(READ.protocolRevision));
+      const protocolVersion = parseProtocolVersion(protocolRevision);
+      if (
+        !protocolVersion ||
+        protocolVersion.major !== 1 ||
+        protocolVersion.minor < USB_PROTOCOL_MINOR
+      ) {
+        throw unsupportedFirmwareError(
+          `The hub reports Pybricks protocol "${protocolRevision}"; USB needs 1.${USB_PROTOCOL_MINOR} or newer within 1.x (Pybricks v4.1.1 or newer).`,
+        );
+      }
+      const capabilities = decodeHubCapabilities(view(await opened.read(READ.capabilities)));
+      if ((capabilities.featureFlags & FeatureFlag.USER_PROG_FORMAT_MULTI_MPY_V6) === 0) {
+        throw unsupportedFirmwareError(
+          'The hub does not accept programs in the MicroPython .mpy v6 format.',
+        );
+      }
+      // The hub sends events only to a host that subscribed; it answers with a status report.
+      await opened.subscribe(true);
+      if (attempt !== this.#attempt) return;
+      this.#setLink({
+        status: 'ready',
+        hub: {
+          via: 'usb',
+          name: this.#usbName,
+          firmwareRevision,
+          firmwareVersion: parseFirmwareVersion(firmwareRevision),
+          protocolRevision,
+          protocolVersion,
+          capabilities,
+          supportsRepl:
+            protocolVersion.minor >= REPL_PROTOCOL_MINOR &&
+            (capabilities.featureFlags & FeatureFlag.BUILTIN_REPL) !== 0,
+        },
+      });
+    } catch (error) {
+      if (attempt !== this.#attempt) return;
+      if (link) {
+        if (this.#usb === link) this.#usb = null;
+        this.#queue = Promise.resolve();
+        void link.close();
+      }
+      const probeError =
+        typeof error === 'object' && error !== null && 'kind' in error && 'title' in error
+          ? (error as ProbeError)
+          : describeUsbError(error);
+      this.#setLink({ status: 'error', error: probeError, deviceName: this.#usbName });
+    }
+  }
+
+  /**
    * Uploads a packed program (src/lib/pybricks/mpy.ts) and starts it. Resolves when the hub has
    * accepted the start command; output arrives through onOutput().
    */
   async run(program: Uint8Array): Promise<RunResult> {
     const link = this.#snapshot.link;
-    if (link.status !== 'ready' || !this.#control)
+    if (link.status !== 'ready' || !this.#connected())
       return { ok: false, error: { kind: 'not-connected' } };
     if (this.#snapshot.program.phase !== 'idle' || this.#snapshot.flags.userProgramRunning) {
       return { ok: false, error: { kind: 'busy' } };
@@ -457,7 +602,7 @@ export class HubConnection {
 
   /** Asks the hub to stop the running program. Never rejects. */
   async stop(): Promise<boolean> {
-    if (this.#snapshot.link.status !== 'ready' || !this.#control) return false;
+    if (this.#snapshot.link.status !== 'ready' || !this.#connected()) return false;
     if (this.#snapshot.program.phase !== 'idle') this.#setProgram({ phase: 'stopping' });
     try {
       await this.#write(encodeStopUserProgram());
@@ -470,7 +615,7 @@ export class HubConnection {
   /** Sends text to the program's stdin (for example `input()`). Never rejects. */
   async writeStdin(text: string): Promise<boolean> {
     const link = this.#snapshot.link;
-    if (link.status !== 'ready' || !this.#control) return false;
+    if (link.status !== 'ready' || !this.#connected()) return false;
     if (this.#snapshot.repl.phase !== 'off') return false;
     try {
       const writes = encodeStdinWrites(
@@ -494,7 +639,7 @@ export class HubConnection {
    */
   async runInRepl(source: string): Promise<ReplResult> {
     const link = this.#snapshot.link;
-    if (link.status !== 'ready' || !this.#control)
+    if (link.status !== 'ready' || !this.#connected())
       return { ok: false, error: { kind: 'not-connected' } };
     if (!link.hub.supportsRepl) return { ok: false, error: { kind: 'unsupported' } };
     if (
@@ -581,7 +726,7 @@ export class HubConnection {
 
   /** Sends one byte of stdin to a running REPL session, as a keep-alive. Never rejects. */
   async keepReplAlive(): Promise<boolean> {
-    if (this.#snapshot.repl.phase !== 'running' || !this.#control) return false;
+    if (this.#snapshot.repl.phase !== 'running' || !this.#connected()) return false;
     try {
       await this.#write(encodeWriteStdin(Uint8Array.of(0x2e)));
       return true;
@@ -598,16 +743,18 @@ export class HubConnection {
   /** Stops a running program (best effort, bounded wait), then disconnects. */
   async disconnect(): Promise<void> {
     const device = this.#device;
-    if (!device) return;
+    const usb = this.#usb;
+    if (!device && !usb) return;
     await this.#stopIfRunning();
-    if (this.#device !== device) return;
+    if (this.#device !== device || this.#usb !== usb) return;
     const programWasRunning = this.#snapshot.flags.userProgramRunning;
     this.#attempt++;
-    this.#release(device);
+    if (device) this.#release(device);
+    const closing = usb ? this.#releaseUsb(usb) : null;
     this.#set({
       link: {
         status: 'disconnected',
-        deviceName: normalizeName(device.name),
+        deviceName: device ? normalizeName(device.name) : this.#usbName,
         reason: 'user',
         programWasRunning,
       },
@@ -616,18 +763,26 @@ export class HubConnection {
       repl: REPL_OFF,
     });
     this.#notifyWaiters();
+    // Over USB, wait for the port to close, so it can be chosen again at once.
+    await closing;
   }
 
   /** For page unload or unmount: stop (best effort, not awaited for long) and release. */
   dispose(): void {
     const device = this.#device;
+    const usb = this.#usb;
     if (this.#control && this.#snapshot.flags.programRunning) {
       void this.#control
         .writeValueWithResponse(asBufferSource(encodeStopUserProgram()))
         .catch(() => undefined);
     }
+    // Over USB, STOP goes ahead of the unsubscribe and the close in the link's own queue.
+    if (usb && this.#snapshot.flags.programRunning) {
+      void usb.command(encodeStopUserProgram()).catch(() => undefined);
+    }
     this.#attempt++;
     if (device) this.#release(device);
+    if (usb) void this.#releaseUsb(usb);
     if (this.#snapshot !== INITIAL_CONNECTION_SNAPSHOT) this.#set(INITIAL_CONNECTION_SNAPSHOT);
     this.#notifyWaiters();
   }
@@ -732,24 +887,36 @@ export class HubConnection {
 
   async #stopIfRunning(): Promise<void> {
     const running = this.#snapshot.flags.programRunning || this.#snapshot.program.phase !== 'idle';
-    if (!running || !this.#control) return;
+    if (!running || !this.#connected()) return;
     await Promise.race([
       this.stop(),
       new Promise((resolve) => setTimeout(resolve, STOP_BEFORE_DISCONNECT_TIMEOUT_MS)),
     ]);
   }
 
+  #connected(): boolean {
+    return this.#control !== null || this.#usb !== null;
+  }
+
+  /** Writes one command: a GATT write with response, or a USB command answered by the hub. */
   #write(value: Uint8Array): Promise<void> {
     const control = this.#control;
-    if (!control) return Promise.reject(new Error('Not connected.'));
-    const run = this.#queue.then(() => control.writeValueWithResponse(asBufferSource(value)));
+    const usb = this.#usb;
+    if (!control && !usb) return Promise.reject(new Error('Not connected.'));
+    const run = this.#queue.then(() =>
+      usb ? usb.command(value) : control!.writeValueWithResponse(asBufferSource(value)),
+    );
     this.#queue = run.catch(() => undefined);
     return run;
   }
 
   readonly #handleNotification = (event: Event): void => {
     const value = (event.target as ControlCharacteristicLike | null)?.value;
-    if (!value) return;
+    if (value) this.#handleEvent(value);
+  };
+
+  /** A Pybricks event, from a Bluetooth notification or a USB event message. */
+  #handleEvent(value: DataView): void {
     const decoded = decodeHubEvent(value);
     if (!decoded) return;
     if (decoded.type === 'stdout') {
@@ -811,7 +978,34 @@ export class HubConnection {
     }
     this.#set({ ...this.#snapshot, program, flags, repl });
     this.#notifyWaiters();
-  };
+  }
+
+  /** The USB cable was pulled or the hub turned off: a running program keeps running. */
+  #handleUsbLost(link: SerialLink): void {
+    if (this.#usb !== link) return;
+    const programWasRunning = this.#snapshot.flags.userProgramRunning;
+    this.#attempt++;
+    this.#usb = null;
+    this.#queue = Promise.resolve();
+    this.#set({
+      link: {
+        status: 'disconnected',
+        deviceName: this.#usbName,
+        reason: 'lost',
+        programWasRunning,
+      },
+      program: { phase: 'idle' },
+      flags: INITIAL_FLAGS,
+      repl: REPL_OFF,
+    });
+    this.#notifyWaiters();
+  }
+
+  #releaseUsb(link: SerialLink): Promise<void> {
+    if (this.#usb === link) this.#usb = null;
+    this.#queue = Promise.resolve();
+    return link.close();
+  }
 
   readonly #handleDisconnected = (): void => {
     const device = this.#device;

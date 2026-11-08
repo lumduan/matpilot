@@ -82,7 +82,14 @@ entry in [NOTICE](NOTICE).
 
 - `src/lib/` is **framework-agnostic TypeScript**: no React, no Next.js (ESLint enforces this). All
   Web Bluetooth and Pybricks protocol code lives here:
-  - `src/lib/ble/`: Bluetooth transport and the hub probe
+  - `src/lib/ble/`: Bluetooth transport and the hub probe; `hub-connection.ts` also connects over
+    a USB cable through `src/lib/usb/`
+  - `src/lib/usb/`: the USB link for hubs on Pybricks v4.1.1 or newer
+    ([ADR 0018](docs/adr/0018-usb-connection.md)): Web Serial, SPIKE-variant COBS frames
+    (`cobs.ts`, ported from the firmware), the messages and one request at a time
+    (`serial-link.ts`), and a fake hub for tests. Its Pybricks facts are in
+    [docs/protocol/pybricks-usb.md](docs/protocol/pybricks-usb.md), cited at v4.1.3; extend that
+    page before code uses another USB message
   - `src/lib/pybricks/`: UUIDs (single source of truth: `uuids.ts`), version parsing, baselines
   - `src/lib/compat/`: browser compatibility checks
   - `src/lib/monitor/`: stdout line splitting, the monitor log, and the plotter's parser and scale

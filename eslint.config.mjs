@@ -29,6 +29,12 @@ export default defineConfig([
           message:
             'Keep Web Bluetooth access in src/lib/ble/ (framework-agnostic). Call that module from components instead.',
         },
+        {
+          object: 'navigator',
+          property: 'serial',
+          message:
+            'Keep Web Serial (USB) access in src/lib/usb/ and src/lib/ble/hub-connection.ts. Call them from hooks instead.',
+        },
       ],
     },
   },

@@ -24,6 +24,9 @@ What works today:
   not if they cannot.
 - **Read-only hub probe:** connects to a SPIKE Prime hub running Pybricks firmware and reads its
   name, firmware revision, and protocol version. It writes nothing to the hub.
+- **USB cable** (built, not yet tried on a hub): besides Bluetooth, the Blocks, Program and
+  calibration pages connect with a USB cable to a hub on Pybricks v4.1.1 or newer, through Web
+  Serial ([ADR 0018](docs/adr/0018-usb-connection.md)).
 - **Blocks** (`/blocks`): snap blocks together to program the hub in a full-window editor. Simple
   blocks for beginners choose motors and sensors by port and set turns, steering, speeds and the
   hub's lights with pictures: a dial, a steering path, a lever, a 5×5 grid. The detailed blocks,
@@ -131,7 +134,8 @@ then `pnpm dev` (port 3000) or `pnpm build`. See [CONTRIBUTING.md](CONTRIBUTING.
 - [docs/architecture.md](docs/architecture.md): layers, data flow, and what is implemented
 - [docs/compatibility.md](docs/compatibility.md): browser and platform support matrix
 - [docs/protocol/pybricks-ble.md](docs/protocol/pybricks-ble.md): the Pybricks BLE protocol MatPilot
-  uses, cited to upstream source
+  uses, cited to upstream source; [pybricks-usb.md](docs/protocol/pybricks-usb.md): the same over
+  a USB cable
 - [docs/roadmap.md](docs/roadmap.md): planned milestones
 - [docs/adr/](docs/adr/): architecture decision records
 - [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md), [CLAUDE.md](CLAUDE.md) (for AI

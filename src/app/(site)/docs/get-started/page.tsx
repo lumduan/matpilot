@@ -73,6 +73,29 @@ export default function GetStarted() {
         />
       </section>
 
+      <section className="doc-section" aria-labelledby="usb-title">
+        <h2 id="usb-title">Or connect with a USB cable</h2>
+        <p>
+          With <strong>Pybricks v4.1.1 or newer</strong> on the hub, a USB cable works too: no
+          pairing, and nothing else nearby gets in the way. Plug the hub in, turn it on, and press{' '}
+          <strong>USB</strong> beside Connect hub. The browser lists the hub; choose it.
+        </p>
+        <ul className="doc-notes">
+          <li>
+            Older Pybricks, such as v4.0.1, and the LEGO® app’s firmware only charge over USB.
+            Update with the steps above: Pybricks’ installer puts the newest Pybricks on the hub.
+          </li>
+          <li>
+            The USB button appears only in browsers that can use it: Chrome and Edge on a computer,
+            and newer Chrome on Android.
+          </li>
+          <li>On Linux, your user must be allowed to use serial ports (the dialout group).</li>
+          <li>
+            Pulling the cable out does not stop a program: press the hub’s centre button to stop it.
+          </li>
+        </ul>
+      </section>
+
       <section className="doc-section" aria-labelledby="first-title">
         <h2 id="first-title">Your first program</h2>
         <p>
