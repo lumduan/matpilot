@@ -138,6 +138,15 @@ Get started, Blocks, Robots, Mats, For grown-ups and Credits. The Blocks page's 
 there, so the blocks get the whole window. The pictures are retaken with
 `scripts/docs-pictures/docs_pictures.py` after a change to a page they show.
 
+**Every block and the Docs search (built 2026-11-08, asked for: "the Docs should explain every
+block, what it is for and when to use it, in case some overlap", and "a search in the Docs").**
+A Docs page, **Every block**, gives each block its words, what it does, when to use it, the
+Python it makes and the blocks it is easy to mix up with (print or write, wait in seconds or
+milliseconds, and eight more), from `src/lib/blocks/reference.ts`; a test fails when a toolbox
+block has no entry or an entry's words, shape or Python differ from the real block. A search box
+at the top of the Docs' menu finds any section or block; it reads the Docs pages from the site
+the first time it is used, so it never needs its own list.
+
 ### 1 · Pybricks protocol documentation (done)
 
 [`docs/protocol/pybricks-ble.md`](protocol/pybricks-ble.md) describes every part of the Pybricks BLE

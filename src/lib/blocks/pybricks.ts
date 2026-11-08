@@ -31,6 +31,9 @@
  * - hub.light.on(color), off(): FW pybricks/common/pb_type_colorlight_internal.c#L35-L55
  * - hub.display.text(text, on=500, off=50), number(number), icon(icon), off():
  *   FW pybricks/common/pb_type_lightmatrix.c#L321-L342 #L226-L235 #L95-L149 #L172-L179
+ * - hub.display.text() shows one character at a time (on for `on` ms, then off for `off` ms) and
+ *   the program waits until the last one: FW pybricks/common/pb_type_lightmatrix.c#L285-L340; a
+ *   character outside 32 to 126 (English letters, digits and signs) is an error: #L295-L298
  * - hub.speaker.beep(frequency=500, duration=100): FW pybricks/common/pb_type_speaker.c#L93-L119
  * - hub.buttons.pressed() returns a set of Button: FW pybricks/common/pb_type_keypad.c#L25-L34,
  *   FW pybricks/hubs/pb_type_primehub.c#L45-L62
