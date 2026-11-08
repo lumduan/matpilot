@@ -61,11 +61,11 @@ Every Pybricks fact is cited, with its commit, in
 
 - To use USB, the maintainer updates the hub with Pybricks' installer (the Docs' Get started
   page), then runs the [USB checks](../compatibility.md#usb-connection-checks-milestone-11).
-- **Open decision for the maintainer:** after the update, move MatPilot's tested baseline from
-  v4.0.1 to v4.1.x. That means running the Bluetooth checks again on v4.1.x and re-citing
-  docs/protocol/pybricks-ble.md at the new commit, whose facts partly change (for example stdin
-  holds 512 bytes, not 64). New users get v4.1.x from Pybricks' installer already, so this is
-  worth doing soon.
+- **Decided 2026-11-08 (the maintainer: "move to 4.1"):** MatPilot's tested baseline is now
+  v4.1.3, with every firmware citation re-checked at that release; the hardware checks recorded
+  before were on v4.0.1. It means running the Bluetooth checks again on v4.1.3, and
+  docs/protocol/pybricks-ble.md is re-cited at the new commit, where some facts differ (for
+  example stdin holds 512 bytes, not 64). New users get v4.1.x from Pybricks' installer already.
 - The hardware test page (/hardware-test) still probes over Bluetooth only.
 - Not built: choosing a hub by name in the port list (the browser shows the USB product name,
   which Pybricks sets to the hub's name since v4.1.0), and keeping a USB and a Bluetooth link at

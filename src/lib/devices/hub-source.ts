@@ -9,15 +9,15 @@
  * KEEPALIVE_TIMEOUT_MS (for example when the Bluetooth link is lost), so it never keeps the hub
  * busy unattended.
  *
- * Every Pybricks name is cited at v4.0.1,
- * FW = https://github.com/pybricks/pybricks-micropython/blob/4104553405decb0384bcfb030fbfcb4b5a9854cc/
- * and its MicroPython, MP = https://github.com/pybricks/micropython/blob/13580b6ad057173f62e8b2363e01d6851bcc6699/
+ * Every Pybricks name is cited at v4.1.3,
+ * FW = https://github.com/pybricks/pybricks-micropython/blob/c860b6a00301fb7c6ecd429da11dcb5a6c557c7a/
+ * and its MicroPython, MP = https://github.com/pybricks/micropython/blob/740cbf265cda4d404fef11848e3bdf32fcd24420/
  *
- * - pybricks.iodevices.PUPDevice: FW pybricks/iodevices/pb_module_iodevices.c#L86. Its info()
- *   returns a dict whose "id" is the device type id: FW pybricks/iodevices/pb_type_iodevices_pupdevice.c#L91-L128.
+ * - pybricks.iodevices.PUPDevice: FW pybricks/iodevices/pb_module_iodevices.c#L89. Its info()
+ *   returns a dict whose "id" is the device type id: FW pybricks/iodevices/pb_type_iodevices_pupdevice.c#L90-L127.
  *   On an empty port the constructor raises OSError (ENODEV) at once, without waiting: the LEGO
- *   UART device reports "no device" (FW lib/pbio/src/port_lump.c#L1089-L1093), which
- *   FW pybricks/common/pb_type_device.c#L145-L170 raises.
+ *   UART device reports "no device" (FW lib/pbio/src/port_lump/protocol.c#L961-L965), which
+ *   FW pybricks/common/pb_type_device.c#L169-L195 raises.
  * - Device type ids (61 colour, 62 ultrasonic, 63 force; the motors): FW lib/lego/lego/lump.h#L428-L486
  * - Motor(port) raises OSError for a device that is not a motor with rotation sensors:
  *   FW pybricks/common/pb_type_motor.c#L120-L126. It resets the angle to the absolute position
@@ -25,15 +25,15 @@
  * - Motor.angle(), speed(); ColorSensor.color(), reflection(); UltrasonicSensor.distance();
  *   ForceSensor.force(), pressed(); PrimeHub().imu.tilt(): cited in src/lib/blocks/pybricks.ts.
  *   ColorSensor.color() and reflection() use the same sensor mode (RGB_I), so reading both does
- *   not switch modes: FW pybricks/pupdevices/pb_type_pupdevices_colorsensor.c#L49-L55 #L109-L116
- * - color() returns one of the default colours, in this order: FW pybricks/util_pb/pb_color_map.c#L45-L56
+ *   not switch modes: FW pybricks/pupdevices/pb_type_pupdevices_colorsensor.c#L44-L51 #L80-L87
+ * - color() returns one of the default colours, in this order: FW lib/pbio/src/color/color_map.c#L50-L57
  * - Keep-alive: select.poll() on sys.stdin. Prime has `select` and sys.stdin
- *   (FW bricks/_common/mpconfigport.h#L22 #L26 #L97; level 1 on Prime: bricks/primehub/mpconfigport.h#L70),
- *   and the hub reports stdin as readable when bytes are waiting: FW bricks/_common/mphalport.c#L34-L42.
- *   MP extmod/modselect.c#L674, MP py/modsys.c#L344.
+ *   (FW bricks/_common/mpconfigport.h#L22 #L26 #L98; level 1 on Prime: bricks/primehub_f4/mpconfigport.h#L72),
+ *   and the hub reports stdin as readable when bytes are waiting: FW bricks/_common/mphalport.c#L35-L43.
+ *   MP extmod/modselect.c#L676, MP py/modsys.c#L352.
  * - `raise SystemExit` at the end makes the REPL itself exit, so the hub reports that no program
- *   runs: MP shared/runtime/pyexec.c#L142-L145 and #L671-L674. MatPilot's STOP does the same
- *   (FW bricks/_common/micropython.c#L45-L57).
+ *   runs: MP shared/runtime/pyexec.c#L166-L185 and #L727-L730. MatPilot's STOP does the same
+ *   (FW bricks/_common/micropython.c#L44-L56).
  */
 
 /** Device type ids from FW lib/lego/lego/lump.h#L428-L486. */
@@ -43,7 +43,7 @@ export const TYPE_ID = {
   FORCE_SENSOR: 63,
 } as const;
 
-/** Colours that ColorSensor.color() reports by default, in the order of pb_color_map.c. */
+/** Colours that ColorSensor.color() reports by default, in the order of lib/pbio/src/color/color_map.c. */
 export const LIVE_COLORS = ['RED', 'YELLOW', 'GREEN', 'BLUE', 'WHITE', 'NONE'] as const;
 export type LiveColor = (typeof LIVE_COLORS)[number];
 
@@ -144,7 +144,7 @@ raise SystemExit
 /**
  * The text actually pasted: blank lines dropped and each 4-space indent as one tab, which makes it
  * about a quarter shorter to send. MicroPython's lexer advances a tab to the next tab stop, so
- * consistent tabs indent exactly like consistent spaces (MP py/lexer.c#L139-L141).
+ * consistent tabs indent exactly like consistent spaces (MP py/lexer.c#L144-L146).
  */
 export function compactSource(source: string): string {
   return (

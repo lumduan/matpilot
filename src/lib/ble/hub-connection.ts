@@ -214,17 +214,20 @@ export const INITIAL_CONNECTION_SNAPSHOT: ConnectionSnapshot = Object.freeze<Con
 /**
  * The REPL session (docs/protocol/pybricks-ble.md section 8). MicroPython's friendly REPL prints
  * this prompt, enters paste mode on Ctrl-E with the header below, echoes each pasted byte, and runs
- * the paste on Ctrl-D. Cited at pybricks/micropython 13580b6: py/repl.h#L49-L51 (prompt),
- * shared/runtime/pyexec.c#L628-L652 (paste mode).
+ * the paste on Ctrl-D. Cited at pybricks/micropython 740cbf2 (the submodule of Pybricks v4.1.3):
+ * py/repl.h#L49-L51 (prompt),
+ * shared/runtime/pyexec.c#L682-L706 (paste mode).
  */
 const REPL_PROMPT = '>>> ';
 const REPL_PASTE_HEADER = 'Ctrl-D to finish\r\n=== ';
 const CTRL_D = 0x04;
 const CTRL_E = 0x05;
 /**
- * SPIKE Prime buffers 64 bytes of stdin (FW lib/pbio/platform/prime_hub/pbsysconfig.h#L21), of
- * which its ring buffer can hold 63 (FW lib/lwrb/src/lwrb/lwrb.c#L274-L286). Bytes not yet echoed
- * are at most what the buffer still holds, so keeping them at or below 60 can never overflow it.
+ * The hub's stdin buffer is as big as its largest command (FW lib/pbio/sys/host.c#L69-L78): 512
+ * bytes on SPIKE Prime (FW lib/pbio/platform/prime_hub_f4/pbsysconfig.h#L21), of which its ring
+ * buffer can hold 511 (FW lib/lwrb/src/lwrb/lwrb.c#L274-L286). Bytes not yet echoed are at most
+ * what the buffer still holds, so keeping them at or below 60 can never overflow it. (Pybricks
+ * v4.0.1 had 64 bytes; 60 was chosen for that and is kept: raising it needs a hub to check on.)
  */
 const REPL_CHUNK_BYTES = 30;
 const REPL_MAX_IN_FLIGHT = 60;

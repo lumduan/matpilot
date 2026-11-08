@@ -1,14 +1,14 @@
 /**
  * Pybricks BLE protocol: command encoders and event decoders. Every value is documented, with
- * upstream citations at Pybricks v4.0.1 (commit 4104553), in docs/protocol/pybricks-ble.md. The
+ * upstream citations at Pybricks v4.1.3 (commit c860b6a), in docs/protocol/pybricks-ble.md. The
  * section numbers below refer to that page.
  *
- * FW = https://github.com/pybricks/pybricks-micropython/blob/4104553405decb0384bcfb030fbfcb4b5a9854cc/
+ * FW = https://github.com/pybricks/pybricks-micropython/blob/c860b6a00301fb7c6ecd429da11dcb5a6c557c7a/
  */
 
 /**
  * Command types, byte 0 of a write (section 3).
- * FW lib/pbio/include/pbio/protocol.h#L86-L208
+ * FW lib/pbio/include/pbio/protocol.h#L86-L222
  */
 export const Command = {
   STOP_USER_PROGRAM: 0x00,
@@ -20,7 +20,7 @@ export const Command = {
 
 /**
  * Event types, byte 0 of a notification (section 4).
- * FW lib/pbio/include/pbio/protocol.h#L240-L292
+ * FW lib/pbio/include/pbio/protocol.h#L254-L305
  */
 export const EventType = {
   STATUS_REPORT: 0x00,
@@ -30,7 +30,7 @@ export const EventType = {
 
 /**
  * Status flag bit numbers (section 4).
- * FW lib/pbio/include/pbio/protocol.h#L294-L394
+ * FW lib/pbio/include/pbio/protocol.h#L307-L413
  */
 export const StatusFlag = {
   BATTERY_LOW_VOLTAGE_WARNING: 0,
@@ -42,7 +42,7 @@ export const StatusFlag = {
 
 /**
  * Hub feature flags (section 2).
- * FW lib/pbio/include/pbio/protocol.h#L401-L448
+ * FW lib/pbio/include/pbio/protocol.h#L420-L467
  */
 export const FeatureFlag = {
   BUILTIN_REPL: 1 << 0,
@@ -146,7 +146,7 @@ export function encodeStopUserProgram(): Uint8Array {
 
 /**
  * START_USER_PROGRAM without a program id: the firmware then starts the selected slot, which is
- * where the program was just written (FW lib/pbio/sys/command.c#L47-L54).
+ * where the program was just written (FW lib/pbio/sys/command.c#L48-L55).
  */
 export function encodeStartUserProgram(): Uint8Array {
   return Uint8Array.of(Command.START_USER_PROGRAM);
@@ -154,7 +154,7 @@ export function encodeStartUserProgram(): Uint8Array {
 
 /**
  * START_USER_PROGRAM with a program id (protocol 1.4+), for example the REPL. A built-in program
- * does not touch the stored program slots (FW lib/pbio/sys/command.c#L47-L54).
+ * does not touch the stored program slots (FW lib/pbio/sys/command.c#L48-L55).
  */
 export function encodeStartProgramId(programId: number): Uint8Array {
   if (!Number.isInteger(programId) || programId < 0 || programId > 255) {

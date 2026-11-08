@@ -6,36 +6,36 @@
  * hub code rules in CLAUDE.md: one config block, ports assigned once, and every motor stopped in
  * `finally`.
  *
- * Pybricks names used, cited at v4.0.1 (FW = https://github.com/pybricks/pybricks-micropython/blob/4104553405decb0384bcfb030fbfcb4b5a9854cc/):
+ * Pybricks names used, cited at v4.1.3 (FW = https://github.com/pybricks/pybricks-micropython/blob/c860b6a00301fb7c6ecd429da11dcb5a6c557c7a/):
  * - pybricks.parameters.Port: FW pybricks/parameters/pb_module_parameters.c#L29;
  *   Port.A-F: FW pybricks/parameters/pb_type_port.c#L98-L113
  * - pybricks.pupdevices Motor, ColorSensor, ForceSensor, UltrasonicSensor:
  *   FW pybricks/pupdevices/pb_module_pupdevices.c#L15 #L20 #L21 #L38
  * - Motor.stop / angle / speed / run: FW pybricks/common/pb_type_motor.c#L483 #L491 #L492 #L494
- * - UltrasonicSensor.distance: FW pybricks/pupdevices/pb_type_pupdevices_ultrasonicsensor.c#L59
- * - ColorSensor.reflection: FW pybricks/pupdevices/pb_type_pupdevices_colorsensor.c#L173
- * - ForceSensor.force: FW pybricks/pupdevices/pb_type_pupdevices_forcesensor.c#L119
- * - pybricks.tools wait, StopWatch: FW pybricks/tools/pb_module_tools.c#L301 #L311;
+ * - UltrasonicSensor.distance: FW pybricks/pupdevices/pb_type_pupdevices_ultrasonicsensor.c#L56
+ * - ColorSensor.reflection: FW pybricks/pupdevices/pb_type_pupdevices_colorsensor.c#L144
+ * - ForceSensor.force: FW pybricks/pupdevices/pb_type_pupdevices_forcesensor.c#L90
+ * - pybricks.tools wait, StopWatch: FW pybricks/tools/pb_module_tools.c#L418 #L432;
  *   StopWatch.time: FW pybricks/tools/pb_type_stopwatch.c#L79
  *
  * The Xbox controller check (milestone 5's first hardware question, docs/roadmap.md) also uses:
  * - pybricks.hubs.PrimeHub: FW pybricks/hubs/pb_module_hubs.c#L14-L21
  * - hub.light.on(color): FW pybricks/common/pb_type_colorlight_internal.c#L35-L55;
- *   Color members: FW pybricks/parameters/pb_type_color.c#L118-L135
+ *   Color members: FW pybricks/parameters/pb_type_color.c#L143-L160
  * - hub.display.off(), pixel(row, column, brightness=100): FW pybricks/common/pb_type_lightmatrix.c
  *   #L349 #L352, arguments #L271-L282
  * - pybricks.parameters Button, Color: FW pybricks/parameters/pb_module_parameters.c#L11-L32;
  *   Button.MENU: FW pybricks/parameters/pb_type_button.c#L46
  * - pybricks.iodevices.XboxController, enabled on SPIKE Prime: FW
- *   pybricks/iodevices/pb_module_iodevices.c#L91-L92, FW bricks/primehub/mpconfigport.h#L41
+ *   pybricks/iodevices/pb_module_iodevices.c#L94-L95, FW bricks/primehub_f4/mpconfigport.h#L42
  * - XboxController(joystick_deadzone=10, name=None, timeout=10000, connect=True), timeout in ms:
- *   FW pybricks/iodevices/pb_type_iodevices_xbox_controller.c#L425-L435, #L451
- * - joystick_left() returns (x, y), each -100 to 100: same file #L539-L563; buttons.pressed()
- *   returns a set of Button: #L674-L677 (the buttons attribute), FW
+ *   FW pybricks/iodevices/pb_type_iodevices_xbox_controller.c#L417-L421, #L437
+ * - joystick_left() returns (x, y), each -100 to 100: same file #L515-L539; buttons.pressed()
+ *   returns a set of Button: #L650-L653 (the buttons attribute), FW
  *   pybricks/common/pb_type_keypad.c#L25-L29
- * - a read after the controller disconnects raises OSError: same file #L168-L177
+ * - a read after the controller disconnects raises OSError: same file #L164-L173
  * - round(x) with one argument returns an int, so it can index a pixel: MP py/modbuiltins.c
- *   #L499-L500, MP = https://github.com/pybricks/micropython/blob/13580b6ad057173f62e8b2363e01d6851bcc6699/
+ *   #L504-L505, MP = https://github.com/pybricks/micropython/blob/740cbf265cda4d404fef11848e3bdf32fcd24420/
  */
 
 export interface ExampleProgram {

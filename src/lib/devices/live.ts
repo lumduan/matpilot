@@ -11,7 +11,7 @@ export type LivePort = (typeof LIVE_PORTS)[number];
 
 /**
  * UltrasonicSensor.distance() returns 2000 when nothing is in range:
- * https://github.com/pybricks/pybricks-micropython/blob/4104553405decb0384bcfb030fbfcb4b5a9854cc/pybricks/pupdevices/pb_type_pupdevices_ultrasonicsensor.c#L39-L42
+ * https://github.com/pybricks/pybricks-micropython/blob/c860b6a00301fb7c6ecd429da11dcb5a6c557c7a/pybricks/pupdevices/pb_type_pupdevices_ultrasonicsensor.c#L36-L39
  */
 export const NOTHING_IN_RANGE_MM = 2000;
 
@@ -62,7 +62,7 @@ export type LiveEvent =
 
 /**
  * Names by device type id, from FW lib/lego/lego/lump.h#L428-L486 at Pybricks v4.0.1
- * (https://github.com/pybricks/pybricks-micropython/blob/4104553405decb0384bcfb030fbfcb4b5a9854cc/lib/lego/lego/lump.h#L428-L486).
+ * (https://github.com/pybricks/pybricks-micropython/blob/c860b6a00301fb7c6ecd429da11dcb5a6c557c7a/lib/lego/lego/lump.h#L428-L486).
  * "Touch sensor" is the block editor's name for the SPIKE force sensor.
  */
 const TYPE_NAMES: Readonly<Record<number, string>> = {

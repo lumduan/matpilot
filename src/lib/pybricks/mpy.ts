@@ -4,20 +4,23 @@
  * Sources (see docs/protocol/pybricks-ble.md, section 5):
  * - The firmware loads a .mpy only if byte 0 is 'M', byte 1 is MPY_VERSION (6), and byte 3 (small
  *   int bits) fits; the sub-version in byte 2 is checked only for native code
- *   (https://github.com/pybricks/micropython/blob/13580b6ad057173f62e8b2363e01d6851bcc6699/py/persistentcode.c#L465-L473).
- *   Byte 2 holds the sub-version in bits 0-1 and the native architecture from bit 2 up
- *   (https://github.com/pybricks/micropython/blob/13580b6ad057173f62e8b2363e01d6851bcc6699/py/persistentcode.h#L43-L48).
+ *   (https://github.com/pybricks/micropython/blob/740cbf265cda4d404fef11848e3bdf32fcd24420/py/persistentcode.c#L469-L477).
+ *   Byte 2 holds the sub-version in bits 0-1 and the native architecture from bit 2 up, except
+ *   bit 6, which marks architecture flags (https://github.com/pybricks/micropython/blob/740cbf265cda4d404fef11848e3bdf32fcd24420/py/persistentcode.h#L43-L48,
+ *   #L101-L103), which SPIKE Prime refuses
+ *   (https://github.com/pybricks/micropython/blob/740cbf265cda4d404fef11848e3bdf32fcd24420/py/persistentcode.c#L490-L505).
+ *   MatPilot's compiler writes 0 in byte 2.
  * - The upload is a sequence of (u32 LE size, NUL-terminated name, .mpy data), with the entry module
  *   named "__main__", as pybricksdev writes it
  *   (https://github.com/pybricks/pybricksdev/blob/65210a23f53cc62a4b32c0599eac398aeea0c282/pybricksdev/compile.py#L240-L264)
  *   and the firmware reads it
- *   (https://github.com/pybricks/pybricks-micropython/blob/4104553405decb0384bcfb030fbfcb4b5a9854cc/bricks/_common/micropython.c#L142-L181).
+ *   (https://github.com/pybricks/pybricks-micropython/blob/c860b6a00301fb7c6ecd429da11dcb5a6c557c7a/bricks/_common/micropython.c#L141-L180).
  */
 
 /** 'M', the first byte of every .mpy file. */
 export const MPY_MAGIC = 0x4d;
 
-/** The .mpy format version of Pybricks v4.0.1 (`MPY_VERSION 6`). */
+/** The .mpy format version of Pybricks v4.1.3 (`MPY_VERSION 6`). */
 export const MPY_VERSION = 6;
 
 /** Small int bits on the 32-bit hubs; a .mpy that needs more is rejected. */

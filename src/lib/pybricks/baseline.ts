@@ -3,15 +3,19 @@ import { compareFirmwareVersions, parseFirmwareVersion, type FirmwareVersion } f
 /**
  * The Pybricks firmware version MatPilot is tested against. This is a tested baseline, not a
  * hard requirement: other versions are allowed and are reported as "not yet verified".
+ *
+ * Moved from v4.0.1 to v4.1.3 on 2026-11-08 by the maintainer's decision (ADR 0018): v4.1.x has
+ * the USB link and is what Pybricks' installer gives. The hardware checks recorded before that
+ * date ran on v4.0.1 (docs/compatibility.md).
  */
-export const TESTED_FIRMWARE_VERSION = '4.0.1';
+export const TESTED_FIRMWARE_VERSION = '4.1.3';
 
 /**
- * The protocol version (Software Revision String) that firmware v4.0.1 reports, from
- * `PBIO_PROTOCOL_VERSION_MAJOR/MINOR/PATCH` at tag v4.0.1:
- * https://github.com/pybricks/pybricks-micropython/blob/4104553405decb0384bcfb030fbfcb4b5a9854cc/lib/pbio/include/pbio/protocol.h#L23-L30
+ * The protocol version (Software Revision String) that firmware v4.1.3 reports, from
+ * `PBIO_PROTOCOL_VERSION_MAJOR/MINOR/PATCH` at tag v4.1.3:
+ * https://github.com/pybricks/pybricks-micropython/blob/c860b6a00301fb7c6ecd429da11dcb5a6c557c7a/lib/pbio/include/pbio/protocol.h#L23-L30
  */
-export const TESTED_PROTOCOL_VERSION = '1.5.0';
+export const TESTED_PROTOCOL_VERSION = '1.7.0';
 
 export type BaselineComparison = 'baseline' | 'newer' | 'older' | 'unknown';
 

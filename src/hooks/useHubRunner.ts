@@ -16,9 +16,9 @@ import { useMounted } from './useMounted';
 
 /**
  * The firmware stops a program only on the stop command, the hub's stop button (the centre button
- * on SPIKE Prime), or shutdown; never when Bluetooth drops. Cited at Pybricks v4.0.1:
- * https://github.com/pybricks/pybricks-micropython/blob/4104553405decb0384bcfb030fbfcb4b5a9854cc/lib/pbio/sys/program_stop.c#L73-L88
- * https://github.com/pybricks/pybricks-micropython/blob/4104553405decb0384bcfb030fbfcb4b5a9854cc/lib/pbio/platform/prime_hub/pbsysconfig.h#L12
+ * on SPIKE Prime), or shutdown; never when Bluetooth drops. Cited at Pybricks v4.1.3:
+ * https://github.com/pybricks/pybricks-micropython/blob/c860b6a00301fb7c6ecd429da11dcb5a6c557c7a/lib/pbio/sys/program_stop.c#L73-L88
+ * https://github.com/pybricks/pybricks-micropython/blob/c860b6a00301fb7c6ecd429da11dcb5a6c557c7a/lib/pbio/platform/prime_hub_f4/pbsysconfig.h#L12
  * A program can change or disable its stop button, so the message says "normally".
  */
 const LOST_WHILE_RUNNING =

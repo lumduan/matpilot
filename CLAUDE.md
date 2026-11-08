@@ -4,7 +4,8 @@ This file is for AI coding agents (Claude Code and similar) working in this repo
 contributors: see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 MatPilot is a browser-only, block-based programming and control web app for LEGO SPIKE Prime hubs
-running Pybricks firmware. Tested firmware baseline: Pybricks v4.0.1 (a baseline, not a hard
+running Pybricks firmware. Tested firmware baseline: Pybricks v4.1.3 (moved from v4.0.1 on
+2026-11-08; a baseline, not a hard
 requirement). Read [docs/architecture.md](docs/architecture.md) and the ADRs in
 [docs/adr/](docs/adr/) before changing structure. Do not revisit an accepted ADR without being asked.
 
@@ -228,11 +229,11 @@ The block editor's generator applies these rules structurally; how each one maps
 [ADR 0008](docs/adr/0008-block-editor.md). Keep its tests green when changing a block.
 
 Shape to follow. `read_controller()` and `drive()` are placeholders. The Pybricks names used here are
-cited at pybricks-micropython tag v4.0.1, commit `4104553405decb0384bcfb030fbfcb4b5a9854cc`:
-`pybricks.pupdevices.Motor` ([pb_module_pupdevices.c#L15](https://github.com/pybricks/pybricks-micropython/blob/4104553405decb0384bcfb030fbfcb4b5a9854cc/pybricks/pupdevices/pb_module_pupdevices.c#L15)),
-`Motor.stop()` ([pb_type_motor.c#L483](https://github.com/pybricks/pybricks-micropython/blob/4104553405decb0384bcfb030fbfcb4b5a9854cc/pybricks/common/pb_type_motor.c#L483)),
-`pybricks.parameters.Port` ([pb_module_parameters.c#L29](https://github.com/pybricks/pybricks-micropython/blob/4104553405decb0384bcfb030fbfcb4b5a9854cc/pybricks/parameters/pb_module_parameters.c#L29))
-and `Port.A` ([pb_type_port.c#L98](https://github.com/pybricks/pybricks-micropython/blob/4104553405decb0384bcfb030fbfcb4b5a9854cc/pybricks/parameters/pb_type_port.c#L98)).
+cited at pybricks-micropython tag v4.1.3, commit `c860b6a00301fb7c6ecd429da11dcb5a6c557c7a`:
+`pybricks.pupdevices.Motor` ([pb_module_pupdevices.c#L15](https://github.com/pybricks/pybricks-micropython/blob/c860b6a00301fb7c6ecd429da11dcb5a6c557c7a/pybricks/pupdevices/pb_module_pupdevices.c#L15)),
+`Motor.stop()` ([pb_type_motor.c#L483](https://github.com/pybricks/pybricks-micropython/blob/c860b6a00301fb7c6ecd429da11dcb5a6c557c7a/pybricks/common/pb_type_motor.c#L483)),
+`pybricks.parameters.Port` ([pb_module_parameters.c#L29](https://github.com/pybricks/pybricks-micropython/blob/c860b6a00301fb7c6ecd429da11dcb5a6c557c7a/pybricks/parameters/pb_module_parameters.c#L29))
+and `Port.A` ([pb_type_port.c#L98](https://github.com/pybricks/pybricks-micropython/blob/c860b6a00301fb7c6ecd429da11dcb5a6c557c7a/pybricks/parameters/pb_type_port.c#L98)).
 
 ```python
 from pybricks.parameters import Port

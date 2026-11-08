@@ -26,9 +26,12 @@ support policy and its hardware test record.
 | Google Chrome, Microsoft Edge                              | Linux             | Not supported | Not yet verified                                               |
 | Other Chromium-based browsers (Brave, Opera, Vivaldi, ...) | Any               | Untested      | Not yet verified                                               |
 
-**Hub and firmware:** LEGO SPIKE Prime running Pybricks firmware v4.0.1 is the tested baseline (not
-a hard requirement). Status: **verified on hardware for one row** (Google Chrome on macOS,
-2026-11-04); the other rows are not yet verified. Each run is listed under
+**Hub and firmware:** LEGO SPIKE Prime running Pybricks firmware **v4.1.3** is the tested
+baseline (not a hard requirement), since 2026-11-08: the maintainer moved it from v4.0.1, because
+v4.1.x has the USB link ([ADR 0018](adr/0018-usb-connection.md)) and Pybricks' installer gives
+it. **Every hardware check recorded below before that date ran on v4.0.1**; the checks are to be
+run again on v4.1.3. Status: verified on hardware for one row (Google Chrome on macOS, 2026-11-04,
+v4.0.1); the other rows are not yet verified. Each run is listed under
 [Hardware test record](#hardware-test-record).
 
 On Windows, Chrome's Web Bluetooth needs Windows 10 version 1703 (Creators Update) or later

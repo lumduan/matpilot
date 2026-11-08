@@ -7,7 +7,7 @@ describe('hardware test report', () => {
   it('produces the compatibility cell only when every step passed', () => {
     vi.stubEnv('TZ', 'Asia/Bangkok');
     expect(compatibilityCell(play(FULL_RUN))).toBe(
-      'Verified 2026-11-10 (Chrome 142, Windows 11, Pybricks 4.0.1)',
+      'Verified 2026-11-10 (Chrome 142, Windows 11, Pybricks 4.1.3)',
     );
     expect(compatibilityCell(play(FULL_RUN.slice(0, -1)))).toBeNull();
     expect(compatibilityCell(createSession(new Date()))).toBeNull();
@@ -40,8 +40,8 @@ describe('hardware test report', () => {
     expect(text).toContain('Browser: Chrome 142.0.7444.60');
     expect(text).toContain('OS: Windows 11\n');
     expect(text).toContain('Hub name: Pybricks Hub');
-    expect(text).toContain('Firmware revision: 4.0.1 (tested baseline: 4.0.1)');
-    expect(text).toContain('Protocol version: 1.5.0');
+    expect(text).toContain('Firmware revision: 4.1.3 (tested baseline: 4.1.3)');
+    expect(text).toContain('Protocol version: 1.7.0');
     expect(text).toContain('5. PASS  Turning the hub off shows “Hub disconnected”');
     expect(text).toContain('Uncaught exceptions: 0 (errors 0, unhandled rejections 0)');
     expect(text).toContain('Blocked by the Content Security Policy: 0\n');

@@ -5,15 +5,15 @@
  * comes from memory or third-party tutorials. Do not add a UUID here without doing the same.
  *
  * Upstream repository: https://github.com/pybricks/pybricks-micropython (MIT License)
- * Verified at tag v4.0.1, the firmware version MatPilot is tested against:
- *   commit 4104553405decb0384bcfb030fbfcb4b5a9854cc
+ * Verified at tag v4.1.3, the firmware version MatPilot is tested against:
+ *   commit c860b6a00301fb7c6ecd429da11dcb5a6c557c7a
  *
  * 128-bit Pybricks UUIDs (byte arrays plus their string form in doc comments):
- *   https://github.com/pybricks/pybricks-micropython/blob/4104553405decb0384bcfb030fbfcb4b5a9854cc/lib/pbio/src/protocol/pybricks.c#L65-L99
+ *   https://github.com/pybricks/pybricks-micropython/blob/c860b6a00301fb7c6ecd429da11dcb5a6c557c7a/lib/pbio/src/protocol/pybricks.c#L83-L117
  * 16-bit standard GATT UUIDs that the Pybricks protocol uses:
- *   https://github.com/pybricks/pybricks-micropython/blob/4104553405decb0384bcfb030fbfcb4b5a9854cc/lib/pbio/src/protocol/pybricks.c#L101-L116
+ *   https://github.com/pybricks/pybricks-micropython/blob/c860b6a00301fb7c6ecd429da11dcb5a6c557c7a/lib/pbio/include/pbio/protocol.h#L542-L559
  * Declarations:
- *   https://github.com/pybricks/pybricks-micropython/blob/4104553405decb0384bcfb030fbfcb4b5a9854cc/lib/pbio/include/pbio/protocol.h#L461-L469
+ *   https://github.com/pybricks/pybricks-micropython/blob/c860b6a00301fb7c6ecd429da11dcb5a6c557c7a/lib/pbio/include/pbio/protocol.h#L537-L540
  *
  * Re-checked unchanged on 2026-11-04 at master commit 511f6c20fb70d9d8951a85a50c383064747d5bc0
  * (tag v4.1.2). There the 16-bit values moved into an enum in protocol.h:
@@ -34,8 +34,8 @@
  * Pybricks Service. Upstream: `pbio_pybricks_service_uuid`, "@since Protocol v1.0.0".
  *
  * The hub advertises this UUID, so MatPilot uses it as the device picker filter. Upstream
- * advertising data (v4.0.1, SPIKE Prime uses the BTstack driver):
- * https://github.com/pybricks/pybricks-micropython/blob/4104553405decb0384bcfb030fbfcb4b5a9854cc/lib/pbio/drv/bluetooth/bluetooth_btstack.c#L541-L549
+ * advertising data (v4.1.3, SPIKE Prime uses the BTstack driver):
+ * https://github.com/pybricks/pybricks-micropython/blob/c860b6a00301fb7c6ecd429da11dcb5a6c557c7a/lib/pbio/drv/bluetooth/bluetooth_btstack.c#L677-L685
  */
 export const PYBRICKS_SERVICE_UUID = 'c5f50001-8280-46da-89f4-6d8051e4aeef';
 
@@ -68,7 +68,7 @@ export const DEVICE_NAME_CHAR_UUID = 0x2a00;
 
 /**
  * Firmware Revision String characteristic. Upstream: `pbio_gatt_firmware_version_char_uuid`.
- * Value is `PBIO_VERSION_STR`, for example "4.0.1" (see src/lib/pybricks/revision.ts).
+ * Value is `PBIO_VERSION_STR`, for example "4.1.3" (see src/lib/pybricks/revision.ts).
  */
 export const FIRMWARE_REVISION_CHAR_UUID = 0x2a26;
 
