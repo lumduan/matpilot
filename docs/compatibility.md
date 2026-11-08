@@ -908,6 +908,30 @@ newer; not in Safari.
 | 2026-11-08 | SPIKE Prime, v4.1.3 | not stated     | "tried, works"; not itemised | The maintainer updated the hub to v4.1.3 and tried the USB button; it worked. Checks 7 to 9 not reported separately |
 | 2026-11-08 | SPIKE Prime, v4.1.3 | not stated     | 7 and 8 not run yet          | No cable at hand for pulling it out during a run (check 7); check 8 also later. Check 9 is for Linux only           |
 
+## EV3 checks (milestone 12)
+
+These prepare an EV3 for MatPilot ([ADR 0019](adr/0019-ev3-support.md)). MatPilot cannot program
+an EV3 yet; step 12a (the hub type and USB) comes next and adds its own checks here.
+
+1. **Put Pybricks v4 on the EV3** with the steps on the Docs' Get started page, under "LEGO
+   MINDSTORMS EV3 (coming soon)". An EV3 running ev3dev: turn it off and take its microSD card
+   out first, and keep the card.
+2. Note what the EV3 showed: "Updating…" after holding the right button and pressing the centre
+   button; the name the browser's pop-up gave the brick ("LEGO EV3 Firmware Update"); whether the
+   installer said it was done; and what the screen shows when the EV3 starts again.
+3. Find the firmware version on the EV3's screen and note it.
+4. Run a one-line program from Pybricks Code (`print("hello")`) to see that the brick works,
+   over USB or over Bluetooth, and note which.
+5. Note the computer, the operating system, the browser, and anything that went differently from
+   the Docs' steps.
+
+### EV3 results
+
+| Date | Computer and OS | Browser | Pybricks on the EV3 | Result |
+| ---- | --------------- | ------- | ------------------- | ------ |
+
+No run yet.
+
 ## Keeping this file current
 
 The supported and unsupported lists also live in `README.md` (copied matrix) and

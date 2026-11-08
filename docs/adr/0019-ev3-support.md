@@ -1,8 +1,11 @@
 # ADR 0019: LEGO® MINDSTORMS EV3 support (a plan)
 
-- Status: **Proposed** 2026-11-08: the maintainer asked for a plan ("plan for LEGO EV3: what we
-  would need to add for it to work with our project"). Nothing is built. The decisions are in
-  [Decisions for the maintainer](#decisions-for-the-maintainer).
+- Status: **Accepted** 2026-11-08 for D1 to D3 (see
+  [Decisions for the maintainer](#decisions-for-the-maintainer)); D4 to D6 still wait for the
+  maintainer, and their recommendations stand. Proposed the same day, when the maintainer asked
+  for a plan ("plan for LEGO EV3: what we would need to add for it to work with our project").
+- Built so far: the Docs' steps to put Pybricks v4 on an EV3 (Get started, "LEGO MINDSTORMS EV3
+  (coming soon)", 2026-11-08).
 - Date: 2026-11-08
 - Builds on: [ADR 0018](0018-usb-connection.md) (the USB serial link, which an EV3 speaks too),
   [ADR 0010](0010-simple-blocks.md) (the simple blocks), [ADR 0016](0016-robots-and-mats.md)
@@ -34,11 +37,21 @@ unless another source is named. Nothing was tried on an EV3.
 
 ### 2. Installing it
 
-Pybricks' installer at code.pybricks.com flashes the EV3 over WebHID: with the brick off and USB
-attached, hold the right button, press the centre button, release both at "Updating…"; the brick
-is then USB `0x0694:0x0006` (pybricks-code `ea9af98`
-`src/firmware/bootloaderInstructions/translations/en.json#L15-L49`, `src/firmware/sagas.ts#L1063-L1080`;
-FW `lib/lego/lego/usb.h#L17-L18`). The same installer restores LEGO's firmware (1.09H, 1.09E or
+Pybricks' installer at code.pybricks.com flashes the EV3 over WebHID: with the brick off, hold the
+right button, press the centre button, release both at "Updating…", then connect the USB cable;
+the brick is then USB `0x0694:0x0006` and the browser lists it as "LEGO EV3 Firmware Update"
+(pybricks-code `ea9af98` `src/firmware/bootloaderInstructions/translations/en.json#L15-L49`,
+`src/firmware/bootloaderInstructions/BootloaderInstructions.tsx#L59`, `#L174-L331`,
+`src/firmware/sagas.ts#L1063-L1080`; FW `lib/lego/lego/usb.h#L17-L18`). Pybricks' own notes put
+the cable in first and say it may stay plugged in (FW `bricks/ev3/README.md#L30-L35`); either order
+works by those two sources. _(Corrected 2026-11-08: this paragraph first gave only the notes'
+order.)_
+
+An EV3 running **ev3dev** starts it from a microSD card and never changes the brick's own firmware;
+to switch back, shut down and remove the card (ev3dev.github.io `1f1981bbb258` `index.md#L80-L84`).
+So the card comes out to use Pybricks (taking it out first is the simple order), and ev3dev is used again by restoring LEGO's
+firmware and putting the card back (ev3dev starts from the card on LEGO's firmware:
+`docs/getting-started.md#L173-L178`). The same installer restores LEGO's firmware (1.09H, 1.09E or
 MakeCode; `src/firmware/sagas.ts#L1354-L1410`). As for SPIKE, MatPilot would link to it, not
 flash anything itself.
 
@@ -109,14 +122,17 @@ blocks of ADR 0010), 12c medium, 12d medium.
 ## Decisions for the maintainer
 
 - **D1 · Do it, and when?** Recommended: yes, after the SPIKE checks on v4.1.3 are done, because
-  the EV3 shares the USB link and much of the protocol, and many teams own EV3s.
+  the EV3 shares the USB link and much of the protocol, and many teams own EV3s. **Answered
+  2026-11-08: start now** ("เริ่มได้เลย"), with the steps to install Pybricks v4 on the EV3 in the
+  Docs first.
 - **D2 · An EV3 to test on.** **Answered 2026-11-08: the maintainer has an EV3**, at present
   running ev3dev. Trying MatPilot on it means installing Pybricks v4 on it with Pybricks'
   installer first (section 2); each step then gets its checklist as SPIKE's did.
 - **D3 · How a program knows its hub.** Recommended: a hub type on the program and on the robot,
   with the toolbox following it, and a warning when the connected hub differs. Alternative: detect
   the hub on connecting and switch blocks then (simpler, but a program could not be written for an
-  EV3 without one connected).
+  EV3 without one connected). **Answered 2026-11-08: remember it** ("จำ"): the program and the
+  robot keep their hub type, as recommended.
 - **D4 · Bluetooth for EV3 (12c).** Recommended: yes, but after USB works, since it needs pairing
   in the operating system, works only in Chrome and Edge, and its behaviour per operating system
   is not documented.

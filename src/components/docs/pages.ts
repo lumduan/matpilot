@@ -4,7 +4,7 @@ export const DOC_PAGES = [
   {
     href: '/docs/get-started',
     title: 'Get started',
-    about: 'What you need, Pybricks on the hub, and your first program.',
+    about: 'What you need, Pybricks on the hub, your first program, and an EV3.',
   },
   {
     href: '/docs/blocks',
