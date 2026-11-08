@@ -27,7 +27,9 @@ support policy and its hardware test record.
 | Other Chromium-based browsers (Brave, Opera, Vivaldi, ...) | Any               | Untested      | Not yet verified                                               |
 
 **Hub and firmware:** LEGO SPIKE Prime running Pybricks firmware **v4.1.3** is the tested
-baseline (not a hard requirement), since 2026-11-08: the maintainer moved it from v4.0.1, because
+baseline (not a hard requirement), since 2026-11-08. The same day the maintainer updated the hub
+to v4.1.3 and reported that USB and the main Bluetooth features work on it (not itemised check by
+check). The maintainer moved the baseline from v4.0.1, because
 v4.1.x has the USB link ([ADR 0018](adr/0018-usb-connection.md)) and Pybricks' installer gives
 it. **Every hardware check recorded below before that date ran on v4.0.1**; the checks are to be
 run again on v4.1.3. Status: verified on hardware for one row (Google Chrome on macOS, 2026-11-04,
@@ -854,9 +856,9 @@ newer; not in Safari.
 
 ### USB results
 
-| Date | Hub and Pybricks | Browser and OS | Checks passed | Notes       |
-| ---- | ---------------- | -------------- | ------------- | ----------- |
-| -    | -                | -              | -             | Not run yet |
+| Date       | Hub and Pybricks    | Browser and OS | Checks passed                | Notes                                                                                                               |
+| ---------- | ------------------- | -------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| 2026-11-08 | SPIKE Prime, v4.1.3 | not stated     | "tried, works"; not itemised | The maintainer updated the hub to v4.1.3 and tried the USB button; it worked. Checks 7 to 9 not reported separately |
 
 ## Keeping this file current
 
