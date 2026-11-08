@@ -122,8 +122,9 @@ export interface BlocksEditor {
   readonly renameTab: EditorHandle['renameTab'];
   readonly closeTab: (id: string) => void;
   readonly showBlock: (tabId: string, blockId: string) => void;
-  /** Adds blocks at the end of main's program (see EditorHandle.addToMain). */
-  readonly addToMain: (
+  /** Adds blocks to a tab, where they run (see EditorHandle.addToTab). */
+  readonly addToTab: (
+    tabId: string,
     state: object,
   ) => { readonly blocks: number; readonly attached: boolean } | null;
   /** The program as the text of a file (ADR 0011). */
@@ -250,8 +251,8 @@ export function useBlocksEditor(
     (tabId: string, blockId: string) => editor.current?.showBlock(tabId, blockId),
     [],
   );
-  const addToMain = useCallback(
-    (state: object) => editor.current?.addToMain(state as never) ?? null,
+  const addToTab = useCallback(
+    (tabId: string, state: object) => editor.current?.addToTab(tabId, state as never) ?? null,
     [],
   );
 
@@ -357,7 +358,7 @@ export function useBlocksEditor(
     renameTab,
     closeTab,
     showBlock,
-    addToMain,
+    addToTab,
     fileText,
     saveToComputer,
     openFile,

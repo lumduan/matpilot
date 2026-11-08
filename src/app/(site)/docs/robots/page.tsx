@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { DocsNext } from '@/components/docs/DocsNav';
 import { Shot } from '@/components/docs/Shot';
 import { LDRAW, STUDIO } from '@/lib/links';
+import { MeasureHelp } from '@/components/robots/MeasureHelp';
 import { PROJECT_NAME } from '@/lib/project';
 
 export const metadata: Metadata = {
@@ -52,6 +53,14 @@ export default function RobotsDocs() {
             wheel motor is on the left.
           </li>
         </ul>
+        <p>
+          On the Robots page, the <strong>i</strong> beside <strong>Body</strong> and{' '}
+          <strong>Wheels</strong> shows how to measure, with pictures. The same help is here.
+        </p>
+        <h3 id="measure-body-title">How to measure the body</h3>
+        <MeasureHelp topic="body" />
+        <h3 id="measure-wheels-title">How to measure the wheels, with a caliper</h3>
+        <MeasureHelp topic="wheels" />
         <p>
           A ruler is close, not exact. <strong>Measure on the floor</strong> runs two short moves
           with your hub and corrects the wheel size and the track, so the robot drives as far and

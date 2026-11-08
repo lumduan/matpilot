@@ -333,6 +333,10 @@ recommended option on 2026-11-07, plans it in steps:
    page with a simulated Pybricks, played back on the mat;
 4. 7d: the colour sensor reads the mat.
 
+On 2026-11-08 (ADR 0016 amendment): a path from the Mats page goes into the tab the child has
+open (main's program, or a block of your own in another tab), and the Robots page's **i** beside
+Body and Wheels shows how to measure, with pictures and how to read a vernier caliper.
+
 Later in ADR 0016: the calibration helper, how sure the robot is (drift), and a path drawn on the
 mat turned into blocks.
 

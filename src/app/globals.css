@@ -4434,3 +4434,150 @@ code {
     margin-top: 0.3rem;
   }
 }
+
+/* The "i" that opens how to measure, on the Robots page (src/components/robots/MeasureHelp.tsx). */
+.info-button {
+  display: inline-grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-left: 0.5rem;
+  padding: 0;
+  border: 1.5px solid var(--accent);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--accent);
+  font:
+    italic 700 0.9rem/1 Georgia,
+    'Times New Roman',
+    serif;
+  vertical-align: middle;
+  cursor: pointer;
+}
+
+.info-button[aria-expanded='true'] {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+.robot-measure-help {
+  margin: 0.5rem 0 1rem;
+  padding: 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  background: var(--bg);
+}
+
+.measure-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+.measure-figures {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 0.8rem;
+  margin-bottom: 0.6rem;
+}
+
+.measure-figure {
+  margin: 0;
+  padding: 0.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+}
+
+.measure-figure svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.measure-figure figcaption {
+  margin-top: 0.3rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.measure-body {
+  fill: var(--neutral-bg);
+  stroke: var(--neutral-border);
+  stroke-width: 1.5;
+}
+
+.measure-faint {
+  opacity: 0.5;
+}
+
+.measure-wheel {
+  fill: var(--text);
+  opacity: 0.75;
+}
+
+.measure-part {
+  fill: var(--neutral-border);
+}
+
+.measure-tool {
+  fill: var(--muted);
+  opacity: 0.55;
+}
+
+.measure-table {
+  stroke: var(--text);
+  stroke-width: 2;
+}
+
+.measure-guide {
+  stroke: var(--muted);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+
+.measure-guide-dot {
+  fill: var(--surface);
+}
+
+.measure-dim {
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
+.measure-head {
+  fill: var(--accent);
+}
+
+.measure-scale {
+  stroke: var(--text);
+  stroke-width: 1.2;
+}
+
+.measure-hit {
+  stroke: var(--accent);
+  stroke-width: 2.5;
+}
+
+.measure-ring {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
+.measure-label {
+  fill: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.measure-strong {
+  fill: var(--accent);
+}
+
+.measure-note {
+  fill: var(--muted);
+  font-size: 11px;
+}

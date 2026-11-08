@@ -1,8 +1,8 @@
 /**
  * Blocks handed to the Blocks page from another page (ADR 0016): a path drawn on the Mats page,
  * as the simple blocks "turn" and "move forward … mm". Kept in this browser until the Blocks
- * page adds them at the end of main or they are dismissed: nothing changes in a program unless
- * the child presses Add there.
+ * page adds them to the open tab (./add-to-tab.ts) or they are dismissed: nothing changes in a
+ * program unless the child presses Add there.
  *
  * No Blockly here: the Mats page writes the steps, and the Blocks page makes them into blocks
  * with `stepsToBlocks`. The block types and their inputs are the simple blocks' own

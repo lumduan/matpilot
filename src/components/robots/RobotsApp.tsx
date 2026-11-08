@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, type ReactNode } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 import { GitHubSettingsDialog } from '@/components/blocks/GitHubSettingsDialog';
 import { FileLoadDialog } from '@/components/files/FileLoadDialog';
 import { FileSaveDialog } from '@/components/files/FileSaveDialog';
@@ -31,6 +31,7 @@ import {
 import { RULES_PROFILES, robotChecks } from '@/lib/robots/rules';
 import { boxLength, boxWidth, footprint, overallHeight, turningRadius } from '@/lib/robots/shape';
 import { CalibrateDialog } from './CalibrateDialog';
+import { MeasureHelp, type MeasureTopic } from './MeasureHelp';
 import { ModelDialog } from './ModelDialog';
 import { NumberField } from './NumberField';
 import { RobotDrawing } from './RobotDrawing';
@@ -263,11 +264,45 @@ export function RobotsApp() {
   );
 }
 
-function Section({ title, children, hint }: { title: string; children: ReactNode; hint?: string }) {
+function Section({
+  title,
+  children,
+  hint,
+  help,
+}: {
+  title: string;
+  children: ReactNode;
+  hint?: string;
+  /** How to measure what this section asks for: an "i" opens it. */
+  help?: MeasureTopic;
+}) {
+  const [open, setOpen] = useState(false);
+  const panel = useId();
   return (
     <fieldset className="robot-section">
-      <legend>{title}</legend>
+      <legend>
+        {title}
+        {help && (
+          <button
+            type="button"
+            className="info-button"
+            aria-expanded={open}
+            aria-controls={panel}
+            aria-label={`How to measure: ${title.toLowerCase()}`}
+            title="How to measure"
+            onClick={() => setOpen(!open)}
+            data-testid={`measure-info-${help}`}
+          >
+            i
+          </button>
+        )}
+      </legend>
       {hint && <p className="field-hint robot-section-hint">{hint}</p>}
+      {help && open && (
+        <div id={panel} className="robot-measure-help">
+          <MeasureHelp topic={help} />
+        </div>
+      )}
       <div className="robot-fields">{children}</div>
     </fieldset>
   );
@@ -344,7 +379,8 @@ function RobotForm({
 
       <Section
         title="Body"
-        hint="Measure the whole robot from above and from the side, in millimetres."
+        hint="Measure the whole robot from above and from the side, in millimetres. Tap i to see how."
+        help="body"
       >
         <NumberField
           label="Width (left to right)"
@@ -381,7 +417,11 @@ function RobotForm({
         />
       </Section>
 
-      <Section title="Wheels">
+      <Section
+        title="Wheels"
+        hint="A caliper measures wheels best. Tap i to see how, and how to read one."
+        help="wheels"
+      >
         <NumberField
           label="Wheel diameter"
           unit="mm"
