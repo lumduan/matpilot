@@ -3,6 +3,7 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { compilePython } from '@/lib/pybricks/compiler';
 import { INPUT_OPTIONS } from '../controller/layout';
 import { parseControllerLine, XBOX_BUTTONS } from '../controller/xbox';
+import { NOT_FOUND_HELP } from './controller-generator';
 import { CHECKABLE_BUTTONS } from './fields/controller';
 import { FieldMotorSet, describeMotorSet, parseMotorSet } from './fields/port';
 import { generateProgram } from './generator';
@@ -61,13 +62,21 @@ describe('controller blocks', () => {
     ]);
     expect(problems).toEqual([]);
     expect(code).toContain('from pybricks.iodevices import XboxController');
-    expect(code).toContain('CONTROLLER_SEARCH_MS = 20000\nCONTROLLER_REPORT_MS = 100');
+    expect(code).toContain('CONTROLLER_SEARCH_MS = 30000\nCONTROLLER_REPORT_MS = 100');
     // Setup: the drive base first, then the controller, so a missing controller moves nothing.
     expect(code).toMatch(
-      /robot = DriveBase\([^\n]+\)\ncontroller_memory = \{\}\ncontroller_report = StopWatch\(\)\nhub\.light\.on\(Color\.BLUE\)\nprint\("@xbx searching"\)\ntry:\n {4}controller = XboxController\(timeout=CONTROLLER_SEARCH_MS\)\nexcept OSError:\n/,
+      /robot = DriveBase\([^\n]+\)\ncontroller_memory = \{\}\ncontroller_report = StopWatch\(\)\nhub\.light\.blink\(Color\.BLUE, \[300, 300\]\)\nprint\("@xbx searching"\)\ntry:\n {4}controller = XboxController\(timeout=CONTROLLER_SEARCH_MS\)\nexcept OSError as controller_error:\n/,
     );
     expect(code).toContain('    print("@xbx notfound")\n');
-    expect(code).toContain('hub.light.on(Color.GREEN)\nprint("@xbx connected")');
+    // The hub's own reason goes to the Monitor (Pybricks says when pairing mode is needed).
+    expect(code).toContain(
+      '    print("No Xbox controller connected. The hub said:", controller_error)\n',
+    );
+    expect(code).toContain(`    print("${NOT_FOUND_HELP}")\n    raise SystemExit\n`);
+    // Connected: a steady green light, then two rising beeps.
+    expect(code).toContain(
+      'hub.light.on(Color.GREEN)\nprint("@xbx connected")\nhub.speaker.beep(660, 100)\nhub.speaker.beep(990, 100)\n',
+    );
     // Hub code rule 2: controller reads are guarded, and a lost controller ends the program.
     expect(code).toMatch(
       / {4}try:\n {8}left = controller\.joystick_left\(\)[\s\S]+ {4}except OSError:\n {8}controller_lost\(\)/,

@@ -64,6 +64,9 @@ The firmware facts this design relies on are cited in `src/lib/blocks/pybricks.t
      ([`pb_type_iodevices_xbox_controller.c#L303-L309`](https://github.com/pybricks/pybricks-micropython/blob/4104553405decb0384bcfb030fbfcb4b5a9854cc/pybricks/iodevices/pb_type_iodevices_xbox_controller.c#L303-L309)).
    - Green once connected.
    - Red with a message, then the program ends, if no controller is found.
+   - ➡️ Changed by the [amendment of 2026-11-08](#amendment-the-hub-shows-the-search-2026-11-08):
+     the light blinks blue while searching, green comes with two beeps, 30 s per attempt (about
+     a minute), and the Monitor gets the hub's own reason.
 4. **Every block reads through one helper**, `read_controller()`:
    - **controller lost** (`OSError`, hub code rule 2): red light, a message, and
      `raise SystemExit`, so `finally` stops every motor. There is no reconnecting yet;
@@ -154,3 +157,55 @@ Decided:
 13. **The Controller pane names the controller and lists "Your controls"**: what each control
     does in this program and which finger uses it, from the generator (for example "left stick
     drives and turns the robot · left thumb", "Menu ☰ stops the program").
+
+## Amendment: the hub shows the search (2026-11-08)
+
+The maintainer tried the Controller blocks on Pybricks v4.1.3 (2026-11-08) and the controller did
+not connect; what the hub light and the Monitor showed was not reported. They asked for two
+things, pointing at their own car program (lumduan/lego-spike-prime-remote-car, `main.py` at
+`798160126be9`, which blinks blue while it looks, then plays two rising beeps and shows green):
+
+- the hub should show that it is waiting: a blinking blue light, then a steady green light and a
+  beep once connected;
+- a controller paired before should connect by itself the next time the program runs.
+
+What the firmware already does, cited at pybricks-micropython v4.1.3 (`c860b6a`, details and
+lines in `src/lib/blocks/pybricks.ts`):
+
+- `XboxController()` uses a controller that is still connected from the last run, at once, and a
+  controller stays connected when a program ends (since v4.0.0b6, `CHANGELOG.md#L341-L342`).
+- The hub also finds a controller that is just turned on, not in pairing mode. Pybricks' comment
+  says this works only if the hub was that controller's most recent connection; after a console,
+  a phone or a computer, the controller must be put in pairing mode again
+  (`pb_type_iodevices_xbox_controller.c#L140-L153`, `#L366-L380`).
+- If the controller connects but will not give its buttons, Pybricks raises `OSError("Connected,
+but not allowed to read buttons. Try putting the controller in pairing mode.")` (same file,
+  `#L376-L379`). MatPilot's message used to hide it.
+
+So "connect by itself" needs no new code: it needs the child to know that after the first pairing
+the Xbox button is enough. Decided:
+
+14. **The Setup lines show the search on the hub:**
+    - `hub.light.blink(Color.BLUE, [300, 300])` while the hub looks for the controller. The
+      blinking goes on while `XboxController()` waits, because the light's animation is a process
+      of the hub's own;
+    - once connected: a steady green light, then `hub.speaker.beep(660, 100)` and
+      `hub.speaker.beep(990, 100)`, the two rising notes of the maintainer's car;
+    - not connected: a red light, `print("No Xbox controller connected. The hub said:",
+controller_error)` with Pybricks' own reason, then what to do. `controller_error` is a
+      reserved name.
+15. **`CONTROLLER_SEARCH_MS` is 30 s** (it was 20 s), as in the maintainer's car. With the second
+    attempt that is about a minute to turn the controller on after pressing Run.
+16. **The words say how to connect a second time.** The picker and the Controller pane: "The
+    first time: press Run, then hold its pair button until the Xbox button flashes fast. After
+    that the hub remembers it: press Run and turn the controller on with its Xbox button. Used
+    with something else since (a console, a phone, a computer)? Pair it again." The pane says
+    the hub light blinks blue while it looks, and that the Monitor says why when nothing
+    connected.
+
+Not decided here: reconnecting during a program after the controller is lost (the maintainer's
+car project plans it as its "Case 4"); it stays as before (red light, the program ends).
+
+Whether the light keeps blinking during the search, whether the beeps play, and whether a
+controller connects with only its Xbox button after a hub restart, are new hardware checks
+(docs/compatibility.md, Controller blocks checks 12 to 15).

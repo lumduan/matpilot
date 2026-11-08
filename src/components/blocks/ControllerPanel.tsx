@@ -10,10 +10,10 @@ const STALE_MS = 1500;
 
 const STATUS_TEXT: Record<ControllerSnapshot['status'], string> = {
   idle: 'Run the program: the controller moves here while it runs.',
-  searching: 'Looking for the controller…',
-  connected: 'Connected. Move a stick or press a button.',
+  searching: 'Looking for the controller (the hub light blinks blue)…',
+  connected: 'Connected (green light and a beep). Move a stick or press a button.',
   notfound:
-    'No controller was found, so the program stopped. Turn it on, pair it, and press Run again.',
+    'No controller connected, so the program stopped. The Monitor says why. Turn the controller on with its Xbox button, or pair it, and press Run again.',
   lost: 'The controller was lost, so the program stopped and every motor stopped.',
   menu: 'Menu (☰) was pressed, so the program stopped.',
   ended: 'The program ended.',

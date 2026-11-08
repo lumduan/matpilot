@@ -228,7 +228,7 @@ the earlier checks 4 to 7 are the advanced checks.
    for 1 rotations" each time: the motor is clearly faster at 100 %. Then press **Edit as
    Python**: `/program` opens with the same Python, and Run works there.
 10. Reload `/blocks`. The blocks are still there.
-11. **Conditions** (added 2026-11-08, not yet run on a hub): drag the colour **switch on** block
+11. **Conditions** (added 2026-11-08; ➡️ passed on a hub the same day): drag the colour **switch on** block
     under "when the program starts" and put it inside **Control** › "repeat forever". Put "set
     button light to" red in case red, blue in case blue, and white under otherwise. Run and hold
     a red brick, a blue brick, then nothing, in front of the colour sensor (port D): the centre
@@ -364,14 +364,15 @@ These check tabs and functions ([ADR 0013](adr/0013-block-tabs.md)). Checks 1 to
 
 ### Blocks results
 
-| Date       | Browser    | OS           | Hub         | Firmware | Result                                                                                   |
-| ---------- | ---------- | ------------ | ----------- | -------- | ---------------------------------------------------------------------------------------- |
-| 2026-11-05 | Chrome 156 | macOS 27.0.1 | SPIKE Prime | 4.0.1    | Checks 1 and 2 passed; 3 to 9 not yet reported                                           |
-| 2026-11-06 | Chrome 156 | macOS 27.0.1 | SPIKE Prime | 4.0.1    | All passed: simple 1 to 10, advanced 1 to 4, layout and live values 1 to 9 (notes below) |
-| 2026-11-06 | Chrome 156 | macOS 27.0.1 | (none)      | —        | Undo, Save and Load checks 1 to 8 passed, GitHub ones included (notes below)             |
-| 2026-11-06 | not stated | not stated   | (none)      | —        | Tabs and functions checks 1 to 5 tried; two requests came out of them (notes below)      |
-| 2026-11-06 | not stated | not stated   | (none)      | —        | Tabs and functions checks 11 to 13 passed; two more requests (notes below)               |
-| 2026-11-07 | not stated | not stated   | SPIKE Prime | 4.0.1    | Tabs and functions checks 6, 7, 14 and 15 passed: several files on the hub (notes below) |
+| Date       | Browser    | OS           | Hub         | Firmware | Result                                                                                    |
+| ---------- | ---------- | ------------ | ----------- | -------- | ----------------------------------------------------------------------------------------- |
+| 2026-11-05 | Chrome 156 | macOS 27.0.1 | SPIKE Prime | 4.0.1    | Checks 1 and 2 passed; 3 to 9 not yet reported                                            |
+| 2026-11-06 | Chrome 156 | macOS 27.0.1 | SPIKE Prime | 4.0.1    | All passed: simple 1 to 10, advanced 1 to 4, layout and live values 1 to 9 (notes below)  |
+| 2026-11-06 | Chrome 156 | macOS 27.0.1 | (none)      | —        | Undo, Save and Load checks 1 to 8 passed, GitHub ones included (notes below)              |
+| 2026-11-06 | not stated | not stated   | (none)      | —        | Tabs and functions checks 1 to 5 tried; two requests came out of them (notes below)       |
+| 2026-11-06 | not stated | not stated   | (none)      | —        | Tabs and functions checks 11 to 13 passed; two more requests (notes below)                |
+| 2026-11-07 | not stated | not stated   | SPIKE Prime | 4.0.1    | Tabs and functions checks 6, 7, 14 and 15 passed: several files on the hub (notes below)  |
+| 2026-11-08 | not stated | not stated   | SPIKE Prime | 4.1.3    | Simple checks 8, 11 and 12 passed; the drawn "up" arrow points to the A and B end (notes) |
 
 The 2026-11-05 row uses the numbering of the list before it was reorganised (see the start of this
 section): its checks 1 and 2 are simple-block checks 1 and 2 today, run then with the earlier
@@ -400,7 +401,8 @@ be those of the earlier runs.
   was not reported. Until it is, the orientation of the 5×5 picture on the hub is unverified.
   (➡️ The Xbox check on 2026-11-07 found the lights' top row, row 0, at the end with ports A and
   B; check 8 still has to show that a drawn picture follows it. Later that day the maintainer
-  called the remaining checks OK, without saying which way the arrow pointed.)
+  called the remaining checks OK, without saying which way the arrow pointed. ➡️ Answered on
+  2026-11-08: the arrow points to the A and B end; see the notes on the 2026-11-08 run.)
 - **Optional robot check: not run.** No two-wheel robot was built yet. From the motor turns in
   checks 5 to 7, the maintainer expects the movement blocks to be right once the wheel sizes are.
 
@@ -448,6 +450,17 @@ side 200 from the tab `shapes`, and prints `laps`; `square` drives the square an
 - **Checks 7 and 15** were reported done, with no failure. Asked whether the motors turned as
   described, the maintainer answered that it was done, without detail.
 - **Not reported:** checks 8 to 10 (closing a tab, Save and Load of tabs, reload).
+
+Notes on the 2026-11-08 run (the maintainer, reported in conversation; browser and OS not stated;
+the hub had just been updated to Pybricks v4.1.3):
+
+- **Simple check 8 is closed:** the arrow drawn pointing up shows pointing to the top of the hub,
+  the end with ports A and B ("ด้านบน"). A picture drawn in the picker therefore appears on the
+  hub the way it was drawn, held with ports A and B at the top, which matches the lights' top row
+  found by the Xbox check on 2026-11-07.
+- **Simple check 11 passed:** the colour **switch on** block worked on the hub ("ใช้ได้ ลองแล้ว").
+- **Simple check 12 passed** earlier the same day, after the fix to typing in the search box
+  ("ใช้ได้แล้ว ดีมาก"); no hub is needed for it.
 
 ## Xbox controller check (milestone 5)
 
@@ -526,10 +539,11 @@ and B stand in for a robot's wheels, C for an arm.
 1. Open **Controller** in the toolbox and drag the first group ("use the controller Xbox", then
    "repeat forever" with "drive with the controller" and "A ↻ and B ↺ runs motors C ↻") under
    "when the program starts". Tap **Xbox**: the controller's picture, name and how to pair it.
-2. Turn the controller on and hold its pair button until the Xbox button flashes fast. Connect the
-   hub and press **Run**. The **Controller · Xbox** panel opens at the bottom: "Looking for the
-   controller…" and a blue hub light, then **LIVE** and a green hub light. "Your controls" lists
-   the left stick, A and B, and Menu.
+2. Connect the hub and press **Run**, then turn the controller on and hold its pair button until
+   the Xbox button flashes fast. The **Controller · Xbox** panel opens at the bottom: "Looking for
+   the controller…" while the hub light blinks blue, then **LIVE**, a steady green hub light and
+   two rising beeps. "Your controls" lists the left stick, A and B, and Menu. (Before 2026-11-08
+   the light was steady blue and there were no beeps.)
 3. Push the left stick away from you. The stick in the drawing moves up and "Left stick ↕" shows a
    number near **+100**; motors A and B turn the way a robot's wheels turn driving forward
    (opposite directions). Let go: they stop. Report the number's sign if it is negative.
@@ -545,14 +559,30 @@ and B stand in for a robot's wheels, C for an arm.
 9. Press **Menu** (☰): the program stops, the panel says Menu was pressed, and every motor stops.
 10. Run again, then switch the controller off (hold the Xbox button for about 6 seconds): the
     panel says the controller was lost, the hub light turns red, and the motors stop.
-11. With the controller off, press Run: within about 45 seconds (the hub tries twice) the panel
-    says no controller was found.
+11. With the controller off, press Run: within about a minute (30 seconds, and the hub tries
+    twice) the hub light turns red and the panel says no controller connected. The Monitor
+    says "No Xbox controller connected. The hub said:" with Pybricks' reason, then what to do.
+    (Before 2026-11-08: about 45 seconds, and no reason.)
+12. **Blinking** (added 2026-11-08): press Run with the controller off. The hub light **blinks**
+    blue all the time the hub looks, not steady blue. Turn the controller on and pair it: the
+    light turns steady green and the hub beeps twice, low then high.
+13. **Still connected** (added 2026-11-08): stop the program with the hub's button, leave the
+    controller on, and press Run again: green and the beeps come at once, without pairing (the
+    controller stays connected when a program ends).
+14. **Only the Xbox button** (added 2026-11-08): switch the controller off (hold the Xbox button
+    for about 6 seconds), press Run, and turn the controller on with a short press of its Xbox
+    button, without the pair button. Note whether it connects. Then turn the hub off and on,
+    connect the page again, and try once more.
+15. **If it does not connect** (added 2026-11-08): copy the Monitor's "The hub said:" line into
+    the report. "Connected, but not allowed to read buttons" means the controller was last used
+    with something else and must be paired again (step 2).
 
 ### Controller blocks results
 
-| Date       | Browser    | OS         | Hub         | Firmware | Controller | Result                                                                  |
-| ---------- | ---------- | ---------- | ----------- | -------- | ---------- | ----------------------------------------------------------------------- |
-| 2026-11-07 | not stated | not stated | SPIKE Prime | 4.0.1    | Xbox       | Tried ("played with it"); no failure reported; details open (see notes) |
+| Date       | Browser    | OS         | Hub         | Firmware | Controller | Result                                                                          |
+| ---------- | ---------- | ---------- | ----------- | -------- | ---------- | ------------------------------------------------------------------------------- |
+| 2026-11-07 | not stated | not stated | SPIKE Prime | 4.0.1    | Xbox       | Tried ("played with it"); no failure reported; details open (see notes)         |
+| 2026-11-08 | not stated | not stated | SPIKE Prime | 4.1.3    | Xbox       | Did not connect; what the light and the Monitor showed not reported (see notes) |
 
 Notes (2026-11-07; the maintainer, reported in conversation; browser, OS, hub, firmware and
 controller assumed to be those of the earlier runs):
@@ -564,6 +594,23 @@ controller assumed to be those of the earlier runs):
 - **The maintainer's child** has not built a car yet. Seeing the motors turn showed them that it
   works, and they were happy with that. Their opinion of driving comes once the car exists (no
   date).
+
+Notes (2026-11-08; the maintainer, reported in conversation with two screenshots of the
+Blocks page; browser and OS not stated). The hub had been updated from v4.0.1 to v4.1.3 earlier
+that day.
+
+- **The controller did not connect** ("tried to connect, not successful"). The program was the
+  ready-made group ("use the controller Xbox", then "repeat forever" with "drive with the
+  controller: one stick" and "A ↻ and B ↺ runs motors C ↻"). Not reported: the hub light's
+  colour, the Monitor's text, and whether the pair button was held. The reason is therefore
+  unknown. Pybricks' own source names two likely ones: a controller last used with something
+  else must be paired again, and a controller turned on after the search ended (about 42
+  seconds then) is not found (ADR 0012, amendment of 2026-11-08).
+- **The maintainer asked** for the hub to show the search (blinking blue, then steady green and
+  a beep) and for a controller paired before to connect by itself, as their car program does.
+  Both are in the amendment: the blinking, the beeps, a longer search, the hub's reason in the
+  Monitor, and words saying that after the first pairing the Xbox button is enough. Checks 2 and
+  11 changed, and checks 12 to 15 were added.
 
 ## Python editing checks (milestone 8)
 
@@ -859,6 +906,7 @@ newer; not in Safari.
 | Date       | Hub and Pybricks    | Browser and OS | Checks passed                | Notes                                                                                                               |
 | ---------- | ------------------- | -------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------- |
 | 2026-11-08 | SPIKE Prime, v4.1.3 | not stated     | "tried, works"; not itemised | The maintainer updated the hub to v4.1.3 and tried the USB button; it worked. Checks 7 to 9 not reported separately |
+| 2026-11-08 | SPIKE Prime, v4.1.3 | not stated     | 7 and 8 not run yet          | No cable at hand for pulling it out during a run (check 7); check 8 also later. Check 9 is for Linux only           |
 
 ## Keeping this file current
 
