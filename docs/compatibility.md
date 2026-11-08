@@ -537,8 +537,9 @@ These check the **Controller** blocks and the live controller view on `/blocks`
 and B stand in for a robot's wheels, C for an arm.
 
 1. Open **Controller** in the toolbox and drag the first group ("use the controller Xbox", then
-   "repeat forever" with "drive with the controller" and "A ↻ and B ↺ runs motors C ↻") under
-   "when the program starts". Tap **Xbox**: the controller's picture, name and how to pair it.
+   "repeat forever" with "drive with the controller") under "when the program starts". With a
+   motor on port C, also drag "A ↻ and B ↺ runs motors C ↻" into "repeat forever" (before
+   2026-11-08 the group held it). Tap **Xbox**: the controller's picture, name and how to pair it.
 2. Connect the hub and press **Run**, then turn the controller on and hold its pair button until
    the Xbox button flashes fast. The **Controller · Xbox** panel opens at the bottom: "Looking for
    the controller…" while the hub light blinks blue, then **LIVE**, a steady green hub light and
@@ -576,14 +577,24 @@ and B stand in for a robot's wheels, C for an arm.
 15. **If it does not connect** (added 2026-11-08): copy the Monitor's "The hub said:" line into
     the report. "Connected, but not allowed to read buttons" means the controller was last used
     with something else and must be paired again (step 2).
+16. **The ports are checked** (added 2026-11-08): with the hub connected and Live on, and
+    nothing on port C, put "A ↻ and B ↺ runs motors C ↻" into the program. Under the blocks:
+    "Fix the ports before running … Port C is empty, but … needs a motor there", and **Run**
+    stays off. Tap the line: the block is shown. Plug a motor into C (or change the block to
+    another motor port): the note goes and Run comes back.
+17. **A stop on a missing device is explained** (added 2026-11-08): untick **Live**, keep the
+    motor C block with nothing on C, and Run. The program stops at once, and under the blocks:
+    "The program stopped at its start: port C has no motor (line … of main.py: motor_c =
+    Motor(MOTOR_C_PORT)) …".
 
 ### Controller blocks results
 
-| Date       | Browser    | OS         | Hub         | Firmware | Controller | Result                                                                                    |
-| ---------- | ---------- | ---------- | ----------- | -------- | ---------- | ----------------------------------------------------------------------------------------- |
-| 2026-11-07 | not stated | not stated | SPIKE Prime | 4.0.1    | Xbox       | Tried ("played with it"); no failure reported; details open (see notes)                   |
-| 2026-11-08 | not stated | not stated | SPIKE Prime | 4.1.3    | Xbox       | Did not connect; what the light and the Monitor showed not reported (see notes)           |
-| 2026-11-08 | not stated | not stated | SPIKE Prime | 4.1.3    | Xbox       | Second try: connected, but the drive blocks were not attached, so nothing ran (see notes) |
+| Date       | Browser    | OS         | Hub         | Firmware | Controller | Result                                                                                            |
+| ---------- | ---------- | ---------- | ----------- | -------- | ---------- | ------------------------------------------------------------------------------------------------- |
+| 2026-11-07 | not stated | not stated | SPIKE Prime | 4.0.1    | Xbox       | Tried ("played with it"); no failure reported; details open (see notes)                           |
+| 2026-11-08 | not stated | not stated | SPIKE Prime | 4.1.3    | Xbox       | Did not connect; what the light and the Monitor showed not reported (see notes)                   |
+| 2026-11-08 | not stated | not stated | SPIKE Prime | 4.1.3    | Xbox       | Second try: connected, but the drive blocks were not attached, so nothing ran (see notes)         |
+| 2026-11-08 | not stated | not stated | SPIKE Prime | 4.1.3    | Xbox       | Third try: blocks did not connect (motor on empty port C); `/program` example connects every time |
 
 Notes (2026-11-07; the maintainer, reported in conversation; browser, OS, hub, firmware and
 controller assumed to be those of the earlier runs):
@@ -626,6 +637,26 @@ that day.
     "Looking for the controller..." and "The controller is connected.", and the Controller pane
     says when a program ended right after connecting without reading the controller (ADR 0012,
     decision 17).
+- **Third try (20:42, the same evening):** with "repeat forever" attached, the blocks still did
+  not connect: no beep, nothing in the Monitor as reported. On `/program`, the example "Xbox
+  controller check (no motors)" connected every time: "Connected" 1.6 s after the start, and
+  on later runs just running it and turning the controller on was enough. So the hub, the
+  controller and the pairing work, and **reconnecting with only the Xbox button works** (the
+  maintainer's words: after the first connection, the next times just run and turn the
+  controller on).
+  - The cause, found from the program the blocks make: the ready-made group's "A ↻ and B ↺
+    runs motors C ↻" makes a motor on port C, and the earlier screenshot shows **port C
+    empty** (the car has motors on A and B only). Making a motor on an empty port stops the
+    program at once with Pybricks' "A sensor or motor is not connected to the specified port"
+    (ADR 0012, decision 18), on Setup's first device line, before the blinking and the search.
+    The example uses no motors, so it was not affected.
+  - The maintainer confirmed it was motor C, and asked that ready-made blocks like this not be
+    offered ("makes errors very easy") and for a protection, since a user could hardly find
+    this alone. Fixed the same day (ADR 0012, decision 18): the ready-made group only drives;
+    the Blocks page checks the ports against what the hub sees and keeps Run off until they
+    fit ("Fix the ports before running"); and a run that stops on a missing device is
+    explained by port. Checks 16 and 17.
+  - Next try: delete "A ↻ and B ↺ runs motors C ↻" (or plug a motor into C), then Run.
 - **The maintainer asked** for the hub to show the search (blinking blue, then steady green and
   a beep) and for a controller paired before to connect by itself, as their car program does.
   Both are in the amendment: the blinking, the beeps, a longer search, the hub's reason in the

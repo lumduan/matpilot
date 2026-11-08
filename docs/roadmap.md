@@ -252,7 +252,11 @@ blocks instead, for children: sticks drive, buttons run motors, and it can be wa
   already reconnects such a controller and keeps it connected between runs). Checks 12 to 15. The
   second try the same evening connected, but the program's "repeat forever" group was not
   attached, so nothing ran; the page now lists blocks that are not attached ("Not running"), and
-  the Monitor says when the controller is connected (decision 17).
+  the Monitor says when the controller is connected (decision 17). A third try showed why the
+  blocks still did not connect while the `/program` example did: the ready-made group made a
+  motor on port C, which was empty, so the program stopped at once. The Blocks page now checks
+  the ports against what the hub sees and keeps Run off until they fit, explains a run that
+  stopped on a missing device, and the ready-made group only drives (decision 18).
 - **Next:** the hardware checks; then "when button pressed" hat blocks with Tasks (milestone 4's
   `await`-aware generator); reconnecting after the controller is lost.
 

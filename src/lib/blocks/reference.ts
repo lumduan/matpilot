@@ -671,7 +671,7 @@ export const REFERENCE: readonly ReferenceCategory[] = [
         words: 'use the controller Xbox',
         shape: 'step',
         what: 'Chooses the controller. The program connects to it before anything else: the hub light blinks blue while it looks, then turns green and beeps twice. The first time, hold the controller’s pair button until its Xbox button flashes fast; after that, turning it on with the Xbox button is enough.',
-        when: 'At the top of a program that uses the controller. The toolbox offers it with “repeat forever” and two blocks ready to drive.',
+        when: 'At the top of a program that uses the controller. The toolbox offers it ready to drive, with “repeat forever” and “drive with the controller”; add motor blocks yourself, for motors you have plugged in.',
         python: 'controller = XboxController(timeout=CONTROLLER_SEARCH_MS)',
       },
       {
@@ -686,7 +686,7 @@ export const REFERENCE: readonly ReferenceCategory[] = [
         type: 'mp_ctrl_motor',
         words: 'A ↻ and B ↺ runs motors C ↻',
         shape: 'step',
-        what: 'Turns one or more motors from a control: a pair of buttons, a stick or the triggers. Tap a motor to add it (↻), again to turn it the other way (↺), again to remove it.',
+        what: 'Turns one or more motors from a control: a pair of buttons, a stick or the triggers. Tap a motor to add it (↻), again to turn it the other way (↺), again to remove it. Each chosen port needs a motor plugged in: with nothing there, the program stops as soon as it starts.',
         when: 'Inside “repeat forever”, for an arm or a tool.',
         python:
           'run_motor_with_controller(0, motor_c, motor_c_speed, controller_pair(Button.A, Button.B))',

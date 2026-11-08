@@ -262,12 +262,15 @@ describe('motor sets', () => {
 });
 
 describe('controllerFlyout', () => {
-  it('starts with a ready-made driving loop, and its motor avoids the wheels', () => {
+  it('starts with a ready-made driving loop; the motor block, on its own, avoids the wheels', () => {
     const flyout = controllerFlyout({ hints: {}, movement: null });
     const first = flyout.find((item) => item.kind === 'block') as State;
     expect(first.type).toBe('mp_ctrl_use');
     expect(JSON.stringify(first)).toContain('"type":"mp_forever"');
-    expect(JSON.stringify(first)).toContain('"MOTORS":"C+"');
+    // The group only drives (2026-11-08): a motor block needs a motor on its port.
+    expect(JSON.stringify(first)).not.toContain('mp_ctrl_motor');
+    const motor = flyout.find((item) => item.kind === 'block' && item.type === 'mp_ctrl_motor');
+    expect(JSON.stringify(motor)).toContain('"MOTORS":"C+"');
     const types = flyout.flatMap((item) => (item.kind === 'block' ? [item.type] : []));
     expect(types).toEqual(
       expect.arrayContaining([
