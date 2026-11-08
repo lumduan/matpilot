@@ -253,6 +253,9 @@ The model dialog draws the model in 3D above the drawings from above and from th
   model; it is not loaded again.
 - If the browser cannot draw in 3D, the dialog says so and the drawings from above and from the
   side remain.
+- Ports are picked in the dialog's list, whose tags match the 3D view and the drawings, not by
+  tapping a part in the 3D view as "How A would work" step 4 proposed: a list works with a
+  keyboard and a screen reader, and on a small screen.
 
 Checked: unit tests (the packed driving base read by the real LDrawLoader; every placed name
 found; a brick drawn as a box; an unknown part drawn as nothing); the production build in headless
