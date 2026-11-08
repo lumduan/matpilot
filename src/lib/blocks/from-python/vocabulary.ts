@@ -302,6 +302,16 @@ const TOP: readonly Word[] = [
     'else:\n    ${pass}',
   ),
   word(
+    'switch_value',
+    'keyword',
+    ' = value',
+    '“switch on”: checks one value once; the if … elif just under it picks the case the value equals, and else is “otherwise”.',
+    'switch_value = colour_sensor_d.color()\nif switch_value == Color.RED:\n    wait(100)\nelif switch_value == Color.BLUE:\n    wait(200)',
+    'switch on …',
+    'mp_switch',
+    'switch_value = ${value}\nif switch_value == ${1}:\n    ${pass}\nelif switch_value == ${2}:\n    ${pass}',
+  ),
+  word(
     'break',
     'keyword',
     '',
@@ -719,6 +729,16 @@ function simpleSensor(kind: string, name: string): Word[] {
   switch (kind) {
     case 'colour_sensor':
       return [
+        word(
+          'color',
+          'method',
+          '()',
+          'The colour the sensor sees: Color.RED, YELLOW, GREEN, BLUE, WHITE or NONE. Check it with “switch on”, or compare it.',
+          `print(${name}.color())`,
+          `colour sensor ${port} colour`,
+          'mp_sensor_color',
+          'color()',
+        ),
         word(
           'color',
           'method',

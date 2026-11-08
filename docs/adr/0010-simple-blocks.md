@@ -90,3 +90,27 @@ detailed blocks must stay:** experienced users prefer them because they are more
     (ADR 0008 decision 9);
   - a motor "go to position" block with a dial;
   - turns with the gyro, for a later step with a built robot.
+
+## Amendment (2026-11-08): Conditions and "switch on"
+
+The operator could not find the condition blocks: "if" and "if … else" were in Control (as in the
+LEGO SPIKE app), and the comparisons in Operators. Asked for "if, else, switch":
+
+1. **A Conditions category**, after Control: "if", "if … else" and "if … else if … else"; two
+   "switch on" blocks; the true-or-false questions (colour sensor sees, closer than, pressed, hub
+   button, compare, and, or, not, true); the colour blocks; and one idea (red light when something
+   is close). Control keeps its "if" blocks, so nothing moved.
+2. **"switch on"** (`src/lib/blocks/switch.ts`) checks one value once, then does the case it
+   equals, or "otherwise". ⊕ adds a case like the one before it (the next colour or number), ⊖
+   removes the last one and leaves its blocks loose on the workspace; Undo takes either back.
+   Its Python is the `if … elif … else` the other blocks already make, on `switch_value`, a name
+   the program reserves, set just before (no `match` statement, so nothing new for the hub). Reading the value once keeps a
+   changing sensor from matching two cases or none; a switch inside a case sets it again, which is
+   safe because no further case is checked once one is chosen. The Python editor reads that shape
+   back into the block ([ADR 0014](0014-python-editing-on-blocks-page.md)).
+3. **Two colour blocks** for it: "colour sensor D colour" (`colour_sensor_d.color()`) and a colour
+   swatch (`Color.RED`), with the colours `ColorSensor.color()` reports, already cited in
+   `src/lib/blocks/pybricks.ts`. Advanced › Flow gains "if … else if … else" and a number "switch
+   on".
+
+Check: simple blocks check 11 in [compatibility.md](../compatibility.md#simple-blocks-checks-milestone-4).

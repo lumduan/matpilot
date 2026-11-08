@@ -173,6 +173,11 @@ program cannot omit them.
   of ADR 0011). After the first try, the same day: copy and paste between tabs, a cut and pasted
   function that keeps its calls, and shared variables (🌐) for a value every tab needs (ADR 0013
   decisions 10 and 11).
+- **Conditions and "switch on" (built 2026-11-08, asked for: the "if" blocks were hard to find):**
+  a Conditions category with "if", "else if", "else", the questions they ask, and a "switch on"
+  block that checks a colour or a number once and does the matching case
+  ([ADR 0010 amendment](adr/0010-simple-blocks.md#amendment-2026-11-08-conditions-and-switch-on),
+  [check 11](compatibility.md#simple-blocks-checks-milestone-4), not yet run on a hub).
 - **Next:** milestone 5 comes first, by the maintainer's choice (2026-11-06). Then Tasks
   (`multitask`), which need an `await`-aware generator, and with them event blocks such as "when
   the colour sensor sees red"; then examples.

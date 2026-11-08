@@ -223,6 +223,12 @@ the earlier checks 4 to 7 are the advanced checks.
    for 1 rotations" each time: the motor is clearly faster at 100 %. Then press **Edit as
    Python**: `/program` opens with the same Python, and Run works there.
 10. Reload `/blocks`. The blocks are still there.
+11. **Conditions** (added 2026-11-08, not yet run on a hub): drag the colour **switch on** block
+    under "when the program starts" and put it inside **Control** › "repeat forever". Put "set
+    button light to" red in case red, blue in case blue, and white under otherwise. Run and hold
+    a red brick, a blue brick, then nothing, in front of the colour sensor (port D): the centre
+    button turns red, blue, then white. Press ⊕: a third case appears with yellow; ⊖ removes it
+    again, and **Undo** brings it back.
 
 Optional, with a built two-wheel robot whose left wheel is on A and right wheel on B: "move ↑ for 1
 rotations" drives forward about one wheel turn, and "turn right 90°" turns it about a quarter to

@@ -1,6 +1,6 @@
 /**
  * The toolbox. First the simple blocks (ADR 0010, ./simple-toolbox.ts): Movement, Motors, Light,
- * Sound, Control, Sensors, Operators, and Variables. Then "Advanced", which folds open like
+ * Sound, Control, Conditions, Sensors, Controller, Operators, Variables and Functions. Then "Advanced", which folds open like
  * MakeCode's, with the detailed blocks (ADR 0008): Setup, Output, Input, Flow, Data, Other.
  *
  * Setup, Output and Input are filled when opened, from the devices in the "set up" block, so a
@@ -14,6 +14,7 @@ import {
   OPERATOR_CONTENTS,
   SOUND_CONTENTS,
 } from './simple-toolbox';
+import { SWITCH_BLOCK } from './switch';
 
 export type FlyoutItem = Record<string, unknown> & {
   readonly kind: 'block' | 'label' | 'sep' | 'button';
@@ -193,6 +194,12 @@ export const TOOLBOX = {
     },
     {
       kind: 'category',
+      name: 'Conditions',
+      categorystyle: 'loop_category',
+      custom: 'MP_CONDITIONS',
+    },
+    {
+      kind: 'category',
       name: 'Sensors',
       categorystyle: 'mp_sensor_category',
       custom: 'MP_SENSORS',
@@ -248,6 +255,11 @@ export const TOOLBOX = {
             block('controls_whileUntil'),
             block('controls_if'),
             block('controls_if', { extraState: { hasElse: true } }),
+            block('controls_if', { extraState: { elseIfCount: 1, hasElse: true } }),
+            block(SWITCH_BLOCK, {
+              extraState: { cases: 2 },
+              inputs: { CASE0: num(1), CASE1: num(2) },
+            }),
             block('controls_flow_statements'),
             block('mp_stop_program'),
             label('Conditions'),

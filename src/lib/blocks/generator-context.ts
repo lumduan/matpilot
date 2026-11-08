@@ -78,6 +78,8 @@ export const SIMPLE_RESERVED: readonly string[] = [
   'controller_just_pressed',
   'controller_rumble',
   'controller_power',
+  // The "switch on" block's value (./switch.ts).
+  'switch_value',
 ];
 
 /** One control of the controller and what the program does with it. */

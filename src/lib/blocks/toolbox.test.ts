@@ -3,6 +3,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { NO_HINTS, hintsFromKey } from './fields/hints';
 import { registerBlocks } from './register';
 import {
+  conditionsFlyout,
   defaultMotorPort,
   defaultMovementPorts,
   defaultSensorPort,
@@ -143,6 +144,7 @@ describe('the toolbox', () => {
       'Light',
       'Sound',
       'Control',
+      'Conditions',
       'Sensors',
       'Controller',
       'Operators',
@@ -188,6 +190,23 @@ describe('simple flyouts', () => {
     expect(port(sensors, 'mp_sensor_pressed')).toBe('F');
     const movement = blocksIn(movementFlyout({ hints: moved, movement: null }));
     expect(movement[0]?.fields).toEqual({ PORTS: 'CE' });
+  });
+
+  it('give the Conditions blocks the sensors the hub sees', () => {
+    const moved = hintsFromKey('A=- B=color:61 C=motor:48 D=- E=motor:49 F=distance:62');
+    const items = conditionsFlyout({ hints: moved, movement: null });
+    const types = blocksIn(items).map((item) => item.type);
+    expect(types.slice(0, 5)).toEqual([
+      'controls_if',
+      'controls_if',
+      'controls_if',
+      'mp_switch',
+      'mp_switch',
+    ]);
+    expect(JSON.stringify(blocksIn(items)[3])).toContain(
+      '"VALUE":{"block":{"type":"mp_sensor_color","fields":{"PORT":"B"}}}',
+    );
+    expect(port(items, 'mp_sensor_closer')).toBe('F');
   });
 
   it('skip ports the hub sees a sensor on when choosing a motor port', () => {

@@ -74,8 +74,9 @@ type InputBlock = Blockly.Block & {
   input_: FunctionInput;
 };
 
-const ADD_PICTURE = svgButton('<circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>');
-const REMOVE_PICTURE = svgButton('<circle cx="12" cy="12" r="9"/><path d="M8 12h8"/>');
+/** ⊕ and ⊖, for blocks that grow: define (inputs) and switch (cases). */
+export const ADD_PICTURE = svgButton('<circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>');
+export const REMOVE_PICTURE = svgButton('<circle cx="12" cy="12" r="9"/><path d="M8 12h8"/>');
 
 function svgButton(body: string): string {
   return `data:image/svg+xml,${encodeURIComponent(

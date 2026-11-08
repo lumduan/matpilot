@@ -1,8 +1,8 @@
 /**
  * The simple blocks' toolbox categories (ADR 0010): Movement, Motors, Light, Sound, Control,
- * Sensors, Controller (ADR 0012) and Operators.
+ * Conditions, Sensors, Controller (ADR 0012) and Operators.
  *
- * Movement, Motors and Sensors are filled when opened. A new block takes the port where the hub
+ * Movement, Motors, Conditions and Sensors are filled when opened. A new block takes the port where the hub
  * says such a device is plugged in (./fields/hints.ts); without a hub, the maintainer's bench
  * layout (motors A and B, colour D, distance E, touch F); a motor block avoids the robot's wheels.
  */
@@ -10,6 +10,7 @@ import { portsWith, type PortHints } from './fields/hints';
 import { SMILE_MATRIX } from './fields/matrix-value';
 import { PORTS, type PortName } from './pybricks';
 import { SHADOW } from './simple-definitions';
+import { COLOR_VALUE_BLOCK, SWITCH_BLOCK } from './switch';
 import type { FlyoutItem } from './toolbox';
 
 export interface SimpleToolboxState {
@@ -125,6 +126,62 @@ export function sensorsFlyout(state: SimpleToolboxState): FlyoutItem[] {
       },
     }),
     block('mp_print', { inputs: { VALUE: text('Hello') } }),
+  ];
+}
+
+/**
+ * The Conditions category: "if" with its "else if" and "else", "switch on" (./switch.ts), then the
+ * questions a condition asks, all true or false. The same "if" blocks are in Control too.
+ */
+export function conditionsFlyout(state: SimpleToolboxState): FlyoutItem[] {
+  const colour = defaultSensorPort(state.hints, 'color');
+  const distance = defaultSensorPort(state.hints, 'distance');
+  const touch = defaultSensorPort(state.hints, 'force');
+  const colourCase = (value: string) => ({
+    shadow: { type: COLOR_VALUE_BLOCK, fields: { COLOR: value } },
+  });
+  return [
+    label('If something is true, do the blocks inside'),
+    block('controls_if'),
+    block('controls_if', { extraState: { hasElse: true } }),
+    block('controls_if', { extraState: { elseIfCount: 1, hasElse: true } }),
+    label('Switch: check one thing once, then do the case it matches (⊕ adds a case)'),
+    block(SWITCH_BLOCK, {
+      extraState: { cases: 2 },
+      inputs: {
+        VALUE: { block: { type: 'mp_sensor_color', fields: { PORT: colour } } },
+        CASE0: colourCase('RED'),
+        CASE1: colourCase('BLUE'),
+      },
+    }),
+    block(SWITCH_BLOCK, { extraState: { cases: 2 }, inputs: { CASE0: num(1), CASE1: num(2) } }),
+    label('Questions: each one is true or false'),
+    block('mp_sensor_color_is', { fields: { PORT: colour, COLOR: 'RED' } }),
+    block('mp_sensor_closer', { fields: { PORT: distance }, inputs: { DISTANCE: num(100) } }),
+    block('mp_sensor_pressed', { fields: { PORT: touch } }),
+    block('mp_hub_button', { fields: { BUTTON: 'LEFT' } }),
+    block('logic_compare', { inputs: { A: num(0), B: num(50) } }),
+    block('logic_operation'),
+    block('logic_negate'),
+    block('logic_boolean'),
+    label('Colours, for “switch on” and for comparing'),
+    block('mp_sensor_color', { fields: { PORT: colour } }),
+    block(COLOR_VALUE_BLOCK, { fields: { COLOR: 'RED' } }),
+    label('Idea: red light when something is close, green when not'),
+    block('controls_if', {
+      extraState: { hasElse: true },
+      inputs: {
+        IF0: {
+          block: {
+            type: 'mp_sensor_closer',
+            fields: { PORT: distance },
+            inputs: { DISTANCE: num(100) },
+          },
+        },
+        DO0: { block: { type: 'mp_light_button', fields: { COLOR: 'RED' } } },
+        ELSE: { block: { type: 'mp_light_button', fields: { COLOR: 'GREEN' } } },
+      },
+    }),
   ];
 }
 
