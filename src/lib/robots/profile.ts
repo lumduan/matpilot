@@ -55,6 +55,21 @@ export interface RobotMotor {
   readonly name: string;
 }
 
+/**
+ * The LEGO model a robot was made from (ADR 0017): the LDraw file as it was loaded, so it can be
+ * shown again and saved with the robot. Programs keep their copy of a robot without it.
+ */
+export interface RobotModel {
+  readonly fileName: string;
+  /** The `.ldr` or `.mpd` text. */
+  readonly text: string;
+  /** The front is the other way round from MatPilot's guess. */
+  readonly turned: boolean;
+}
+
+/** A model's text is at most this long (as ../ldraw/model.ts reads it). */
+export const ROBOT_MODEL_MAX_LENGTH = 1_000_000;
+
 /** Speeds as the drive base's `settings()` takes them. */
 export interface RobotSpeed {
   /** Straight speed, mm/s. */
@@ -107,6 +122,8 @@ export interface RobotProfile {
     /** How far its heading is off after a 90° turn, degrees. */
     readonly per90Deg: number | null;
   };
+  /** The LEGO model it was made from, or `null`. */
+  readonly model: RobotModel | null;
 }
 
 /** Limits for typed numbers: wide enough for any LEGO robot, narrow enough to catch typos. */
@@ -146,6 +163,7 @@ export function newRobot(name = DEFAULT_ROBOT_NAME): RobotProfile {
     speed: { mode: 'auto' },
     massG: null,
     drift: { perMetreMm: null, per90Deg: null },
+    model: null,
   };
 }
 
@@ -378,10 +396,25 @@ export function readRobot(value: unknown): RobotProfile | null {
         : { mode: 'auto' },
     massG: numOrNull(value.massG),
     drift: { perMetreMm: numOrNull(drift.perMetreMm), per90Deg: numOrNull(drift.per90Deg) },
+    model: readModel(value.model),
   };
 }
 
-/** The robot as plain data, for storage and files (also how two robots are compared). */
+function readModel(value: unknown): RobotModel | null {
+  if (!isObject(value)) return null;
+  if (typeof value.text !== 'string' || value.text === '') return null;
+  if (value.text.length > ROBOT_MODEL_MAX_LENGTH) return null;
+  return {
+    fileName: typeof value.fileName === 'string' ? value.fileName.slice(0, 200) : 'model.ldr',
+    text: value.text,
+    turned: value.turned === true,
+  };
+}
+
+/**
+ * The robot as plain data without its LEGO model: the copy a program keeps, and how two robots are
+ * compared (a model changes nothing a program uses).
+ */
 export function robotData(robot: RobotProfile): Record<string, unknown> {
   return {
     id: robot.id,
@@ -407,13 +440,18 @@ export function robotData(robot: RobotProfile): Record<string, unknown> {
   };
 }
 
+/** The robot as plain data with its LEGO model: for this browser's storage and robot files. */
+export function robotRecord(robot: RobotProfile): Record<string, unknown> {
+  return robot.model ? { ...robotData(robot), model: { ...robot.model } } : robotData(robot);
+}
+
 export const sameRobot = (a: RobotProfile | null, b: RobotProfile | null) =>
   a === b ||
   (a !== null && b !== null && JSON.stringify(robotData(a)) === JSON.stringify(robotData(b)));
 
 export function serializeRobotFile(robot: RobotProfile): string {
   return `${JSON.stringify(
-    { format: ROBOT_FILE_FORMAT, version: ROBOT_FILE_VERSION, robot: robotData(robot) },
+    { format: ROBOT_FILE_FORMAT, version: ROBOT_FILE_VERSION, robot: robotRecord(robot) },
     null,
     2,
   )}\n`;

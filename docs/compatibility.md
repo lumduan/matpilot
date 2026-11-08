@@ -667,8 +667,10 @@ stated. DeepSeek is still to be tried.
 ## Robots checks (milestone 7)
 
 These check the Robots page and a program that uses a robot
-([ADR 0016](adr/0016-robots-and-mats.md), step 7a, and its calibration helper). Checks 1 to 6 and
-8 need no hub; checks 7 and 9 need the hub and the robot, and a ruler or a tape measure.
+([ADR 0016](adr/0016-robots-and-mats.md), step 7a, and its calibration helper) and a robot made
+from a LEGO model ([ADR 0017](adr/0017-lego-part-builder.md)). Checks 1 to 6 and 8 need no hub;
+checks 7 and 9 need the hub and the robot, and a ruler or a tape measure; check 10 needs the robot
+built in BrickLink Studio, and a ruler.
 
 1. Open **Robots** in the top bar and press **Make a robot**. Measure your robot and type in its
    width, length and height, how far the wheel axle is from the back, the wheel diameter (the
@@ -705,6 +707,17 @@ These check the Robots page and a program that uses a robot
    by how many degrees: make the picture look like the robot). **Use these numbers**: the wheel
    diameter and the axle track change on the page. Run both again: it should now drive about
    1000 mm and end pointing about the way it started. Note the numbers before and after.
+10. A robot from a LEGO model, with the real robot built as in Studio and a ruler. In BrickLink
+    Studio, open the robot and choose **File → Export As → LDraw** (`.ldr`, or `.mpd` when it
+    has submodels). On the Robots page, choose (or make) a robot, then **Make from a LEGO
+    model…** and choose that file. Check, against the real robot: the picture from above and from
+    the side looks like it; **The front is up** (else **Turn the front round**); the wheels'
+    diameter and the axle track; the width, length and height against a ruler; each sensor's
+    place (mm ahead or behind, left or right of the middle) and the way it looks; which drive
+    motor is "turned round" (the one whose shaft points to the robot's left). Give each motor and
+    sensor its real port, **Use these numbers**, then run check 7 or 9: it should drive and turn
+    as the program says. Note the numbers MatPilot gave and what the ruler said, and anything in
+    the yellow notes. Also try the Studio `.io` file itself: it should say how to export it.
 
 ## Mats checks (milestone 7)
 

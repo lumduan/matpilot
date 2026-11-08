@@ -1,6 +1,10 @@
 # ADR 0017: Building a robot from LEGO parts
 
-- Status: **Proposed** 2026-11-08, for the maintainer to decide. Nothing here is built.
+- Status: **Accepted** 2026-11-08: the maintainer asked to build it ("continue with item 5,
+  because it is a very good feature"), so route A with the recommended D1, D3 and D4; D2 as
+  amended in [Decisions](#decisions-2026-11-08); D5 (asking LDraw.org) is still the maintainer's
+  choice. Built: [step 10a-1](#built-step-10a-1-2026-11-08), reading a model and making the
+  robot profile from it; [next](#next-step-10a-2-the-3d-view): the 3D view
 - Date: 2026-11-08
 - Builds on: [ADR 0016](0016-robots-and-mats.md) section 7 (this is that "own ADR"), whose robot
   profile is the contract a part builder writes; [ADR 0002](0002-static-export-no-server-features.md)
@@ -126,7 +130,7 @@ How A would work:
 5. The result is an ordinary robot profile, shown with the checks the Robots page already makes,
    and saved like any robot.
 
-## Decisions for the maintainer
+## Decisions for the maintainer (as proposed)
 
 - **D1, route:** A (import), B (own builder) or C (full builder). **Recommended: A**, B later
   only if asked for.
@@ -149,7 +153,88 @@ How A would work:
   headers, licence texts and attribution, inside an MIT web app is fine (**recommended** before
   shipping).
 
-## Consequences, if A is accepted
+## Decisions (2026-11-08)
+
+- **D1: A**, import a model built elsewhere.
+- **D2: (a), amended.** Two things were mixed in (a): the parts' **sizes** and their **shapes**.
+  - Sizes: every part and primitive of the pinned release has its size in a table
+    (`third_party/ldraw/boxes.json`: 27,807 boxes, 902 kB, about 190 kB compressed), made from
+    the whole library by `scripts/ldraw-library.mjs` and loaded only when a model is opened. So a
+    model's size counts every part it uses, not only the SPIKE ones, and no part is "a point".
+  - Shapes (for the 3D view, step 10a-2): no list of the SPIKE Prime sets' parts was found whose
+    terms are clear (Rebrickable's download page refused to be read, and its terms say nothing
+    about its data's licence), so the subset is chosen from the library itself: every part with
+    the keyword "Spike Prime", and the Technic families SPIKE robots are built from (beams, axles,
+    pins, connectors, bushes, gears and the like: about 500 parts, 8 MB in 1,565 files with their
+    sub-parts and primitives, 1.3 MB compressed). Any other part is drawn as a box of its true
+    size.
+- **D3: three.js**, loaded only by the model dialog (step 10a-2).
+- **D4: kept.** The robot keeps the `.ldr`/`.mpd` text (up to 1 MB) in this browser and in its
+  `.matpilot-robot.json`; the copy of a robot a program keeps leaves it out.
+- **D5: not asked.** MatPilot has not contacted LDraw.org. The licence itself allows what MatPilot
+  does: "You are free: To distribute, remix, adapt, and build upon the material in any medium or
+  format, so long as attribution, as specified by the license, is given to the creator"
+  (`CAreadme.txt`, section 2, shipped in `third_party/ldraw/` and on the site), and MatPilot gives
+  it (NOTICE, the licence texts beside the files, and a credit in the dialog). Asking LDraw.org is
+  a courtesy, the maintainer's to send.
+
+## Built: step 10a-1 (2026-11-08)
+
+On the Robots page, **From a LEGO model → Make from a LEGO model…** (`ModelDialog`):
+
+1. The child chooses a `.ldr` or `.mpd` exported from Studio (or LeoCAD, LDCad). A Studio `.io`
+   file gets "In Studio, choose File → Export As → LDraw (.ldr or .mpd)". Files over 1 MB, with more
+   than 5,000 parts, or with submodels placing each other in a loop are refused with a reason.
+2. `src/lib/ldraw/model.ts` reads it: every line type 1 through every submodel, colour 16
+   inherited, a part the document carries itself (Studio does this for parts LDraw lacks) sized
+   from its own lines.
+3. `src/lib/ldraw/robot-from-model.ts` works out the robot:
+   - each part is the box around its shape (`parts.ts`, from the size table), placed as the model
+     places it;
+   - the drive wheels: two level wheels on one line, the same size, preferring wheels on a motor's
+     shaft. The SPIKE wheels are known exactly (56 mm and 87.8 mm, 14 mm wide); another wheel is
+     sized from its box, a rim and its tyre counting as one;
+   - the ROBOT frame: the origin between the drive wheels, the floor under them, forward square to
+     their axle. LDraw is right-handed with −Y up, so left = up × forward; this was also checked
+     on a printed tile (a "4" seen from above reads the right way round only in that frame);
+   - which way is the front: a model does not say. MatPilot guesses (where a distance sensor looks,
+     else the side the colour sensors are on, else the longer side of the body) and says why; the
+     child can turn it round;
+   - the drive motors: the motor whose shaft is on each wheel's axis, else the nearest (with a
+     note). The motor whose shaft points to the robot's left is the one turned round, because
+     Pybricks defines clockwise "by looking at the motor shaft"
+     ([direction.rst#L26-L27](https://github.com/pybricks/pybricks-api/blob/e610a0a9a3ca4dcdd79342bfe11becbdfefe0c8f/doc/main/parameters/direction.rst#L26-L27));
+     with both shafts out this gives "the left motor", as MatPilot's default robot and Pybricks'
+     drive base example ("the motor on the left must turn counterclockwise",
+     [drivebase_basics.py#L5-L8](https://github.com/pybricks/pybricks-api/blob/e610a0a9a3ca4dcdd79342bfe11becbdfefe0c8f/examples/pup/robotics/drivebase_basics.py#L5-L8)) have it;
+   - the sensors: each one's front and the way it looks, snapped to the nearest of the six ways a
+     profile has (a note when more than 20° off);
+   - the body: the box around every part except the drive wheels, drawn as wide on both sides as
+     its wider side (a note when the two sides differ by more than 10 mm).
+     The SPIKE parts' facts (the hub; the large, medium and small motors with their shafts on the
+     −Y side; the colour, distance and force sensors looking along −Z, the cable variants with
+     their own offsets; the wheels) were read from their LDraw files and are checked against the
+     size table by a test.
+4. The dialog draws the model from above and from the side, every part's box coloured by what it
+   is, the motors and sensors tagged (L, R, M1…, S1…) as in its list; the child picks the ports
+   (starting from the robot's own where a motor or sensor matches) and names the other motors;
+   it shows what changes on the robot, and the Robots page's own checks before "Use these
+   numbers". The robot's name, speeds, mass and measured drift stay.
+
+Checked: unit tests (a hand-built driving base worked out on paper, its `.mpd` form, the front
+turned, motors facing in, notes, a rim with its tyre, refusals); the production build in headless
+Chromium (`.io` and text files refused; a driving base with an arm motor and two sensors measured
+and applied; kept across a reload); and a real 106 kB `.mpd` with 54 models and 1,155 parts
+(Pybricks' own device drawings, MIT) read in about a second. Not yet checked: a robot exported
+from Studio, against the real robot ([Robots check 10](../compatibility.md#robots-checks-milestone-7)).
+
+## Next: step 10a-2, the 3D view
+
+three.js (MIT) and its LDraw loader, loaded only by the dialog, draw the model from the shapes
+subset of D2 served under `/vendor/ldraw/` (parts the subset lacks as boxes of their size), with
+the motors and sensors highlighted from the list.
+
+## Consequences
 
 - No new site is contacted: the part shapes are served from MatPilot's own site under
   `/vendor/ldraw/`, copied by a script from a pinned release with every header kept, beside

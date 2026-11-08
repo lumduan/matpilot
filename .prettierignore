@@ -5,3 +5,5 @@ coverage/
 pnpm-lock.yaml
 next-env.d.ts
 public/vendor/
+# Generated from the LDraw parts library by scripts/ldraw-library.mjs (ADR 0017).
+third_party/ldraw/

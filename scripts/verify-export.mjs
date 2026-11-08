@@ -7,7 +7,8 @@
 //      (MatPilot must make zero runtime requests to third-party origins), or
 //   3. the self-hosted compiler binary (out/vendor/mpy-cross-v6.wasm, ADR 0006), Blockly's
 //      self-hosted media (out/vendor/blockly-media/, ADR 0008), pdf.js's worker
-//      (out/vendor/pdfjs/, ADR 0016) or MicroPython (out/vendor/micropython/, ADR 0016) is missing,
+//      (out/vendor/pdfjs/, ADR 0016), MicroPython (out/vendor/micropython/, ADR 0016) or the LDraw
+//      parts' sizes with their licence (out/vendor/ldraw/, ADR 0017) is missing,
 //      or
 //   4. an exported page lacks the Content-Security-Policy meta tag, or its policy allows any
 //      origin but the page's own. The exceptions are in connect-src: https://api.github.com, for
@@ -27,6 +28,8 @@ const COMPILER_WASM = join(OUT_DIR, 'vendor', 'mpy-cross-v6.wasm');
 const BLOCKLY_SPRITES = join(OUT_DIR, 'vendor', 'blockly-media', 'sprites.svg');
 const PDFJS_WORKER = join(OUT_DIR, 'vendor', 'pdfjs', 'pdf.worker.min.js');
 const MICROPYTHON = join(OUT_DIR, 'vendor', 'micropython', 'micropython.wasm');
+const LDRAW_BOXES = join(OUT_DIR, 'vendor', 'ldraw', 'boxes.json');
+const LDRAW_LICENCE = join(OUT_DIR, 'vendor', 'ldraw', 'CAreadme.txt');
 
 /** Matches an absolute URL with a scheme, or a protocol-relative URL (`//host/...`). */
 const EXTERNAL_URL = /^(?:[a-z][a-z0-9+.-]*:)?\/\//i;
@@ -148,6 +151,12 @@ if (!existsSync(PDFJS_WORKER)) {
 if (!existsSync(MICROPYTHON)) {
   problems.push(
     `${MICROPYTHON} is missing. MicroPython must be self-hosted (ADR 0016); did scripts/vendor-assets.mjs run?`,
+  );
+}
+
+if (!existsSync(LDRAW_BOXES) || !existsSync(LDRAW_LICENCE)) {
+  problems.push(
+    `${LDRAW_BOXES} or the LDraw licence files are missing. The LEGO parts' sizes must be self-hosted with their licence (ADR 0017); did scripts/vendor-assets.mjs run?`,
   );
 }
 

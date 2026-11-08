@@ -5,7 +5,7 @@ import {
   newRobotId,
   parseRobotFile,
   readRobot,
-  robotData,
+  robotRecord,
   robotFileName,
   sameRobot,
   serializeRobotFile,
@@ -69,7 +69,7 @@ function getSnapshot(): Stored {
 }
 
 function write(next: Stored): void {
-  const raw = JSON.stringify({ robots: next.robots.map(robotData), openId: next.openId });
+  const raw = JSON.stringify({ robots: next.robots.map(robotRecord), openId: next.openId });
   try {
     window.localStorage.setItem(STORAGE_KEY, raw);
     memory = null;
@@ -138,7 +138,9 @@ export function useRobots(): RobotLibrary {
     const parsed = parseRobotFile(text);
     if (!parsed.ok) return parsed;
     const now = getSnapshot();
-    const same = now.robots.find((each) => sameRobot(each, parsed.robot));
+    const same = now.robots.find(
+      (each) => sameRobot(each, parsed.robot) && each.model?.text === parsed.robot.model?.text,
+    );
     if (same) {
       write({ ...now, openId: same.id });
       return { ok: true as const, robot: same };
