@@ -210,6 +210,23 @@ controller_error)` with Pybricks' own reason, then what to do. `controller_error
     Controller pane asks whether the Controller blocks are attached under "use the controller".
     The Blocks page also lists every block that is not attached ("Not running"), for any program.
 
+18. **Added the same day, after the third try**: the blocks still did not connect, while the
+    `/program` example connected every time. The ready-made group's "A ↻ and B ↺ runs motors
+    C ↻" made a motor on port C, and port C was empty, so Setup stopped on its first device
+    (`Motor()` on an empty port raises OSError ENODEV at once: pybricks-micropython `c860b6a`
+    `pybricks/common/pb_type_motor.c#L121-L126`), before the blinking and the search. Now:
+    - the ready-made group only drives ("use the controller", "repeat forever", "drive with the
+      controller"). The motor block is offered on its own: the maintainer said such a ready-made
+      block "makes errors very easy";
+    - the Blocks page compares every device the program makes with what the connected hub sees.
+      When a port is empty or holds another device, it says which block and which port, and
+      **Run waits** until it is fixed ("Fix the ports before running"), for any program
+      (`src/lib/blocks/hardware.ts`). The maintainer asked for this protection because a user
+      could hardly find the cause alone;
+    - when the hub was not reporting its ports (Live off, or no reading yet) and a run stops
+      with ENODEV on a line that makes a device, the page says which port, from the traceback's
+      line.
+
 Not decided here: reconnecting during a program after the controller is lost (the maintainer's
 car project plans it as its "Case 4"); it stays as before (red light, the program ends).
 

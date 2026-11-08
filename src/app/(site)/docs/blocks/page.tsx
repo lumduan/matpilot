@@ -56,6 +56,11 @@ export default function BlocksDocs() {
           run. Drag it under “when the program starts” (or into the blocks above it) until it snaps
           in. The page lists such blocks under <strong>Not running</strong>; tap one to find it.
         </p>
+        <p className="doc-tip">
+          With a hub connected, MatPilot checks that every motor and sensor your program uses is
+          plugged into its port. If one is missing, it says which port and which block, and{' '}
+          <strong>Run</strong> waits until you plug it in or choose another port.
+        </p>
       </section>
 
       <section className="doc-section" aria-labelledby="pictures-title">

@@ -20,6 +20,7 @@ import { usePythonEditing } from '@/hooks/usePythonEditing';
 import { saveProgramForEditor } from '@/hooks/useProgramRunner';
 import { useStoredState } from '@/hooks/useStoredState';
 import { hintsFromKey, hintsKey } from '@/lib/blocks/fields/hints';
+import { hardwareWarnings, missingDevice } from '@/lib/blocks/hardware';
 import { PROJECT_NAME, PROJECT_STATUS } from '@/lib/project';
 import { CodeView } from './CodeView';
 import { ControllerPanel } from './ControllerPanel';
@@ -127,6 +128,21 @@ export function BlocksApp() {
   const files = editor.program?.files ?? [];
   const problems = editor.program?.problems ?? [];
   const loose = editor.program?.loose ?? [];
+  const portWarnings = useMemo(
+    () => hardwareWarnings(editor.program?.hardware ?? [], portHints),
+    [editor.program, portHints],
+  );
+  // The last run stopped because a port had nothing (or something else) in it: say which.
+  const monitorLines = runner.monitor.lines;
+  const stoppedOnPort = useMemo(() => {
+    let start = -1;
+    monitorLines.forEach((line, index) => {
+      if (line.text === 'Program started.') start = index;
+    });
+    if (start < 0) return null;
+    const output = monitorLines.slice(start + 1).map((line) => line.text);
+    return missingDevice(output, editor.program?.files ?? []);
+  }, [monitorLines, editor.program]);
   const tabName = (id: string) => editor.tabs.find((tab) => tab.id === id)?.name ?? '';
   const mainTabId = editor.tabs[0]?.id ?? 'main';
   const activeFile = files.find((file) => file.tabId === editor.activeTab)?.name;
@@ -222,7 +238,9 @@ export function BlocksApp() {
   if (!statusText) {
     if (editor.status === 'loading') statusText = 'Loading the block editor…';
     else if (problems.length > 0) statusText = 'Fix the problems above to run the program.';
-    else if (ready) statusText = 'Ready. Press Run to send the program to the hub.';
+    else if (portWarnings.length > 0) {
+      statusText = 'Plug in what the program needs, or change its ports, to run it.';
+    } else if (ready) statusText = 'Ready. Press Run to send the program to the hub.';
     else statusText = 'Connect a hub to run the program.';
   }
 
@@ -419,7 +437,12 @@ export function BlocksApp() {
                 runner.runFiles(files);
               }}
               disabled={
-                !ready || runner.compiling || !editor.program || problems.length > 0 || editing
+                !ready ||
+                runner.compiling ||
+                !editor.program ||
+                problems.length > 0 ||
+                portWarnings.length > 0 ||
+                editing
               }
               data-testid="run"
             >
@@ -714,7 +737,11 @@ export function BlocksApp() {
         </div>
       )}
 
-      {(problems.length > 0 || runner.compileError || loose.length > 0) && (
+      {(problems.length > 0 ||
+        runner.compileError ||
+        loose.length > 0 ||
+        portWarnings.length > 0 ||
+        stoppedOnPort) && (
         <div className="studio-problems">
           {problems.length > 0 && (
             <div className="notice notice-warn" data-testid="block-problems">
@@ -746,6 +773,34 @@ export function BlocksApp() {
                 })}
               </ul>
             </div>
+          )}
+          {portWarnings.length > 0 && (
+            <div className="notice notice-warn" data-testid="port-warnings">
+              <strong>Fix the ports before running (what the hub sees now):</strong>
+              <ul>
+                {portWarnings.map((warning) => (
+                  <li key={warning.message}>
+                    {warning.blockId ? (
+                      <button
+                        type="button"
+                        className="problem-link"
+                        onClick={() => editor.showBlock(warning.tabId, warning.blockId!)}
+                        title="Show the block"
+                      >
+                        {warning.message}
+                      </button>
+                    ) : (
+                      warning.message
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {stoppedOnPort && portWarnings.length === 0 && (
+            <p className="notice notice-error" role="alert" data-testid="stopped-on-port">
+              {stoppedOnPort.message}
+            </p>
           )}
           {loose.length > 0 && (
             <div className="notice" data-testid="loose-blocks">

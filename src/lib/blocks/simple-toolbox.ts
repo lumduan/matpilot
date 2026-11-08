@@ -196,16 +196,14 @@ export function controllerFlyout(state: SimpleToolboxState): FlyoutItem[] {
   const use = { type: 'mp_ctrl_use', fields: { CONTROLLER: 'XBOX' } };
   const drive = { type: 'mp_ctrl_drive', fields: { STYLE: 'ONE_STICK' } };
   const motor = { type: 'mp_ctrl_motor', fields: { SOURCE: 'A_B', MOTORS: `${PORT}+` } };
+  // The ready-made group only drives: a motor block in it needs a motor on its port, and a
+  // missing one stops the program before it looks for the controller (./hardware.ts; asked for on
+  // 2026-11-08 after exactly that happened). The motor block is offered on its own below.
   return [
     label('Drive with a controller. Menu (☰) stops the program.'),
     block(use.type, {
       fields: use.fields,
-      next: {
-        block: {
-          type: 'mp_forever',
-          inputs: { DO: { block: { ...drive, next: { block: motor } } } },
-        },
-      },
+      next: { block: { type: 'mp_forever', inputs: { DO: { block: drive } } } },
     }),
     label('One block at a time; put them inside “repeat forever”'),
     block(use.type, { fields: use.fields }),

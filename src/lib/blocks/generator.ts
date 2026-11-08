@@ -49,6 +49,7 @@ import {
   type FunctionInfo,
 } from './functions';
 import { DEVICES, PORTS, isDeviceType, type DeviceType, type PortName } from './pybricks';
+import type { HardwareUse } from './hardware';
 import type { RobotProfile } from '../robots/profile';
 import { registerSharedGenerators, sharedProblems, usedSharedVariables } from './shared';
 import { SETUP_MODULE, programTabsOf, type ProgramTab } from './tabs';
@@ -96,6 +97,8 @@ export interface GeneratedProgram {
    * says so in words. The program still runs.
    */
   readonly loose: readonly Problem[];
+  /** Every device the program makes, by port, to compare with what the hub sees (./hardware.ts). */
+  readonly hardware: readonly HardwareUse[];
   /** The program reads the Xbox controller, so the page offers its live view (ADR 0012). */
   readonly usesController: boolean;
   /** The controller it uses, when it uses one. */
@@ -772,6 +775,61 @@ export function looseBlocks(tabs: readonly ProgramTab[]): Problem[] {
   );
 }
 
+/** Every device the program makes, in Setup's order: set-up devices, ports, then the wheels. */
+function hardwareUses(
+  tabs: readonly ProgramTab[],
+  devices: readonly SetUpDevice[],
+  ports: readonly PortUse[],
+  movement: Movement | null,
+  robotBlockId: string | null,
+): HardwareUse[] {
+  const mainId = tabs[0]?.id ?? 'main';
+  const find = (blockId: string | null) => {
+    if (!blockId) return { tabId: mainId, block: null };
+    for (const tab of tabs) {
+      const block = tab.workspace.getBlockById(blockId);
+      if (block) return { tabId: tab.id, block };
+    }
+    return { tabId: mainId, block: null };
+  };
+  const uses: HardwareUse[] = devices.map((device) => ({
+    port: device.port,
+    device: device.type,
+    blockId: device.blockId,
+    tabId: find(device.blockId).tabId,
+    what: `“${device.name}” in “set up”`,
+  }));
+  for (const use of [...ports].sort((a, b) => a.port.localeCompare(b.port))) {
+    const { tabId, block } = find(use.blockId);
+    uses.push({
+      port: use.port,
+      device: use.kind,
+      blockId: use.blockId,
+      tabId,
+      what: block ? `“${blockLabel(block)}”` : `a ${PORT_DEVICES[use.kind].label} block`,
+    });
+  }
+  if (movement) {
+    const blockId = movement.blockId ?? robotBlockId;
+    for (const [port, side] of [
+      [movement.left, 'left'],
+      [movement.right, 'right'],
+    ] as const) {
+      uses.push({
+        port,
+        device: 'Motor',
+        blockId,
+        tabId: find(blockId).tabId,
+        what:
+          movement.portsFrom === 'robot' && movement.robotName
+            ? `the robot “${movement.robotName}” (its ${side} wheel)`
+            : `the robot’s ${side} wheel`,
+      });
+    }
+  }
+  return uses;
+}
+
 function placeProblems(drafts: readonly DraftProblem[], tabs: readonly ProgramTab[]): Problem[] {
   const mainId = tabs[0]?.id ?? 'main';
   return drafts.map((draft) => ({
@@ -1099,6 +1157,13 @@ export function generateTabs(
       files,
       problems: placeProblems(problems, tabs),
       loose: looseBlocks(tabs),
+      hardware: hardwareUses(
+        tabs,
+        unique,
+        [...ports.ports.values()],
+        robot ? movement : null,
+        needs.robotUses[0] ?? null,
+      ),
       usesController,
       controller: usesController ? controllerProfile(chosen).id : null,
       controls,
