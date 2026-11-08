@@ -110,6 +110,8 @@ export interface ControllerSnapshot {
   readonly values: ControllerValues | null;
   /** When the last values arrived, ms since the Unix epoch; 0 before any. */
   readonly valuesAt: number;
+  /** For `ended`: what the controller was doing when the program ended. */
+  readonly endedFrom?: 'searching' | 'connected';
 }
 
 export const IDLE_CONTROLLER: ControllerSnapshot = Object.freeze({
@@ -147,7 +149,7 @@ export class ControllerTracker {
   end(): void {
     const { status } = this.#snapshot;
     if (status === 'connected' || status === 'searching') {
-      this.#snapshot = { ...this.#snapshot, status: 'ended' };
+      this.#snapshot = { ...this.#snapshot, status: 'ended', endedFrom: status };
     }
   }
 }

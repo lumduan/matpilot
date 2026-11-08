@@ -157,6 +157,8 @@ export const NOT_FOUND_HELP =
  * The Setup lines (ADR 0012, amendment of 2026-11-08):
  * - while the hub looks for the controller its light blinks blue;
  * - connected: a steady green light and two rising beeps;
+ * - the Monitor says when the search starts and when the controller connects, in words (the
+ *   `@xbx` lines go to the Controller pane, not the Monitor);
  * - not connected in time: a red light, and the Monitor gets the hub's own reason (Pybricks says,
  *   for example, when the controller must be put in pairing mode) and what to do.
  * A controller that is still connected from the last run is used at once, and one whose most
@@ -170,6 +172,7 @@ export function controllerSetup(): string[] {
     `${C.report} = StopWatch()`,
     'hub.light.blink(Color.BLUE, [300, 300])',
     `print("${CONTROLLER_LINE_PREFIX} searching")`,
+    'print("Looking for the controller...")',
     'try:',
     `${INDENT}${C.controller} = XboxController(timeout=${C.searchMs})`,
     `except OSError as ${C.error}:`,
@@ -180,6 +183,7 @@ export function controllerSetup(): string[] {
     `${INDENT}raise SystemExit`,
     'hub.light.on(Color.GREEN)',
     `print("${CONTROLLER_LINE_PREFIX} connected")`,
+    'print("The controller is connected.")',
     'hub.speaker.beep(660, 100)',
     'hub.speaker.beep(990, 100)',
   ];

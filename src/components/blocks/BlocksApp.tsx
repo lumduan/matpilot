@@ -126,6 +126,7 @@ export function BlocksApp() {
   const running = connection.flags.userProgramRunning || connection.program.phase !== 'idle';
   const files = editor.program?.files ?? [];
   const problems = editor.program?.problems ?? [];
+  const loose = editor.program?.loose ?? [];
   const tabName = (id: string) => editor.tabs.find((tab) => tab.id === id)?.name ?? '';
   const mainTabId = editor.tabs[0]?.id ?? 'main';
   const activeFile = files.find((file) => file.tabId === editor.activeTab)?.name;
@@ -713,7 +714,7 @@ export function BlocksApp() {
         </div>
       )}
 
-      {(problems.length > 0 || runner.compileError) && (
+      {(problems.length > 0 || runner.compileError || loose.length > 0) && (
         <div className="studio-problems">
           {problems.length > 0 && (
             <div className="notice notice-warn" data-testid="block-problems">
@@ -743,6 +744,26 @@ export function BlocksApp() {
                     </li>
                   );
                 })}
+              </ul>
+            </div>
+          )}
+          {loose.length > 0 && (
+            <div className="notice" data-testid="loose-blocks">
+              <strong>Not running (the faded blocks):</strong>
+              <ul>
+                {loose.map((note) => (
+                  <li key={note.blockId ?? note.message}>
+                    <button
+                      type="button"
+                      className="problem-link"
+                      onClick={() => note.blockId && editor.showBlock(note.tabId, note.blockId)}
+                      title="Show the block"
+                    >
+                      {editor.tabs.length > 1 ? `${tabName(note.tabId)}: ` : ''}
+                      {note.message}
+                    </button>
+                  </li>
+                ))}
               </ul>
             </div>
           )}

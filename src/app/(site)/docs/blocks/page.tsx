@@ -51,6 +51,11 @@ export default function BlocksDocs() {
           <strong>write</strong>? See <Link href="/docs/every-block">Every block</Link>: every
           block, when to use it, the Python it makes, and the blocks that look alike.
         </p>
+        <p className="doc-tip">
+          A <strong>faded</strong> block (striped in the dark theme) is not attached, so it does not
+          run. Drag it under “when the program starts” (or into the blocks above it) until it snaps
+          in. The page lists such blocks under <strong>Not running</strong>; tap one to find it.
+        </p>
       </section>
 
       <section className="doc-section" aria-labelledby="pictures-title">

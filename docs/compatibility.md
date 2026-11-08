@@ -579,10 +579,11 @@ and B stand in for a robot's wheels, C for an arm.
 
 ### Controller blocks results
 
-| Date       | Browser    | OS         | Hub         | Firmware | Controller | Result                                                                          |
-| ---------- | ---------- | ---------- | ----------- | -------- | ---------- | ------------------------------------------------------------------------------- |
-| 2026-11-07 | not stated | not stated | SPIKE Prime | 4.0.1    | Xbox       | Tried ("played with it"); no failure reported; details open (see notes)         |
-| 2026-11-08 | not stated | not stated | SPIKE Prime | 4.1.3    | Xbox       | Did not connect; what the light and the Monitor showed not reported (see notes) |
+| Date       | Browser    | OS         | Hub         | Firmware | Controller | Result                                                                                    |
+| ---------- | ---------- | ---------- | ----------- | -------- | ---------- | ----------------------------------------------------------------------------------------- |
+| 2026-11-07 | not stated | not stated | SPIKE Prime | 4.0.1    | Xbox       | Tried ("played with it"); no failure reported; details open (see notes)                   |
+| 2026-11-08 | not stated | not stated | SPIKE Prime | 4.1.3    | Xbox       | Did not connect; what the light and the Monitor showed not reported (see notes)           |
+| 2026-11-08 | not stated | not stated | SPIKE Prime | 4.1.3    | Xbox       | Second try: connected, but the drive blocks were not attached, so nothing ran (see notes) |
 
 Notes (2026-11-07; the maintainer, reported in conversation; browser, OS, hub, firmware and
 controller assumed to be those of the earlier runs):
@@ -606,6 +607,25 @@ that day.
   unknown. Pybricks' own source names two likely ones: a controller last used with something
   else must be paired again, and a controller turned on after the search ended (about 42
   seconds then) is not found (ADR 0012, amendment of 2026-11-08).
+- **Second try, the same evening, with the blinking and beeps (PR #52)** (a screenshot of the
+  Blocks page and a 3-second video): the controller still seemed not to work. What the
+  screenshot shows:
+  - The program's **"repeat forever" group was not attached**: it lay apart from "use the
+    controller Xbox" and was drawn striped (turned off). The program was therefore only "use
+    the controller", which connects and ends.
+  - The Monitor: one search ended "not found" at 17:43:44 (the "The hub said:" line is cut off
+    in the screenshot). Then one run of 2.2 s at 17:44:50, and three runs of about 0.2 s each:
+    no "not found" message, and the Controller pane said "The program ended". So the controller
+    connected at 17:44:50, and the next runs found it still connected at once.
+  - The video shows the hub with no program running (the centre button light off), and the
+    controller's Xbox button blinking, so it was not connected at that moment. When it was
+    filmed, relative to those runs, is not known.
+  - Not reported: whether the hub beeped.
+    Next try: attach "repeat forever" under "use the controller" (it snaps in and stops being
+    striped). The page now lists blocks that are not attached under "Not running", the Monitor says
+    "Looking for the controller..." and "The controller is connected.", and the Controller pane
+    says when a program ended right after connecting without reading the controller (ADR 0012,
+    decision 17).
 - **The maintainer asked** for the hub to show the search (blinking blue, then steady green and
   a beep) and for a controller paired before to connect by itself, as their car program does.
   Both are in the amendment: the blinking, the beeps, a longer search, the hub's reason in the

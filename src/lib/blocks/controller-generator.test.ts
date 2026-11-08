@@ -65,7 +65,7 @@ describe('controller blocks', () => {
     expect(code).toContain('CONTROLLER_SEARCH_MS = 30000\nCONTROLLER_REPORT_MS = 100');
     // Setup: the drive base first, then the controller, so a missing controller moves nothing.
     expect(code).toMatch(
-      /robot = DriveBase\([^\n]+\)\ncontroller_memory = \{\}\ncontroller_report = StopWatch\(\)\nhub\.light\.blink\(Color\.BLUE, \[300, 300\]\)\nprint\("@xbx searching"\)\ntry:\n {4}controller = XboxController\(timeout=CONTROLLER_SEARCH_MS\)\nexcept OSError as controller_error:\n/,
+      /robot = DriveBase\([^\n]+\)\ncontroller_memory = \{\}\ncontroller_report = StopWatch\(\)\nhub\.light\.blink\(Color\.BLUE, \[300, 300\]\)\nprint\("@xbx searching"\)\nprint\("Looking for the controller\.\.\."\)\ntry:\n {4}controller = XboxController\(timeout=CONTROLLER_SEARCH_MS\)\nexcept OSError as controller_error:\n/,
     );
     expect(code).toContain('    print("@xbx notfound")\n');
     // The hub's own reason goes to the Monitor (Pybricks says when pairing mode is needed).
@@ -75,7 +75,7 @@ describe('controller blocks', () => {
     expect(code).toContain(`    print("${NOT_FOUND_HELP}")\n    raise SystemExit\n`);
     // Connected: a steady green light, then two rising beeps.
     expect(code).toContain(
-      'hub.light.on(Color.GREEN)\nprint("@xbx connected")\nhub.speaker.beep(660, 100)\nhub.speaker.beep(990, 100)\n',
+      'hub.light.on(Color.GREEN)\nprint("@xbx connected")\nprint("The controller is connected.")\nhub.speaker.beep(660, 100)\nhub.speaker.beep(990, 100)\n',
     );
     // Hub code rule 2: controller reads are guarded, and a lost controller ends the program.
     expect(code).toMatch(

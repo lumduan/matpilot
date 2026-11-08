@@ -45,6 +45,23 @@ describe('ControllerTracker', () => {
     expect(tracker.snapshot.status).toBe('ended');
   });
 
+  it('remembers what the controller was doing when the program ended', () => {
+    const connected = new ControllerTracker();
+    connected.push('@xbx searching', 1);
+    connected.push('@xbx connected', 2);
+    connected.end();
+    // Connected, then ended with no values read: the program never read the controller.
+    expect(connected.snapshot).toMatchObject({
+      status: 'ended',
+      endedFrom: 'connected',
+      values: null,
+    });
+    const searching = new ControllerTracker();
+    searching.push('@xbx searching', 1);
+    searching.end();
+    expect(searching.snapshot).toMatchObject({ status: 'ended', endedFrom: 'searching' });
+  });
+
   it('consumes malformed @xbx lines without changing anything', () => {
     const tracker = new ControllerTracker();
     expect(tracker.push('@xbx 1 2', 1)).toBe(true);
