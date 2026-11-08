@@ -53,6 +53,10 @@ export async function createModelView(
   const loader = new LDrawLoader();
   // The loader needs the material for its "conditional" edges (the outlines of curved surfaces).
   loader.setConditionalLineMaterial(LDrawConditionalLineMaterial);
+  // Smoothing the normals of curved surfaces took 2.5 s of the 3 s the driving base needs (in Node
+  // on the build server), all on the page's main thread; without it curved parts look a little
+  // faceted, and their edge lines are still drawn.
+  loader.smoothNormals = false;
   await loader.preloadMaterials(ldconfigUrl);
   const model = await new Promise<InstanceType<typeof THREE.Group>>((resolve, reject) =>
     loader.parse(packed, resolve, reject),
