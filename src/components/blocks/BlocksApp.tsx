@@ -20,7 +20,7 @@ import { usePythonEditing } from '@/hooks/usePythonEditing';
 import { saveProgramForEditor } from '@/hooks/useProgramRunner';
 import { useStoredState } from '@/hooks/useStoredState';
 import { hintsFromKey, hintsKey } from '@/lib/blocks/fields/hints';
-import { PROJECT_NAME, PROJECT_STATUS, TRADEMARK_DISCLAIMER } from '@/lib/project';
+import { PROJECT_NAME, PROJECT_STATUS } from '@/lib/project';
 import { CodeView } from './CodeView';
 import { ControllerPanel } from './ControllerPanel';
 import { GitHubSettingsDialog } from './GitHubSettingsDialog';
@@ -39,9 +39,6 @@ const AiPanel = dynamic(() => import('./AiPanel').then((module) => module.AiPane
     </aside>
   ),
 });
-
-/** How long the page's introduction stays open after the page loads. */
-const INTRO_OPEN_MS = 5000;
 
 /** How long a notice with Undo stays (after opening a program, closing a tab, ...). */
 const NOTICE_MS = 12_000;
@@ -112,7 +109,6 @@ export function BlocksApp() {
     readonly line: number;
     readonly at: number;
   } | null>(null);
-  const intro = useIntro();
   const { connection, monitor } = runner;
 
   // What arrived while a pane was closed, for the badges on its toggle.
@@ -336,17 +332,16 @@ export function BlocksApp() {
           </Link>
           <span className="status-pill">{PROJECT_STATUS}</span>
           <StudioNav current="blocks" />
-          <button
-            type="button"
+          <Link
+            href="/docs/blocks"
+            target="_blank"
             className="icon-button"
-            aria-expanded={intro.open}
-            aria-controls="studio-intro"
-            onClick={intro.toggle}
-            title={intro.open ? 'Hide the introduction' : 'Show the introduction'}
+            title="How the Blocks page works (opens the guide in a new tab)"
+            data-testid="blocks-help"
           >
-            <Chevron up={intro.open} />
-            <span className="visually-hidden">Introduction</span>
-          </button>
+            <HelpIcon />
+            <span className="visually-hidden">Help: how the Blocks page works</span>
+          </Link>
         </div>
 
         <div className="segmented" role="group" aria-label="View">
@@ -438,40 +433,6 @@ export function BlocksApp() {
           />
         </div>
       </header>
-
-      <div
-        id="studio-intro"
-        className="studio-intro"
-        data-open={intro.open}
-        onPointerEnter={intro.hold}
-        onPointerLeave={intro.release}
-        onFocus={intro.hold}
-        onBlur={intro.release}
-      >
-        <div className="studio-intro-inner">
-          <p>
-            Snap blocks together under “when the program starts” and press <strong>Run</strong>. Tap
-            a block’s picture to choose a port, a turn, a speed or a light picture; press{' '}
-            <strong>Python</strong> to see the code it makes. Make blocks of your own in{' '}
-            <strong>Functions</strong>, and keep them in tabs (<strong>+</strong>): each tab is a
-            Python file that main uses. <strong>Undo</strong> (↶) takes back a change, and{' '}
-            <strong>Save</strong> and <strong>Load</strong> keep programs in a file or in your
-            team’s GitHub repository.
-          </p>
-          <p className="muted">
-            <strong>Stop</strong> ends the program, and every motor stops with it. Leaving or
-            disconnecting also stops it first. If the Bluetooth connection drops, the program keeps
-            running on the hub: press the hub’s centre button to stop it. The bar above the blocks
-            shows what is plugged into each port while no program runs.
-          </p>
-          <p className="studio-intro-legal">
-            {TRADEMARK_DISCLAIMER} {PROJECT_NAME} is open-source software released under the MIT
-            License. It runs entirely in your browser and sends nothing to any server, except to
-            GitHub when you save or load a program there, and to the AI company an adult chose when
-            you ask the AI helper.
-          </p>
-        </div>
-      </div>
 
       <noscript>
         <p className="notice notice-error">This page needs JavaScript to be enabled.</p>
@@ -893,41 +854,19 @@ export function BlocksApp() {
   );
 }
 
-/**
- * The introduction is open when the page loads and folds away after INTRO_OPEN_MS. While the
- * pointer or keyboard focus is in it, it waits; once the user opens or closes it with the chevron,
- * it stays as they left it.
- */
-function useIntro() {
-  const [open, setOpen] = useState(true);
-  const [held, setHeld] = useState<'none' | 'hover' | 'user'>('none');
-  useEffect(() => {
-    if (held !== 'none' || !open) return;
-    const timer = setTimeout(() => setOpen(false), INTRO_OPEN_MS);
-    return () => clearTimeout(timer);
-  }, [held, open]);
-  return {
-    open,
-    toggle: () => {
-      setHeld('user');
-      setOpen((current) => !current);
-    },
-    hold: () => setHeld((current) => (current === 'user' ? current : 'hover')),
-    release: () => setHeld((current) => (current === 'hover' ? 'none' : current)),
-  };
-}
-
-function Chevron({ up }: { up: boolean }) {
+/** A question mark in a circle: help. */
+function HelpIcon() {
   return (
     <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false">
+      <circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" strokeWidth="1.5" />
       <path
-        d={up ? 'M4 10l4-4 4 4' : 'M4 6l4 4 4-4'}
+        d="M6.2 6.3a1.9 1.9 0 0 1 3.7.6c0 1.3-1.9 1.6-1.9 2.8"
         fill="none"
         stroke="currentColor"
-        strokeWidth="1.8"
+        strokeWidth="1.5"
         strokeLinecap="round"
-        strokeLinejoin="round"
       />
+      <circle cx="8" cy="11.6" r="0.9" fill="currentColor" />
     </svg>
   );
 }

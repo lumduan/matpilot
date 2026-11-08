@@ -32,3 +32,6 @@ Thumbs.db
 
 # Third-party runtime files copied by scripts/vendor-assets.mjs
 public/vendor/
+
+# Python bytecode (scripts/docs-pictures/).
+__pycache__/

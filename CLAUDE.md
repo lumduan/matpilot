@@ -187,6 +187,10 @@ entry in [NOTICE](NOTICE).
   `usePythonEditing`, GitHub in `useGitHub`, the AI helper in `useAiHelper`, the robots in
   `useRobots`, the mats in `useMats`, a run on a mat in `useMatRun`).
   Components may import types and pure helpers.
+- `src/components/docs/`, `src/app/(site)/docs/`: the Docs, with screenshots in `public/docs/`.
+  **When a change alters a page the Docs show, retake the pictures** with
+  `scripts/docs-pictures/docs_pictures.py` (its docstring says how) and check the Docs' words; a
+  test fails when a picture or a mark a page asks for is missing.
 - `src/components/`, `src/app/`: UI only. They must not touch `navigator.bluetooth` (ESLint
   enforces this).
 - Pure logic goes behind functions with Vitest unit tests next to the source (`*.test.ts`). Mock

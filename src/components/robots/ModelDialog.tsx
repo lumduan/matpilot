@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { Dialog } from '@/components/Dialog';
 import { useLdrawBoxes } from '@/hooks/useLdrawBoxes';
@@ -11,6 +12,7 @@ import {
   type ModelChoices,
 } from '@/lib/ldraw/apply-model';
 import { MAX_MODEL_BYTES, modelFileKind, readLdraw } from '@/lib/ldraw/model';
+import { LDRAW, STUDIO } from '@/lib/links';
 import {
   partTag,
   robotFromModel,
@@ -148,10 +150,18 @@ export function ModelDialog({
     <Dialog title="Make it from a LEGO model" onClose={onClose} testId="model-dialog">
       <div className="calibrate model-dialog">
         <p className="field-hint">
-          Build your robot in BrickLink Studio (free), then choose <strong>File → Export As</strong>{' '}
-          and save it as <strong>LDraw (.ldr or .mpd)</strong>. Choose that file here: MatPilot
-          measures the robot, finds its wheels, motors and sensors, and you give each motor and
-          sensor its port. LeoCAD and LDCad save LDraw files too.
+          Build your robot in{' '}
+          <a href={STUDIO.download} target="_blank" rel="noopener" data-testid="model-studio-link">
+            BrickLink Studio
+          </a>{' '}
+          (free), then choose <strong>File → Export As</strong> and save it as{' '}
+          <strong>LDraw (.ldr or .mpd)</strong> (
+          <a href={STUDIO.exportHelp} target="_blank" rel="noopener">
+            Studio’s help
+          </a>
+          ). Choose that file here: MatPilot measures the robot, finds its wheels, motors and
+          sensors, and you give each motor and sensor its port. LeoCAD and LDCad save LDraw files
+          too. <Link href="/docs/robots#lego-model">How it works, with pictures</Link>
         </p>
         <label className="button model-file">
           {file ? 'Choose another model…' : 'Choose a model…'}
@@ -365,8 +375,14 @@ export function ModelDialog({
                 </button>
               </div>
             </section>
-            <p className="field-hint model-credit">
-              {`Part sizes from the LDraw Parts Library (${boxes.status === 'ready' ? boxes.table.release : 'LDraw.org'}), CC BY 4.0 and CC BY 2.0: see NOTICE.`}
+            <p className="field-hint model-credit" data-testid="model-credit">
+              Part shapes and sizes from the{' '}
+              <a href={LDRAW.site} target="_blank" rel="noopener">
+                LDraw Parts Library
+              </a>{' '}
+              ({boxes.status === 'ready' ? boxes.table.release : 'LDraw.org'}), CC BY 4.0 and CC BY
+              2.0: see NOTICE and the <Link href="/docs/credits">Credits</Link>. BrickLink Studio is
+              the LEGO Group’s free building program; MatPilot is not made by BrickLink.
             </p>
           </>
         )}

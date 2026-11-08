@@ -3,11 +3,12 @@
 import Link from 'next/link';
 import { useEffect, useRef } from 'react';
 
-/** The full-window pages (ADR 0016, D1). */
-const PAGES = [
+/** The full-window pages (ADR 0016, D1), and the Docs, which explain them. */
+export const PAGES = [
   { id: 'blocks', href: '/blocks', label: 'Blocks' },
   { id: 'robots', href: '/robots', label: 'Robots' },
   { id: 'mats', href: '/mats', label: 'Mats' },
+  { id: 'docs', href: '/docs', label: 'Docs' },
 ] as const;
 
 export type StudioPage = (typeof PAGES)[number]['id'];

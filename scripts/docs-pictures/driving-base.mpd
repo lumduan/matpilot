@@ -1,0 +1,18 @@
+0 FILE base.ldr
+0 Driving base
+0 Name: base.ldr
+0 !LDRAW_ORG Unofficial_Model
+1 16 0 -40 0 1 0 0 0 1 0 0 0 1 45601.dat
+1 4 0 0 0 1 0 0 0 1 0 0 0 1 drive.ldr
+1 16 0 -4 -200 1 0 0 0 0 -1 0 1 0 37308.dat
+1 16 0 -60 -180 1 0 0 0 1 0 0 0 1 37316.dat
+1 16 0 -150 60 1 0 0 0 1 0 0 0 1 54675.dat
+1 72 0 -30 140 1 0 0 0 1 0 0 0 1 32524.dat
+0 NOFILE
+0 FILE drive.ldr
+0 The drive
+1 0 140 0 0 0 0 1 0 1 0 -1 0 0 39367p01.dat
+1 0 -140 0 0 0 0 1 0 1 0 -1 0 0 39367p01.dat
+1 16 70 0 0 0 -1 0 1 0 0 0 0 1 54696p01.dat
+1 16 -70 0 0 0 1 0 1 0 0 0 0 -1 54696p01.dat
+0 NOFILE

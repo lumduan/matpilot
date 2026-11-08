@@ -808,7 +808,7 @@ function RobotFacts({
         <p className="muted" data-testid="robot-model-status">
           {robot.model
             ? `Made from ${robot.model.fileName}. Open it to see it again, or to choose a newer one.`
-            : 'Built it in BrickLink Studio? Export it as an LDraw file, and MatPilot measures it: its size, its wheels, its motors and its sensors.'}
+            : 'Built it in BrickLink Studio, the free LEGO building program? Export it as an LDraw file, and MatPilot measures it: its size, its wheels, its motors and its sensors.'}
         </p>
         <button
           type="button"
