@@ -806,49 +806,6 @@ code {
   border: 0;
 }
 
-/* The introduction folds up: a grid row from 1fr to 0fr. Padding lives on the paragraphs. */
-.studio-intro {
-  display: grid;
-  grid-template-rows: 0fr;
-  background: var(--surface);
-  border-bottom: 1px solid transparent;
-  transition:
-    grid-template-rows 320ms ease,
-    border-color 320ms ease;
-}
-
-.studio-intro[data-open='true'] {
-  grid-template-rows: 1fr;
-  border-bottom-color: var(--border);
-}
-
-.studio-intro-inner {
-  min-height: 0;
-  overflow: hidden;
-  padding: 0 1rem;
-  font-size: 0.92rem;
-}
-
-.studio-intro-inner > p {
-  max-width: 60rem;
-  margin: 0.45rem 0;
-}
-
-.studio-intro-inner > p:last-child {
-  margin-bottom: 0.6rem;
-}
-
-.studio-intro-legal {
-  font-size: 0.78rem;
-  color: var(--muted);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .studio-intro {
-    transition: none;
-  }
-}
-
 .studio-notices {
   padding: 0 0.75rem;
 }
@@ -2972,9 +2929,12 @@ code {
   margin: 0.6rem 0 0;
 }
 
+/* Each box is wide enough for a four-digit millimetre value (a mat is up to 2362 mm wide): three
+   across on a wide panel, else x and y on one row and the facing below. At 1280 px the three-across
+   boxes were 49 px wide and showed "400" as "40". */
 .mats-pose {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
   gap: 0 0.5rem;
   align-items: start;
 }
@@ -3819,4 +3779,377 @@ code {
 .model-3d figcaption {
   font-size: 0.8rem;
   color: var(--muted);
+}
+
+/* --- Home page and Docs ---------------------------------------------------------------------- */
+
+.site-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem;
+  margin-left: auto;
+}
+
+.wordmark {
+  color: var(--text);
+  text-decoration: none;
+}
+
+.home-hero {
+  padding: 2rem 0 0.5rem;
+}
+
+.home-hero h1 {
+  font-size: 1.9rem;
+  line-height: 1.2;
+}
+
+.home-lead {
+  font-size: 1.1rem;
+  line-height: 1.55;
+  max-width: 42rem;
+}
+
+.doc-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin: 1rem 0;
+}
+
+.doc-actions .button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  text-decoration: none;
+}
+
+.doc-actions .doc-icon {
+  width: 1.1em;
+  height: 1.1em;
+}
+
+.doc-section {
+  margin-top: 2.5rem;
+}
+
+.doc-section h2 {
+  font-size: 1.4rem;
+  margin-bottom: 0.75rem;
+}
+
+.doc-icon {
+  flex: none;
+  color: var(--accent);
+}
+
+/* Steps with a picture each: a numbered list of cards. */
+.doc-steps {
+  list-style: none;
+  counter-reset: doc-step;
+  display: grid;
+  gap: 0.6rem;
+  padding: 0;
+  margin: 1rem 0;
+}
+
+.doc-steps > li {
+  counter-increment: doc-step;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+  line-height: 1.5;
+}
+
+.doc-steps:not(.doc-steps-plain) > li::before {
+  content: counter(doc-step);
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 1.8rem;
+  height: 1.8rem;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-weight: 700;
+}
+
+.doc-icon-blink circle {
+  animation: doc-blink 1.8s infinite;
+}
+
+.doc-icon-blink circle:nth-child(2) {
+  animation-delay: 0.6s;
+}
+
+.doc-icon-blink circle:nth-child(3) {
+  animation-delay: 1.2s;
+}
+
+@keyframes doc-blink {
+  0%,
+  30% {
+    opacity: 1;
+  }
+  34%,
+  100% {
+    opacity: 0.2;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .doc-icon-blink circle {
+    animation: none;
+  }
+}
+
+.doc-numbered {
+  line-height: 1.6;
+  padding-left: 1.4rem;
+}
+
+.doc-numbered li + li,
+.doc-notes li + li {
+  margin-top: 0.35rem;
+}
+
+.doc-notes {
+  line-height: 1.55;
+  padding-left: 1.2rem;
+}
+
+.doc-tip {
+  padding: 0.6rem 0.9rem;
+  border-left: 4px solid var(--ok-border);
+  background: var(--ok-bg);
+  color: var(--ok-text);
+  border-radius: 0.3rem;
+}
+
+/* Cards with a picture: the four steps, the Docs' pages. */
+.home-cards {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 0.8rem;
+}
+
+.home-cards > li {
+  padding: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+}
+
+.home-cards h2,
+.home-cards h3 {
+  font-size: 1.05rem;
+  margin: 0.5rem 0 0.25rem;
+}
+
+.home-cards p {
+  margin: 0;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.home-cards-links h2 a,
+.home-cards-links h3 a {
+  text-decoration: none;
+}
+
+.home-cards-links h2 a::after,
+.home-cards-links h3 a::after {
+  content: ' →';
+}
+
+/* "Built on Pybricks": the credit stands out. */
+.doc-credit {
+  margin-top: 2.5rem;
+  padding: 1.25rem 1.4rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 6px solid var(--accent);
+  border-radius: 0.6rem;
+  line-height: 1.55;
+}
+
+.doc-credit h2 {
+  font-size: 1.4rem;
+}
+
+.doc-credit-list {
+  padding-left: 1.2rem;
+}
+
+.doc-credit-list li + li {
+  margin-top: 0.3rem;
+}
+
+/* Screenshots with numbered marks. */
+.doc-shot {
+  margin: 1.25rem 0;
+}
+
+.doc-shot-frame {
+  position: relative;
+  display: block;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.doc-shot-frame img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.doc-mark {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: grid;
+  place-items: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 50%;
+  background: #d9480f;
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+}
+
+.doc-shot figcaption {
+  margin-top: 0.5rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.doc-legend {
+  margin: 0.4rem 0 0;
+  padding-left: 0;
+  list-style: none;
+  counter-reset: doc-legend;
+  columns: 2 18rem;
+  column-gap: 1.5rem;
+  color: var(--text);
+}
+
+.doc-legend li {
+  counter-increment: doc-legend;
+  display: flex;
+  gap: 0.5rem;
+  break-inside: avoid;
+  margin-bottom: 0.3rem;
+}
+
+.doc-legend li::before {
+  content: counter(doc-legend);
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 1.3rem;
+  height: 1.3rem;
+  border-radius: 50%;
+  background: #d9480f;
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.doc-pair {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+
+/* The Docs: their menu beside the page, above it on a phone. */
+.docs {
+  display: grid;
+  grid-template-columns: 12rem minmax(0, 1fr);
+  gap: 2rem;
+  padding-top: 1.5rem;
+}
+
+.docs-nav {
+  position: sticky;
+  top: 1rem;
+  align-self: start;
+}
+
+.docs-nav ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.docs-nav a {
+  display: block;
+  padding: 0.4rem 0.7rem;
+  border-radius: 0.4rem;
+  color: var(--muted);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.docs-nav a:hover {
+  color: var(--text);
+  background: var(--surface);
+}
+
+.docs-nav a[aria-current='page'] {
+  color: var(--text);
+  background: var(--surface);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.docs-main {
+  min-width: 0;
+  line-height: 1.55;
+}
+
+.docs-main h1 {
+  font-size: 1.9rem;
+}
+
+.docs-next {
+  margin-top: 2.5rem;
+  font-size: 1.1rem;
+}
+
+@media (max-width: 48rem) {
+  .docs {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.5rem;
+  }
+
+  .docs-nav {
+    position: static;
+  }
+
+  .docs-nav ol {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+
+  .site-header-inner {
+    flex-wrap: wrap;
+  }
+
+  .site-nav {
+    margin-left: 0;
+    width: 100%;
+  }
 }

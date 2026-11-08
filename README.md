@@ -18,6 +18,8 @@ chose (Anthropic, OpenAI or DeepSeek) when the child presses Ask
 
 What works today:
 
+- **Home page and Docs** (`/docs`): how to start, putting Pybricks on the hub, and every page
+  explained with pictures, for children and the grown-ups helping them.
 - **Compatibility check:** tells you whether this browser and device can use Web Bluetooth, and why
   not if they cannot.
 - **Read-only hub probe:** connects to a SPIKE Prime hub running Pybricks firmware and reads its
@@ -125,6 +127,7 @@ then `pnpm dev` (port 3000) or `pnpm build`. See [CONTRIBUTING.md](CONTRIBUTING.
 
 ## Documentation
 
+- The Docs for using MatPilot are in the app itself, at `/docs`.
 - [docs/architecture.md](docs/architecture.md): layers, data flow, and what is implemented
 - [docs/compatibility.md](docs/compatibility.md): browser and platform support matrix
 - [docs/protocol/pybricks-ble.md](docs/protocol/pybricks-ble.md): the Pybricks BLE protocol MatPilot
@@ -141,6 +144,8 @@ Third-party attributions are in [NOTICE](NOTICE).
 
 ---
 
-LEGO and SPIKE are trademarks of the LEGO Group. Xbox is a trademark of Microsoft Corporation. WRO is
-a trademark of the World Robot Olympiad Association. MatPilot is an independent project and is not
-affiliated with, sponsored by, or endorsed by any of these organisations or by the Pybricks project.
+LEGO® is a trademark of the LEGO Group of companies which does not sponsor, authorize or endorse
+this site. SPIKE and BrickLink are trademarks of the LEGO Group. Xbox is a trademark of Microsoft
+Corporation. WRO is a trademark of the World Robot Olympiad Association. MatPilot is an independent
+project and is not affiliated with, sponsored by, or endorsed by any of these organisations or by the
+Pybricks project.

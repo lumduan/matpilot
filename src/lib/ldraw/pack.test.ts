@@ -59,6 +59,13 @@ describe('a model packed for the 3D view', () => {
     expect(new Set(fetched).size).toBe(fetched.length);
   });
 
+  it('packs submodels in a file named .ldr, as Studio writes them', async () => {
+    const packed = await packModel(DRIVING_BASE_MPD, 'my robot.ldr', shapes, table, fromDisk);
+    expect(packed.text.startsWith('0 FILE base.ldr\n')).toBe(true);
+    expect(unresolved(packed.text)).toEqual([]);
+    expect(packed.missing).toEqual([]);
+  });
+
   it('names submodels and sub-parts as LDrawLoader looks them up', async () => {
     const packed = await packModel(DRIVING_BASE_MPD, 'base.mpd', shapes, table, fromDisk);
     expect(unresolved(packed.text)).toEqual([]);

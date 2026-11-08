@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react';
 
 /**
- * Full-window editors (the Blocks page). The page brings its own top bar and fills the window, so
- * nothing scrolls under the editor; it shows the footer's notices in its introduction instead.
+ * Full-window editors (Blocks, Robots, Mats). Each page brings its own top bar and fills the
+ * window, so nothing scrolls under the editor. How to use them, the credits and the footer's
+ * notices are on the home page and in the Docs (/docs), which the top bar links to.
  */
 export default function StudioLayout({ children }: { children: ReactNode }) {
   return children;

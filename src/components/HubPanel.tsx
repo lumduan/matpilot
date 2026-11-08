@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { useHubProbe } from '@/hooks/useHubProbe';
 import type { HubInfo, HubProbeState } from '@/lib/ble';
 import { assessFirmwareBaseline, TESTED_FIRMWARE_VERSION } from '@/lib/pybricks/baseline';
@@ -146,6 +147,12 @@ function HubDetails({ hub }: { hub: HubInfo }) {
         <dd data-testid="hub-firmware">
           <code>{hub.firmwareRevision || '(empty)'}</code>
           <span className="muted"> {baseline.message}</span>
+          {baseline.comparison === 'older' && (
+            <>
+              {' '}
+              <Link href="/docs/get-started#install-pybricks">How to update Pybricks</Link>
+            </>
+          )}
         </dd>
         <dt>Protocol version</dt>
         <dd data-testid="hub-protocol">

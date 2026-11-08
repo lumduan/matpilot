@@ -21,6 +21,16 @@ describe('reading an LDraw model', () => {
     expect(result.model.submodels).toBe(0);
   });
 
+  it('reads submodels in a file named .ldr, as Studio writes them', () => {
+    // Studio's help: the extension does not matter; a model with submodels is written as MPD.
+    const result = readLdraw(DRIVING_BASE_MPD, 'my robot.ldr');
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.model.name).toBe('base.ldr');
+    expect(result.model.submodels).toBe(1);
+    expect(result.model.parts.filter((part) => part.name === '39367p01')).toHaveLength(2);
+  });
+
   it('goes through the submodels of a .mpd, placing and colouring their parts', () => {
     const shifted = DRIVING_BASE_MPD.replace('1 4 0 0 0 ', '1 4 10 -20 30 ');
     const result = readLdraw(shifted, 'base.mpd');
