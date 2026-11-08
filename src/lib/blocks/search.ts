@@ -285,7 +285,7 @@ class SearchCategory extends Blockly.ToolboxCategory {
     const dom = super.createDom_();
     const input = document.createElement('input');
     input.type = 'search';
-    input.placeholder = 'Search blocks';
+    input.placeholder = 'Search';
     input.className = 'mp-toolbox-search';
     input.setAttribute('aria-label', 'Search the blocks');
     input.setAttribute('data-testid', 'block-search');
@@ -313,6 +313,14 @@ class SearchCategory extends Blockly.ToolboxCategory {
 
   override getClickTarget(): Element {
     return this.#input ?? super.getClickTarget();
+  }
+
+  /**
+   * Blockly 13 moves keyboard focus to the toolbox item a click selects. For this item that must be
+   * the text box, or what a child types goes to the toolbox instead (seen 2026-11-08 on a Mac).
+   */
+  override getFocusableElement(): HTMLElement | SVGElement {
+    return this.#input ?? super.getFocusableElement();
   }
 
   override setSelected(selected: boolean): void {

@@ -20,8 +20,8 @@ flowchart TD
     M10["10 · A robot from its LEGO model<br/>ADR 0017 accepted 2026-11-08<br/>ACTIVE — robot profile from a Studio model<br/>and its 3D view built"]
     M8["8 · Edit the Python on the Blocks page<br/>back to blocks, errors marked<br/>ACTIVE — built and tried 2026-11-07,<br/>suggestions and comments added"]
     M9["9 · AI helper, any provider<br/>explain, review, write, learn to prompt<br/>ACTIVE — explain and review built 2026-11-07,<br/>passed with Claude, write mode later"]
-    M11["11 · Connect with a USB cable<br/>ADR 0018 accepted 2026-11-08<br/>ACTIVE — built, waits for the hub<br/>on Pybricks v4.1.1 or newer"]
-    M12["12 · LEGO MINDSTORMS EV3<br/>ADR 0019 proposed 2026-11-08<br/>DECISION — plan only, needs an EV3 to test"]
+    M11["11 · Connect with a USB cable<br/>ADR 0018 accepted 2026-11-08<br/>DONE — works on the hub (Pybricks v4.1.3)"]
+    M12["12 · LEGO MINDSTORMS EV3<br/>ADR 0019 proposed 2026-11-08<br/>DECISION — plan only; an EV3 is available"]
     GOAL["First usable release<br/>for classrooms and competitions<br/>GOAL"]
 
     M0 --> M1
@@ -61,7 +61,7 @@ flowchart TD
     class GOAL goal
     class M8 active
     class M9 active
-    class M11 active
+    class M11 done
     class M12 decision
 ```
 
@@ -78,8 +78,8 @@ flowchart TD
 | **8 · Python editing**           | 🟡 ACTIVE   | Edit a tab's Python on `/blocks`; it goes back to blocks only when correct, with errors marked where they are; suggestions with help, and comments kept ([ADR 0014](adr/0014-python-editing-on-blocks-page.md))                                                                 | Tried 2026-11-07; suggestions, help and comments added the same day ([checks](compatibility.md#python-editing-checks-milestone-8) 10 to 12)                                                                                                                                                                                                                                                                                                                                                                                 |
 | **9 · AI helper**                | 🟡 ACTIVE   | Explain, review and write code with any AI provider, and learn to prompt ([ADR 0015](adr/0015-ai-helper.md))                                                                                                                                                                    | Explain and review are built; the [checks](compatibility.md#ai-helper-checks-milestone-9) with a real key passed with Claude on 2026-11-07, DeepSeek not tried yet. Left: the write mode, which uses 8                                                                                                                                                                                                                                                                                                                      |
 | **10 · LEGO part builder**       | 🟡 ACTIVE   | A robot profile from a LEGO model built in BrickLink Studio and exported as LDraw: its size, wheels, motors and sensors, the ports picked by the child ([ADR 0017](adr/0017-lego-part-builder.md), accepted 2026-11-08: route A, import)                                        | Steps 10a-1 (read the model, make the profile) and 10a-2 (the 3D view) built 2026-11-08; [Robots check 10](compatibility.md#robots-checks-milestone-7), with a Studio export of the real robot, is the maintainer's; the note to LDraw.org (D5) is agreed, to be sent by the maintainer once matpilot.org is registered                                                                                                                                                                                                     |
-| **11 · USB cable**               | 🟡 ACTIVE   | Connect with a USB cable as well as Bluetooth: the same commands and events over Web Serial ([ADR 0018](adr/0018-usb-connection.md), [protocol](protocol/pybricks-usb.md))                                                                                                      | Built 2026-11-08; needs the hub on Pybricks v4.1.1 or newer (v4.0.1 only charges over USB), then the [USB checks](compatibility.md#usb-connection-checks-milestone-11). The tested baseline moved to v4.1.3 the same day (maintainer's decision); the Bluetooth checks are to be run again on it                                                                                                                                                                                                                            |
-| **12 · LEGO MINDSTORMS EV3**     | 🟥 DECISION | A second hub type: EV3 bricks on Pybricks v4.1.1+, over USB (the same link as 11) and later Bluetooth Classic; EV3 blocks (screen, gyro, ports A–D and S1–S4) ([ADR 0019](adr/0019-ev3-support.md), proposed)                                                                   | The maintainer's decisions D1–D6; an EV3 to test on (none in the hardware list)                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| **11 · USB cable**               | ✅ DONE     | Connect with a USB cable as well as Bluetooth: the same commands and events over Web Serial ([ADR 0018](adr/0018-usb-connection.md), [protocol](protocol/pybricks-usb.md))                                                                                                      | — Built and tried on the hub 2026-11-08 after updating it to v4.1.3: works ([results](compatibility.md#usb-results), not itemised). The baseline moved to v4.1.3 the same day; the maintainer reports the main Bluetooth features work on it too                                                                                                                                                                                                                                                                            |
+| **12 · LEGO MINDSTORMS EV3**     | 🟥 DECISION | A second hub type: EV3 bricks on Pybricks v4.1.1+, over USB (the same link as 11) and later Bluetooth Classic; EV3 blocks (screen, gyro, ports A–D and S1–S4) ([ADR 0019](adr/0019-ev3-support.md), proposed)                                                                   | The maintainer's decisions D1 and D3–D6; an EV3 is available (D2, answered 2026-11-08; it runs ev3dev now, so Pybricks v4 must go on it first)                                                                                                                                                                                                                                                                                                                                                                              |
 | **Goal: first usable release**   | 🟪 GOAL     | Students program a robot with blocks, run it on a hub, drive it with a controller, and use the app offline                                                                                                                                                                      | Needs 4, 5, 6 and 7                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 
 **The real bottleneck is hardware access.** Hardware verification (a real SPIKE Prime hub on each
@@ -99,10 +99,10 @@ built and was tried; 9's explain and review are built and passed with Claude (De
 yet), and its write mode comes later. Milestones 8 and 9 are not part of the first usable
 release unless the maintainer says so.
 
-**Milestone 11, the USB cable, was asked for and built on 2026-11-08** ([ADR 0018](adr/0018-usb-connection.md)):
-it waits on the hub being updated to Pybricks v4.1.1 or newer. The maintainer moved the tested
-baseline from v4.0.1 to v4.1.3 the same day, so the earlier hardware checks (all on v4.0.1) are to
-be run again on v4.1.3.
+**Milestone 11, the USB cable, was asked for, built and tried on the hub on 2026-11-08**
+([ADR 0018](adr/0018-usb-connection.md)): the maintainer updated the hub to Pybricks v4.1.3, the
+new tested baseline, and reports that USB and the main Bluetooth features work on it (not itemised
+check by check).
 
 **Milestone 7 is built in full (ADR 0016) and waits on real-world checks:** the robot measured or
 calibrated on the floor, and runs on the real mat compared with the page. **Milestone 10 is being
@@ -374,7 +374,7 @@ and the prompt journal. Tested with a fake provider in the browser; the
 [checks](compatibility.md#ai-helper-checks-milestone-9) with a real key are next. The write mode
 is not built.
 
-### 11 · Connect with a USB cable (ADR 0018 accepted and built 2026-11-08)
+### 11 · Connect with a USB cable (ADR 0018; built and tried on the hub 2026-11-08)
 
 Asked for on 2026-11-08: "besides Bluetooth, support connecting over USB too". Pybricks has a USB
 link on SPIKE Prime from v4.1.0 (v4.1.1 fixed lost replies); MatPilot's tested v4.0.1 only charges
@@ -385,7 +385,9 @@ stopping, input, live values and the calibration helper work the same way. Next:
 updates the hub with Pybricks' installer and runs the
 [USB checks](compatibility.md#usb-connection-checks-milestone-11). The tested baseline moved to
 v4.1.3 on 2026-11-08 (the maintainer's decision), with every firmware citation re-checked there;
-the Bluetooth checks are to be run again on it.
+the Bluetooth checks are to be run again on it. **Tried the same day:** the maintainer updated
+the hub and reports that USB and the main Bluetooth features work on v4.1.3
+([results](compatibility.md#usb-results)).
 
 ### 12 · LEGO MINDSTORMS EV3 (ADR 0019 proposed 2026-11-08)
 

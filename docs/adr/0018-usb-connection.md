@@ -1,8 +1,9 @@
 # ADR 0018: Connecting with a USB cable
 
 - Status: **Accepted** 2026-11-08: the maintainer asked for it ("besides Bluetooth, I want USB
-  connections supported too"). Built the same day, not yet run on a hub: the hub must first be
-  updated to Pybricks v4.1.1 or newer ([checks](../compatibility.md#usb-connection-checks-milestone-11)).
+  connections supported too"). Built the same day. **Tried on a hub the same day:** the maintainer
+  updated it to Pybricks v4.1.3 and reports that USB works
+  ([results](../compatibility.md#usb-results); not itemised check by check).
 - Date: 2026-11-08
 - Builds on: [ADR 0001](0001-browser-only-web-bluetooth.md) (browser only; Bluetooth stays),
   [ADR 0007](0007-ble-transport-writes.md) (one module writes to the hub, one write at a time,

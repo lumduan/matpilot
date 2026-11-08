@@ -110,9 +110,9 @@ blocks of ADR 0010), 12c medium, 12d medium.
 
 - **D1 · Do it, and when?** Recommended: yes, after the SPIKE checks on v4.1.3 are done, because
   the EV3 shares the USB link and much of the protocol, and many teams own EV3s.
-- **D2 · An EV3 to test on.** None is in the maintainer's hardware list. Without one, nothing
-  EV3 can be checked; with one, each step gets its checklist as SPIKE's did. **Needed before
-  12a ships.**
+- **D2 · An EV3 to test on.** **Answered 2026-11-08: the maintainer has an EV3**, at present
+  running ev3dev. Trying MatPilot on it means installing Pybricks v4 on it with Pybricks'
+  installer first (section 2); each step then gets its checklist as SPIKE's did.
 - **D3 · How a program knows its hub.** Recommended: a hub type on the program and on the robot,
   with the toolbox following it, and a warning when the connected hub differs. Alternative: detect
   the hub on connecting and switch blocks then (simpler, but a program could not be written for an
