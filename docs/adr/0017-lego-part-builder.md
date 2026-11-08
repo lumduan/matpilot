@@ -4,7 +4,7 @@
   because it is a very good feature"), so route A with the recommended D1, D3 and D4; D2 as
   amended in [Decisions](#decisions-2026-11-08); D5 (asking LDraw.org) is still the maintainer's
   choice. Built: [step 10a-1](#built-step-10a-1-2026-11-08), reading a model and making the
-  robot profile from it; [next](#next-step-10a-2-the-3d-view): the 3D view
+  robot profile from it, and [step 10a-2](#built-step-10a-2-2026-11-08), the model in 3D
 - Date: 2026-11-08
 - Builds on: [ADR 0016](0016-robots-and-mats.md) section 7 (this is that "own ADR"), whose robot
   profile is the contract a part builder writes; [ADR 0002](0002-static-export-no-server-features.md)
@@ -228,11 +228,37 @@ and applied; kept across a reload); and a real 106 kB `.mpd` with 54 models and 
 (Pybricks' own device drawings, MIT) read in about a second. Not yet checked: a robot exported
 from Studio, against the real robot ([Robots check 10](../compatibility.md#robots-checks-milestone-7)).
 
-## Next: step 10a-2, the 3D view
+## Built: step 10a-2 (2026-11-08)
 
-three.js (MIT) and its LDraw loader, loaded only by the dialog, draw the model from the shapes
-subset of D2 served under `/vendor/ldraw/` (parts the subset lacks as boxes of their size), with
-the motors and sensors highlighted from the list.
+The model dialog draws the model in 3D above the drawings from above and from the side:
+
+- **Shapes** (D2 as amended): `third_party/ldraw/library/`, 1,622 files of the release unchanged
+  (8.2 MB; each keeps its header naming its authors and licence): 591 parts (every part with the
+  keyword "Spike Prime", the Technic beams, axles, pins, connectors, bushes, gears, cross blocks,
+  angle connectors, plates, bricks, balls, panels, frames, worms and turntables, without patterns,
+  stickers, aliases and obsolete parts, and the old names of those parts) and every sub-part and
+  primitive they use. `shapes.json` maps each name a model places to its file; `LDConfig.ldr`
+  gives the colours. All made by `scripts/ldraw-library.mjs`, served from `/vendor/ldraw/`.
+- **Packing** (`src/lib/ldraw/pack.ts`): the model's own files and every library file it needs,
+  fetched from this site once per visit, in one text, named as three.js's LDrawLoader looks them
+  up (`\` → `/`; `s/` → `parts/s/`; `48/` → `p/48/`; lower case). A part the subset lacks
+  becomes a box of its true size; one MatPilot has no size for, an empty part. LDrawLoader fails a
+  whole model when one file is missing, so it is never left to look for one; a test runs the real
+  loader on a packed model with any network fetch failing it.
+- **Drawing** (`src/lib/ldraw/view3d.ts`, the only code that imports three.js, so it is loaded only
+  when a model is shown: about 730 kB, 185 kB compressed): three.js 0.186.1 (MIT) with its
+  LDrawLoader, the conditional-line material it needs, and OrbitControls (drag to turn, scroll to
+  zoom). The model stands on a floor grid in the ROBOT frame, with an arrow to the front; the
+  motors and sensors are outlined and tagged as in the list. Turning the front round moves the
+  model; it is not loaded again.
+- If the browser cannot draw in 3D, the dialog says so and the drawings from above and from the
+  side remain.
+
+Checked: unit tests (the packed driving base read by the real LDrawLoader; every placed name
+found; a brick drawn as a box; an unknown part drawn as nothing); the production build in headless
+Chromium with software WebGL: the driving base drawn with its SPIKE shapes (240 shape files fetched,
+none failed, 7.3 s with software rendering), tags moving when the front is turned round and when
+the view is dragged, a brick shown as a box with "One kind of part is drawn as plain boxes".
 
 ## Consequences
 

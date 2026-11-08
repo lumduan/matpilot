@@ -143,8 +143,12 @@ entry in [NOTICE](NOTICE).
     table and the SPIKE parts' facts (`parts.ts`: the motors' shafts, the sensors' fronts, the
     wheels, each read from the part's LDraw file and checked against the table by a test), the
     robot profile worked out in the ROBOT frame (`robot-from-model.ts`; LDraw is right-handed with
-    −Y up, so left = up × forward), and the profile with the child's ports (`apply-model.ts`). The
-    size table and the library's licence files are in `third_party/ldraw/`, made by
+    −Y up, so left = up × forward), the profile with the child's ports (`apply-model.ts`), the
+    model packed with every LDraw file it needs (`pack.ts`: three.js's LDrawLoader fails a whole
+    model on one missing file, so nothing is left to fetch), and the 3D view (`view3d.ts`, the only
+    module that imports three.js, loaded on demand). The size table, the shapes subset
+    (`library/`, `shapes.json`), the colours and the library's licence files are in
+    `third_party/ldraw/`, made by
     `scripts/ldraw-library.mjs` from a pinned LDraw release and served from `/vendor/ldraw/`: never
     edit them by hand, and keep NOTICE's LDraw section when moving to another release. A robot
     keeps its model (`RobotProfile.model`): `robotRecord` writes it to storage and robot files,

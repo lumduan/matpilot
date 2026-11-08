@@ -2,17 +2,12 @@
 
 import type { ReactNode } from 'react';
 import type { Vec3 } from '@/lib/ldraw/model';
-import type { DrawnKind, DrawnPart, ModelRobot } from '@/lib/ldraw/robot-from-model';
-
-/** The tag a motor or sensor has in the drawing and in the dialog's list. */
-export function partTag(robot: ModelRobot, list: 'motors' | 'sensors', index: number): string {
-  if (list === 'sensors') return `S${index + 1}`;
-  const motor = robot.motors[index];
-  if (motor?.drives === 'left') return 'L';
-  if (motor?.drives === 'right') return 'R';
-  const others = robot.motors.filter((each) => each.drives === null);
-  return `M${others.indexOf(motor!) + 1}`;
-}
+import {
+  partTag,
+  type DrawnKind,
+  type DrawnPart,
+  type ModelRobot,
+} from '@/lib/ldraw/robot-from-model';
 
 type Point = { readonly x: number; readonly y: number };
 

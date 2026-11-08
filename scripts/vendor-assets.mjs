@@ -11,9 +11,10 @@
 //   need.
 // - ADR 0016: MicroPython's WebAssembly port, which runs a program on a mat. Its loader is copied
 //   as .js for the same reason as pdf.js's worker.
-// - ADR 0017: the LDraw parts' sizes (made from the LDraw parts library by
-//   scripts/ldraw-library.mjs and committed in third_party/ldraw/), with the library's licence
-//   files, for making a robot from a LEGO model.
+// - ADR 0017: the LDraw parts' sizes and the shapes the 3D view draws, with the colours
+//   (LDConfig.ldr) and the library's licence files (made from the LDraw parts library by
+//   scripts/ldraw-library.mjs and committed in third_party/ldraw/), for making a robot from a LEGO
+//   model.
 import { copyFileSync, cpSync, mkdirSync, readdirSync, rmSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
@@ -74,8 +75,16 @@ const ldrawDir = join(root, 'third_party', 'ldraw');
 const ldrawOut = join(vendorDir, 'ldraw');
 rmSync(ldrawOut, { recursive: true, force: true });
 mkdirSync(ldrawOut, { recursive: true });
-const ldrawFiles = ['boxes.json', 'CAreadme.txt', 'CAlicense.txt', 'CAlicense4.txt'];
+const ldrawFiles = [
+  'boxes.json',
+  'shapes.json',
+  'LDConfig.ldr',
+  'CAreadme.txt',
+  'CAlicense.txt',
+  'CAlicense4.txt',
+];
 for (const name of ldrawFiles) copyFileSync(join(ldrawDir, name), join(ldrawOut, name));
+cpSync(join(ldrawDir, 'library'), join(ldrawOut, 'library'), { recursive: true });
 console.log(
-  "Vendored the LDraw parts' sizes and the library's licence files to public/vendor/ldraw/.",
+  "Vendored the LDraw parts' sizes and shapes, the colours and the library's licence files to public/vendor/ldraw/.",
 );
