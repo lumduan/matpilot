@@ -12,6 +12,11 @@ export const DOC_PAGES = [
     about: 'The Blocks page: blocks, pictures, if and switch, Python, tabs.',
   },
   {
+    href: '/docs/every-block',
+    title: 'Every block',
+    about: 'What each block does, when to use it, the Python it makes, and which ones look alike.',
+  },
+  {
     href: '/docs/robots',
     title: 'Robots',
     about: 'Your robot’s size, wheels, motors and sensors, from a ruler or a LEGO® model.',

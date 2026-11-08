@@ -197,6 +197,10 @@ entry in [NOTICE](NOTICE).
   `useRobots`, the mats in `useMats`, a run on a mat in `useMatRun`).
   Components may import types and pure helpers.
 - `src/components/docs/`, `src/app/(site)/docs/`: the Docs, with screenshots in `public/docs/`.
+  **Every block** (`/docs/every-block`) comes from `src/lib/blocks/reference.ts`: when you add a
+  block or change its words or Python, change its entry too (`reference.test.ts` fails until it
+  matches). The Docs search (`src/lib/docs/`, `useDocsSearch`) reads the Docs pages from the site
+  itself, so a new page needs only its place in `src/components/docs/pages.ts`.
   **When a change alters a page the Docs show, retake the pictures** with
   `scripts/docs-pictures/docs_pictures.py` (its docstring says how) and check the Docs' words; a
   test fails when a picture or a mark a page asks for is missing.

@@ -4194,3 +4194,243 @@ code {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
 }
+
+/* The Docs' search (src/components/docs/DocsSearch.tsx), at the top of their menu. */
+.docs-search {
+  position: relative;
+  margin-bottom: 0.6rem;
+}
+
+.docs-search input {
+  width: 100%;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+
+.docs-search-results {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 0.3rem);
+  left: 0;
+  width: min(30rem, calc(100vw - 2rem));
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 0.4rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+
+.docs-search-results ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.docs-nav .docs-search-results a {
+  display: grid;
+  gap: 0.1rem;
+  padding: 0.45rem 0.6rem;
+  color: var(--text);
+  font-weight: 400;
+}
+
+.docs-search-results a:hover,
+.docs-search-results a:focus-visible {
+  background: var(--neutral-bg);
+}
+
+.docs-hit-page {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.docs-hit-text {
+  font-size: 0.85rem;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.docs-search-note {
+  margin: 0.4rem 0.6rem;
+  color: var(--muted);
+}
+
+/* "Every block": blocks drawn in HTML (src/components/docs/BlockChip.tsx). */
+.block-chip {
+  --block-colour: #4b5563;
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35em;
+  padding: 0.4em 0.8em;
+  background: var(--block-colour);
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.35;
+  border-radius: 0.3em;
+}
+
+.block-chip[data-shape='value'] {
+  border-radius: 999px;
+  padding-inline: 0.95em;
+}
+
+.block-chip[data-shape='question'] {
+  border-radius: 0;
+  padding-inline: 1.3em;
+  clip-path: polygon(
+    0.75em 0,
+    calc(100% - 0.75em) 0,
+    100% 50%,
+    calc(100% - 0.75em) 100%,
+    0.75em 100%,
+    0 50%
+  );
+}
+
+.block-chip[data-shape='hat'] {
+  border-radius: 1.1em 1.1em 0.3em 0.3em;
+  padding-top: 0.6em;
+}
+
+.block-chip[data-shape='wrap'] {
+  position: relative;
+  padding-bottom: 1.55em;
+}
+
+.block-chip[data-shape='wrap']::after {
+  content: '';
+  position: absolute;
+  left: 0.9em;
+  right: 0;
+  bottom: 0.45em;
+  height: 0.75em;
+  background: var(--surface);
+  border-radius: 0.2em 0 0 0.2em;
+}
+
+.block-hole {
+  display: inline-block;
+  min-width: 1.8em;
+  padding: 0 0.35em;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.88);
+  color: #39424c;
+  font-weight: 400;
+  text-align: center;
+}
+
+.doc-categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 1rem 0;
+}
+
+.doc-categories a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.doc-cat-dot {
+  display: inline-block;
+  width: 0.75em;
+  height: 0.75em;
+  margin-right: 0.4em;
+  border-radius: 50%;
+  vertical-align: baseline;
+}
+
+.doc-categories .doc-cat-dot {
+  margin-right: 0;
+}
+
+.doc-blocks,
+.doc-alike-list {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.doc-block,
+.doc-alike {
+  padding: 0.9rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+  scroll-margin-top: 1rem;
+}
+
+.doc-block h3,
+.doc-alike h3 {
+  margin: 0 0 0.6rem;
+  font-size: 1.05rem;
+  scroll-margin-top: 1rem;
+}
+
+.doc-block dl {
+  display: grid;
+  grid-template-columns: 8.5rem minmax(0, 1fr);
+  gap: 0.3rem 0.9rem;
+  margin: 0;
+}
+
+.doc-block dt {
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding-top: 0.1rem;
+}
+
+.doc-block dd {
+  margin: 0;
+}
+
+.doc-python {
+  margin: 0;
+  padding: 0.4rem 0.6rem;
+  overflow-x: auto;
+  background: var(--neutral-bg);
+  border-radius: 0.3rem;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  white-space: pre;
+}
+
+.doc-alike p {
+  margin: 0.3rem 0;
+}
+
+.doc-alike-blocks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.doc-alike-blocks a {
+  text-decoration: none;
+}
+
+@media (max-width: 36rem) {
+  .doc-block dl {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .doc-block dd + dt {
+    margin-top: 0.3rem;
+  }
+}
