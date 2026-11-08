@@ -35,7 +35,7 @@ export function HubPanel({ compatible, checking }: HubPanelProps) {
       </div>
 
       <p className="muted">
-        Connects to a LEGO SPIKE Prime hub running Pybricks firmware and reads its name, firmware
+        Connects to a LEGO® SPIKE Prime hub running Pybricks firmware and reads its name, firmware
         revision, and protocol version. Read-only: MatPilot does not write anything to the hub.
         Tested with Pybricks v{TESTED_FIRMWARE_VERSION}.
       </p>

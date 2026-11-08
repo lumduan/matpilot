@@ -61,7 +61,7 @@ export function describeUsbError(error: unknown): ProbeError {
       kind: 'read-failed',
       title: 'The hub did not answer over USB',
       message:
-        'Connecting with a cable needs Pybricks v4.1.1 or newer on the hub; older Pybricks, and the LEGO app’s firmware, only charge over USB. Update Pybricks, or connect with Bluetooth.',
+        'Connecting with a cable needs Pybricks v4.1.1 or newer on the hub; older Pybricks, and the LEGO® app’s firmware, only charge over USB. Update Pybricks, or connect with Bluetooth.',
       detail,
     };
   }

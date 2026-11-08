@@ -43,7 +43,7 @@ export function useLdrawBoxes(): BoxTableState {
         live &&
         setState({
           status: 'error',
-          message: `MatPilot could not load the LEGO parts’ sizes (${error instanceof Error ? error.message : 'unknown error'}). Reload the page and try again.`,
+          message: `MatPilot could not load the LEGO® parts’ sizes (${error instanceof Error ? error.message : 'unknown error'}). Reload the page and try again.`,
         }),
     );
     return () => {

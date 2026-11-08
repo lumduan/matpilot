@@ -147,7 +147,7 @@ export function ModelDialog({
     : [];
 
   return (
-    <Dialog title="Make it from a LEGO model" onClose={onClose} testId="model-dialog">
+    <Dialog title="Make it from a LEGO® model" onClose={onClose} testId="model-dialog">
       <div className="calibrate model-dialog">
         <p className="field-hint">
           Build your robot in{' '}
@@ -182,7 +182,7 @@ export function ModelDialog({
           </p>
         )}
         {file && boxes.status === 'loading' && (
-          <p className="field-hint">Loading the LEGO parts’ sizes…</p>
+          <p className="field-hint">Loading the LEGO® parts’ sizes…</p>
         )}
         {file && boxes.status === 'error' && (
           <p className="notice notice-error" role="alert">

@@ -1,6 +1,6 @@
 # MatPilot
 
-MatPilot is a block-based programming and control web app for LEGO SPIKE Prime hubs running
+MatPilot is a block-based programming and control web app for LEGO® SPIKE Prime hubs running
 [Pybricks](https://pybricks.com) firmware. It is built for education and for robotics competitions
 (WRO and other open or school-run events), with or without a gamepad.
 
@@ -46,7 +46,7 @@ What works today:
   draws it to scale, works out how fast it drives (by the hub's own rules) and how much room it
   needs to turn, and checks it against the WRO 2026 RoboMission rules. **Measure on the floor**
   runs two short programs on the robot (drive 1 metre, turn ten times) and corrects the wheel size
-  and the gap between the wheels from what a tape measure says. **Make from a LEGO model** reads a
+  and the gap between the wheels from what a tape measure says. **Make from a LEGO® model** reads a
   robot built in BrickLink Studio and exported as LDraw, shows it in 3D, and works out its size,
   wheels, motors and sensors, with only the ports to pick. A block program chooses its robot, and the drive base in its Python
   follows it.
@@ -74,7 +74,7 @@ What works today:
 
 More blocks (tasks that run at the same time) and offline use are planned. See the [roadmap](docs/roadmap.md).
 
-Tested firmware baseline: **Pybricks v4.0.1** on LEGO SPIKE Prime. This is the version MatPilot is
+Tested firmware baseline: **Pybricks v4.0.1** on LEGO® SPIKE Prime. This is the version MatPilot is
 tested against, not a hard requirement.
 
 ## Browser and OS support

@@ -102,7 +102,7 @@ export const PICTURES = {
       choice: [2.0, 9.4],
       name: [55.1, 20.3],
       drawing: [80.0, 23.5],
-      model: [87.0, 81.1],
+      model: [88.2, 81.1],
       calibrate: [83.9, 98.7],
       save: [96.6, 4.5],
     },
