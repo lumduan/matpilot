@@ -41,8 +41,10 @@ What works today:
   draws it to scale, works out how fast it drives (by the hub's own rules) and how much room it
   needs to turn, and checks it against the WRO 2026 RoboMission rules. **Measure on the floor**
   runs two short programs on the robot (drive 1 metre, turn ten times) and corrects the wheel size
-  and the gap between the wheels from what a tape measure says. A block program chooses its
-  robot, and the drive base in its Python follows it.
+  and the gap between the wheels from what a tape measure says. **Make from a LEGO model** reads a
+  robot built in BrickLink Studio and exported as LDraw: its size, wheels, motors and sensors, with
+  only the ports to pick. A block program chooses its robot, and the drive base in its Python
+  follows it.
 - **Mats** (`/mats`): add the mat's printing PDF and MatPilot reads its real size from the file
   (a photo works too, with its size typed in). Place your robot on it, drag and turn it, see
   whether it fits the start area, measure distances, and mark areas. **Run a program on the
@@ -65,7 +67,7 @@ What works today:
   hub, records the results in the browser, and produces a report for the
   [compatibility table](docs/compatibility.md).
 
-More blocks (tasks that run at the same time), offline use, and building a robot from LEGO parts ([ADR 0016](docs/adr/0016-robots-and-mats.md)) are planned. See the [roadmap](docs/roadmap.md).
+More blocks (tasks that run at the same time), offline use, and a 3D view of a robot's LEGO model ([ADR 0017](docs/adr/0017-lego-part-builder.md)) are planned. See the [roadmap](docs/roadmap.md).
 
 Tested firmware baseline: **Pybricks v4.0.1** on LEGO SPIKE Prime. This is the version MatPilot is
 tested against, not a hard requirement.

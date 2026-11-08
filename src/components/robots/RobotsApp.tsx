@@ -31,6 +31,7 @@ import {
 import { RULES_PROFILES, robotChecks } from '@/lib/robots/rules';
 import { boxLength, boxWidth, footprint, overallHeight, turningRadius } from '@/lib/robots/shape';
 import { CalibrateDialog } from './CalibrateDialog';
+import { ModelDialog } from './ModelDialog';
 import { NumberField } from './NumberField';
 import { RobotDrawing } from './RobotDrawing';
 
@@ -241,7 +242,7 @@ export function RobotsApp() {
           title="Load a robot"
           kind={ROBOT_FILES}
           github={github}
-          maxBytes={1_000_000}
+          maxBytes={3_000_000}
           open={(text) => {
             const result = library.importFile(text);
             return Promise.resolve(
@@ -763,6 +764,7 @@ function RobotFacts({
 }) {
   const [rulesId, setRulesId] = useState<string>(RULES_PROFILES[0]!.id);
   const [calibrating, setCalibrating] = useState(false);
+  const [modelOpen, setModelOpen] = useState(false);
   const [heading, setHeading] = useState(0);
   const rules = RULES_PROFILES.find((each) => each.id === rulesId) ?? null;
   const motion = robotMotion(robot);
@@ -800,6 +802,26 @@ function RobotFacts({
           {motion.source === 'auto' ? ' (the hub’s defaults)' : ' (typed in)'}
         </dd>
       </dl>
+
+      <section className="robot-calibrate" aria-labelledby="robot-model-title">
+        <h2 id="robot-model-title">From a LEGO model</h2>
+        <p className="muted" data-testid="robot-model-status">
+          {robot.model
+            ? `Made from ${robot.model.fileName}. Open it to see it again, or to choose a newer one.`
+            : 'Built it in BrickLink Studio? Export it as an LDraw file, and MatPilot measures it: its size, its wheels, its motors and its sensors.'}
+        </p>
+        <button
+          type="button"
+          className="button"
+          onClick={() => setModelOpen(true)}
+          data-testid="robot-model"
+        >
+          {robot.model ? 'Open the LEGO model…' : 'Make from a LEGO model…'}
+        </button>
+      </section>
+      {modelOpen && (
+        <ModelDialog robot={robot} onApply={onChange} onClose={() => setModelOpen(false)} />
+      )}
 
       <section className="robot-calibrate" aria-labelledby="robot-calibrate-title">
         <h2 id="robot-calibrate-title">Measure it on the floor</h2>

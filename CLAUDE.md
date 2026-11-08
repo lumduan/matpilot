@@ -138,6 +138,17 @@ entry in [NOTICE](NOTICE).
     served from `/vendor/pdfjs/`, copied by `scripts/vendor-assets.mjs`), IndexedDB storage
     (`store.ts`), the robot on a mat (`pose.ts`), and a path drawn on the mat made into moves
     (`path.ts`; the Blocks page adds them as blocks through `src/lib/blocks/incoming.ts`).
+  - `src/lib/ldraw/`: a robot from its LEGO model ([ADR 0017](docs/adr/0017-lego-part-builder.md)):
+    reading an LDraw `.ldr`/`.mpd` with its submodels (`model.ts`), every part's size from the size
+    table and the SPIKE parts' facts (`parts.ts`: the motors' shafts, the sensors' fronts, the
+    wheels, each read from the part's LDraw file and checked against the table by a test), the
+    robot profile worked out in the ROBOT frame (`robot-from-model.ts`; LDraw is right-handed with
+    −Y up, so left = up × forward), and the profile with the child's ports (`apply-model.ts`). The
+    size table and the library's licence files are in `third_party/ldraw/`, made by
+    `scripts/ldraw-library.mjs` from a pinned LDraw release and served from `/vendor/ldraw/`: never
+    edit them by hand, and keep NOTICE's LDraw section when moving to another release. A robot
+    keeps its model (`RobotProfile.model`): `robotRecord` writes it to storage and robot files,
+    `robotData` (a program's copy, and how robots are compared) leaves it out.
   - `src/lib/sim/`: running a program on a mat ([ADR 0016](docs/adr/0016-robots-and-mats.md), 7c
     and 7d): the engine on a virtual clock (`engine.ts`, citing the firmware), the sensors on the
     mat (`sensors.ts`: the colour sensor's firmware steps, each cited, from the picture at
@@ -167,7 +178,7 @@ entry in [NOTICE](NOTICE).
 - `src/hooks/`: the only React code that creates or calls `src/lib/` objects with side effects
   (the hub probe, the compatibility check, the hub connection in `useHubRunner`, live device
   values in `useLiveDevices`, the block editor in `useBlocksEditor`, blocks handed over from the
-  Mats page in `useIncomingBlocks`, editing a tab's Python in
+  Mats page in `useIncomingBlocks`, the LDraw parts' sizes in `useLdrawBoxes`, editing a tab's Python in
   `usePythonEditing`, GitHub in `useGitHub`, the AI helper in `useAiHelper`, the robots in
   `useRobots`, the mats in `useMats`, a run on a mat in `useMatRun`).
   Components may import types and pure helpers.

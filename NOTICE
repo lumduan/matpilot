@@ -355,3 +355,36 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
+
+==============================================================================
+The LDraw Parts Library
+https://library.ldraw.org/ (LDraw.org)
+Release used: ldraw.org Parts Update 2026-10 (complete.zip dated 2026-10-26,
+  146,853,687 bytes, SHA-256
+  023083918da2d3697c794fb4267975509584f3611b993095874206a803fa610f)
+License: Creative Commons Attribution 4.0 International (CC BY 4.0),
+  https://creativecommons.org/licenses/by/4.0/ ; parts submitted or edited
+  before 2023-03-05 are also under Creative Commons Attribution 2.0 (CC BY 2.0),
+  https://creativecommons.org/licenses/by/2.0/ . Each part file's header names
+  its authors and its licence. The library's CAreadme.txt and the full licence
+  texts (CAlicense.txt for CC BY 2.0, CAlicense4.txt for CC BY 4.0) are in
+  third_party/ldraw/ and are served beside the data at /vendor/ldraw/.
+==============================================================================
+
+MatPilot's Robots page (docs/adr/0017-lego-part-builder.md) makes a robot
+profile from a LEGO model saved in the LDraw format. Data adapted from the
+library ("The LDraw Parts Library", https://www.ldraw.org/legal-info):
+
+  third_party/ldraw/boxes.json (served at /vendor/ldraw/boxes.json)
+    Changed: for every part and primitive of the release, only the smallest
+    box around its shape in its own frame, in LDraw units, rounded out to whole
+    units, and whether its description starts with "Wheel" or "Tyre". Made by
+    scripts/ldraw-library.mjs. No part file is copied.
+
+  src/lib/ldraw/parts.ts
+    Facts read from the SPIKE Prime parts' files (authored by Philippe
+    Hurbain, CC BY 4.0): where the large, medium and small angular motors' shafts
+    come out, where the colour, distance and force sensors' fronts are and
+    which way they look, and the sizes of wheels 39367p01 and 49295p01.
+
+MatPilot does not copy any part file in this release of the site.
