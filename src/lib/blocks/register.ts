@@ -12,6 +12,7 @@ import { registerFunctionBlocks } from './functions';
 import { registerGenerators } from './generator';
 import { registerSharedBlocks } from './shared';
 import { SIMPLE_BLOCK_DEFINITIONS } from './simple-definitions';
+import { registerSwitchBlock } from './switch';
 
 let registered = false;
 
@@ -28,6 +29,7 @@ export function registerBlocks(): void {
   Blockly.common.defineBlocksWithJsonArray(missing);
   registerFunctionBlocks();
   registerSharedBlocks();
+  registerSwitchBlock();
   registerGenerators();
 }
 

@@ -20,10 +20,12 @@ import { ROBOT, formatNumber } from '../generator-context';
 import { DEVICES, type DeviceType, type PortName } from '../pybricks';
 import { SHARED_BLOCKS } from '../shared';
 import { NOTE_OPTIONS } from '../simple-definitions';
+import { COLOR_VALUE_BLOCK, MAX_CASES, MIN_CASES, SWITCH_BLOCK, SWITCH_VALUE } from '../switch';
 import { shadowFor, type BlockState } from './shadows';
 import { Source, asCall, parts, statements, unwrap, type PythonProblem } from './syntax';
 
 export const NO_BLOCK = 'There is no block for this yet.';
+const COLOR_NAMES = 'The colour sensor blocks know Color.RED, YELLOW, GREEN, BLUE, WHITE and NONE.';
 
 /** What one value input holds: a shadow (the toolbox's default), a block over it, or both. */
 export interface InputState {
@@ -493,6 +495,13 @@ export class Reader {
   private member(node: SyntaxNode): BlockState | null {
     const shared = this.sharedTarget(node);
     if (shared) return { type: SHARED_BLOCKS.get, fields: { VAR: { id: shared } } };
+    // A colour the colour sensor knows: Color.RED
+    if (this.src.dotted(node)?.[0] === 'Color') {
+      const color = this.enumValue(node, 'Color', COLOR_VALUE_BLOCK, 'COLOR');
+      return color
+        ? { type: COLOR_VALUE_BLOCK, fields: { COLOR: color } }
+        : this.fail(node, COLOR_NAMES);
+    }
     // hub.imu.tilt()[0]
     const [object, index, extra] = parts(node);
     if (object && index && !extra && index.name !== 'PropertyName') {
@@ -605,6 +614,7 @@ export class Reader {
         const type = (
           {
             'Motor.angle': 'mp_motor_position',
+            'ColorSensor.color': 'mp_sensor_color',
             'ColorSensor.reflection': 'mp_sensor_reflection',
             'UltrasonicSensor.distance': 'mp_sensor_distance',
             'ForceSensor.pressed': 'mp_sensor_pressed',
@@ -805,19 +815,13 @@ export class Reader {
         const color = this.enumValue(right, 'Color', 'mp_sensor_color_is', 'COLOR');
         return color
           ? { type: 'mp_sensor_color_is', fields: { PORT: simple.port, COLOR: color } }
-          : this.fail(
-              right,
-              'The colour sensor blocks know Color.RED, YELLOW, GREEN, BLUE, WHITE and NONE.',
-            );
+          : this.fail(right, COLOR_NAMES);
       }
       if (known?.type === 'ColorSensor') {
         const color = this.enumValue(right, 'Color', 'mp_color_sees', 'COLOR');
         return color
           ? { type: 'mp_color_sees', fields: { SENSOR: { id: known.id }, COLOR: color } }
-          : this.fail(
-              right,
-              'The colour sensor blocks know Color.RED, YELLOW, GREEN, BLUE, WHITE and NONE.',
-            );
+          : this.fail(right, COLOR_NAMES);
       }
       return undefined;
     }
@@ -1078,6 +1082,20 @@ export class Reader {
     }
     // A controller block for several motors: controller_power = ...; then one line per motor.
     const assign = nodes[i];
+    // switch on: switch_value = ...; then if switch_value == ...: ... elif ...
+    if (assign?.name === 'AssignStatement') {
+      const [target, op, value, extra] = parts(assign);
+      if (target && op && value && !extra && src.of(target) === SWITCH_VALUE) {
+        const next = nodes[i + 1];
+        const block = next?.name === 'IfStatement' ? this.switchBlock(value, next) : undefined;
+        if (block !== undefined) return { blocks: block ? [block] : [], used: 2 };
+        this.fail(
+          assign,
+          `${SWITCH_VALUE} is set by the “switch on” block, just before its if … elif.`,
+        );
+        return { blocks: [], used: 1 };
+      }
+    }
     if (assign?.name === 'AssignStatement') {
       const [target, op, value, extra] = parts(assign);
       if (target && op && value && !extra && src.of(target) === 'controller_power') {
@@ -1815,6 +1833,87 @@ export class Reader {
     };
     addComment(block, orphans);
     return block;
+  }
+
+  /**
+   * "switch on" (../switch.ts): the value it checks and an if … elif … else whose every test is
+   * `switch_value == case`. `undefined` when the if is not that shape.
+   */
+  private switchBlock(value: SyntaxNode, chainNode: SyntaxNode): BlockState | null | undefined {
+    const src = this.src;
+    const children = parts(chainNode);
+    // The shape first, so an if that is not a switch is read as one.
+    const tests: SyntaxNode[] = [];
+    for (let i = 0; i < children.length; i += 1) {
+      const word = children[i]!.name;
+      if (word === 'if' || word === 'elif') {
+        const test = unwrap(children[i + 1] ?? chainNode);
+        const [left, op, right, extra] = test.name === 'BinaryExpression' ? parts(test) : [];
+        if (!left || !op || !right || extra || src.of(left) !== SWITCH_VALUE || src.of(op) !== '==')
+          return undefined;
+        if (children[i + 2]?.name !== 'Body') return undefined;
+        tests.push(right);
+        i += 2;
+      } else if (word === 'else') {
+        i += 1;
+      }
+    }
+    if (tests.length < MIN_CASES || tests.length > MAX_CASES) return undefined;
+
+    const inputs: Record<string, InputState> = {};
+    let ok = true;
+    if (src.of(unwrap(value)) !== 'None') {
+      const checked = this.input(value, SWITCH_BLOCK, 'VALUE');
+      if (checked) inputs.VALUE = checked;
+      else ok = false;
+    }
+    for (const [index, test] of tests.entries()) {
+      const slot = this.switchCase(test);
+      if (slot === null) ok = false;
+      else if (slot) inputs[`CASE${index}`] = slot;
+    }
+    const orphans: string[] = [];
+    let branch = 0;
+    for (let i = 0; i < children.length; i += 1) {
+      const word = children[i]!.name;
+      const body = word === 'else' ? children[i + 1] : children[i + 2];
+      if (word !== 'if' && word !== 'elif' && word !== 'else') continue;
+      const { blocks, orphans: left } = this.bodyAndOrphans(body);
+      orphans.push(...left);
+      const statement = statementInput(blocks);
+      if (statement) inputs[word === 'else' ? 'ELSE' : `DO${branch}`] = statement;
+      if (word === 'else') i += 1;
+      else {
+        branch += 1;
+        i += 2;
+      }
+    }
+    if (!ok) return null;
+    const block: BlockState = {
+      type: SWITCH_BLOCK,
+      extraState: { cases: tests.length },
+      inputs,
+    };
+    addComment(block, orphans);
+    return block;
+  }
+
+  /**
+   * A case of "switch on", as ⊕ makes them: a number, a text or a colour fills a shadow; anything
+   * else is a block. `undefined` for an empty case (None), `null` when it cannot be read.
+   */
+  private switchCase(node: SyntaxNode): InputState | null | undefined {
+    const src = this.src;
+    const inner = unwrap(node);
+    if (src.of(inner) === 'None') return undefined;
+    const literal = src.number(inner);
+    if (literal !== null) return { shadow: { type: 'math_number', fields: { NUM: literal } } };
+    const text = inner.name === 'String' ? src.string(inner) : null;
+    if (text !== null) return { shadow: { type: 'text', fields: { TEXT: text } } };
+    const color = this.enumValue(inner, 'Color', COLOR_VALUE_BLOCK, 'COLOR');
+    if (color) return { shadow: { type: COLOR_VALUE_BLOCK, fields: { COLOR: color } } };
+    const block = this.value(inner);
+    return block ? { block } : null;
   }
 
   private forStatement(node: SyntaxNode): BlockState | null {

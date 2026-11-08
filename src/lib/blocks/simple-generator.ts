@@ -192,6 +192,12 @@ export function registerSimpleGenerators(): void {
       Order.RELATIONAL,
     ];
   };
+  forBlock['mp_sensor_color'] = (block) =>
+    call(`${portDevice(block, 'PORT', 'ColorSensor')}.color()`);
+  forBlock['mp_color'] = (block) => {
+    need('pybricks.parameters', 'Color');
+    return [`Color.${block.getFieldValue('COLOR') as string}`, Order.MEMBER];
+  };
   forBlock['mp_sensor_reflection'] = (block) =>
     call(`${portDevice(block, 'PORT', 'ColorSensor')}.reflection()`);
   forBlock['mp_sensor_distance'] = (block) =>

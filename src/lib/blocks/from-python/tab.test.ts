@@ -11,6 +11,7 @@ import {
   LIGHT_CONTENTS,
   OPERATOR_CONTENTS,
   SOUND_CONTENTS,
+  conditionsFlyout,
   controllerFlyout,
   motorsFlyout,
   movementFlyout,
@@ -222,6 +223,7 @@ describe('Python back to blocks', () => {
       movementFlyout(NO_HUB),
       motorsFlyout(NO_HUB),
       sensorsFlyout(NO_HUB),
+      conditionsFlyout(NO_HUB),
       controllerFlyout(NO_HUB),
       [...LIGHT_CONTENTS],
       [...SOUND_CONTENTS],
@@ -594,6 +596,97 @@ describe('Python back to blocks: shapes the generator varies', () => {
     expect(types).not.toContain('mp_light_button');
     const run = program[0]!.workspace.getBlocksByType('mp_motor_run_for', false)[0]!;
     expect(run.getFieldValue('UNIT')).toBe('DEGREES');
+  });
+});
+
+const colourCase = (value: string) => ({ shadow: { type: 'mp_color', fields: { COLOR: value } } });
+const light = (color: string): State => ({ type: 'mp_light_button', fields: { COLOR: color } });
+
+describe('Python back to blocks: switch on', () => {
+  const colourSwitch = (inner?: State): State => ({
+    type: 'mp_switch',
+    extraState: { cases: 3 },
+    inputs: {
+      VALUE: { block: { type: 'mp_sensor_color', fields: { PORT: 'D' } } },
+      CASE0: colourCase('RED'),
+      CASE1: colourCase('BLUE'),
+      CASE2: colourCase('NONE'),
+      DO0: { block: light('RED') },
+      DO1: { block: inner ?? light('BLUE') },
+      ELSE: { block: light('WHITE') },
+    },
+  });
+
+  it('makes an if … elif … else on a value read once, and reads it back', () => {
+    const numbers: State = {
+      type: 'mp_switch',
+      extraState: { cases: 2 },
+      inputs: { CASE0: num(1), DO1: { block: { type: 'mp_light_button_off' } } },
+    };
+    const program = openProgram([
+      { name: 'main', program: [colourSwitch(numbers), { ...numbers, id: 'second' }] },
+    ]);
+    const main = generateTabs(program).files.find((file) => file.name === 'main.py')!.code;
+    expect(main).toContain(
+      [
+        '    switch_value = colour_sensor_d.color()',
+        '    if switch_value == Color.RED:',
+        '        hub.light.on(Color.RED)',
+        '    elif switch_value == Color.BLUE:',
+        '        switch_value = None',
+        '        if switch_value == 1:',
+        '            pass',
+        '        elif switch_value == None:',
+        '            hub.light.off()',
+        '    elif switch_value == Color.NONE:',
+        '        pass',
+        '    else:',
+        '        hub.light.on(Color.WHITE)',
+      ].join('\n'),
+    );
+    expectRoundTrip(program);
+  });
+
+  it('keeps the case blocks and comments, and reads a switch typed in Python', () => {
+    const program = openProgram([{ name: 'main', program: [{ type: 'mp_light_off' }] }]);
+    const text = withMain(
+      program,
+      [
+        '# Which line is it?',
+        'switch_value = colour_sensor_d.reflection()',
+        'if switch_value == 10 + 5:',
+        '    hub.light.on(Color.RED)',
+        'elif switch_value == "far":',
+        '    hub.light.on(Color.GREEN)',
+      ].join('\n'),
+    );
+    const read = readTabPython(program, MAIN_TAB_ID, text);
+    expect(read.problems).toEqual([]);
+    const json = JSON.stringify(read.state);
+    expect(json).toContain('"type":"mp_switch","extraState":{"cases":2}');
+    expect(json).toContain('"CASE1":{"shadow":{"type":"text","fields":{"TEXT":"far"}}}');
+    expect(json).toContain('"type":"math_arithmetic"');
+    expect(json).toContain('Which line is it?');
+  });
+
+  it('says what is wrong with a switch_value that is not a switch', () => {
+    const program = openProgram([{ name: 'main', program: [{ type: 'mp_light_off' }] }]);
+    expect(problemsOf(program, MAIN_TAB_ID, withMain(program, 'switch_value = 3'))).toEqual([
+      'switch_value = 3 | switch_value is set by the “switch on” block, just before its if … elif.',
+    ]);
+    expect(
+      problemsOf(
+        program,
+        MAIN_TAB_ID,
+        withMain(program, 'switch_value = 3\nif switch_value > 2:\n    hub.light.off()'),
+      ),
+    ).toEqual([
+      'switch_value = 3 | switch_value is set by the “switch on” block, just before its if … elif.',
+      'switch_value | Blocks cannot use “switch_value” on its own here.',
+    ]);
+    expect(problemsOf(program, MAIN_TAB_ID, withMain(program, 'print(Color.ORANGE)'))).toEqual([
+      'Color.ORANGE | The colour sensor blocks know Color.RED, YELLOW, GREEN, BLUE, WHITE and NONE.',
+    ]);
   });
 });
 

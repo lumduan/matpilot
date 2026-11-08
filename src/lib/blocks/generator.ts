@@ -59,6 +59,7 @@ import {
   registerControllerGenerators,
 } from './controller-generator';
 import { registerSimpleGenerators } from './simple-generator';
+import { registerSwitchGenerator } from './switch';
 
 export interface Problem {
   /** The block to mark, or `null` for a problem with the program as a whole. */
@@ -172,6 +173,7 @@ export function registerGenerators(): void {
   registerControllerGenerators();
   registerFunctionGenerators();
   registerSharedGenerators();
+  registerSwitchGenerator();
 
   // Set-up blocks become the Config and Setup sections (generateProgram), not statements.
   for (const type of [

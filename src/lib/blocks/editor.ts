@@ -41,6 +41,7 @@ import {
   watchSharedVariables,
 } from './shared';
 import {
+  conditionsFlyout,
   controllerFlyout,
   motorsFlyout,
   movementFlyout,
@@ -509,6 +510,7 @@ export function createEditor(options: EditorOptions): EditorHandle {
     for (const [category, build] of [
       ['MP_MOVEMENT', movementFlyout],
       ['MP_MOTORS', motorsFlyout],
+      ['MP_CONDITIONS', conditionsFlyout],
       ['MP_SENSORS', sensorsFlyout],
       ['MP_CONTROLLER', controllerFlyout],
     ] as const) {

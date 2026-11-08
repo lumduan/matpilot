@@ -90,7 +90,7 @@ const statement = (block: BlockJson): BlockJson => ({
   ...block,
 });
 
-const reporter = (block: BlockJson, check: 'Number' | 'Boolean'): BlockJson => ({
+const reporter = (block: BlockJson, check: 'Number' | 'Boolean' | 'Colour'): BlockJson => ({
   output: check,
   inputsInline: true,
   ...block,
@@ -376,6 +376,25 @@ export const SIMPLE_BLOCK_DEFINITIONS: readonly BlockJson[] = [
     },
     'Boolean',
   ),
+  reporter(
+    {
+      type: 'mp_sensor_color',
+      message0: '%1 colour sensor %2 colour',
+      args0: [icon('colour'), port('color', 'D')],
+      style: SIMPLE_STYLE.sensor,
+      tooltip:
+        'The colour the sensor sees: red, yellow, green, blue, white or no colour. Put it in “switch on”, or compare it with a colour.',
+    },
+    'Colour',
+  ),
+  {
+    type: 'mp_color',
+    message0: '%1',
+    args0: [SENSOR_SWATCHES],
+    output: 'Colour',
+    style: SIMPLE_STYLE.sensor,
+    tooltip: 'A colour the colour sensor knows. Tap it to choose another.',
+  },
   reporter(
     {
       type: 'mp_sensor_reflection',
