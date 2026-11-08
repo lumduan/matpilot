@@ -817,6 +817,40 @@ check 8 is new.
 | Date | Browser | OS  | Hub | Firmware | Result |
 | ---- | ------- | --- | --- | -------- | ------ |
 
+## USB connection checks (milestone 11)
+
+Connecting with a USB cable ([ADR 0018](adr/0018-usb-connection.md),
+[protocol](protocol/pybricks-usb.md)) needs **Pybricks v4.1.1 or newer** on the hub: v4.0.1 only
+charges over USB. Built 2026-11-08; **not yet run on a hub.** Web Serial is in Chrome and Edge on
+Windows, macOS, ChromeOS and Linux, in Chrome for Android 148 and newer, and in Firefox 151 and
+newer; not in Safari.
+
+1. Update the hub: the steps under "Put Pybricks on your hub" in MatPilot's Docs
+   (`/docs/get-started`), with Pybricks' installer. The home page's hub check (over Bluetooth)
+   then shows v4.1.x.
+2. Plug the hub into the computer with its USB cable and turn it on. On the Blocks page a **USB**
+   button sits beside **Connect hub**. Press it: the browser lists the hub (its name, or "SPIKE
+   Prime"). Choose it. The top bar shows the hub's name with **USB** beside it.
+3. Run the starter program: motor A turns, the Plotter draws `angle`, the Monitor ends with `done`.
+4. Run it again and press **Stop** in the middle: the motor stops.
+5. Live values: with no program running, the bar above the blocks shows what is plugged into each
+   port, as over Bluetooth.
+6. A program with `input()` on the Program & Monitor page (`/program`, its **Connect with USB**
+   button): type a line and it arrives.
+7. Start a program that runs forever, then pull the cable: the page says the connection was lost
+   and that the program keeps running; the centre button stops it.
+8. Plug in again and connect over USB, then press **Disconnect** while a program runs: it stops
+   first, then the page lets go of the hub. Connect over Bluetooth now: it works (the hub
+   advertises again once USB has let go).
+9. Linux only: if the port cannot be opened, add your user to the `dialout` group, log out and in,
+   and try again.
+
+### USB results
+
+| Date | Hub and Pybricks | Browser and OS | Checks passed | Notes       |
+| ---- | ---------------- | -------------- | ------------- | ----------- |
+| -    | -                | -              | -             | Not run yet |
+
 ## Keeping this file current
 
 The supported and unsupported lists also live in `README.md` (copied matrix) and

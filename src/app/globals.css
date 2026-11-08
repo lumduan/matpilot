@@ -766,6 +766,22 @@ code {
   white-space: nowrap;
 }
 
+/* "USB" beside the hub's name when it is connected with a cable (ADR 0018). */
+.hub-pill-via {
+  flex: none;
+  padding: 0 0.35rem;
+  border: 1px solid currentColor;
+  border-radius: 0.3rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.button-usb {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
 .hub-pill .button-small {
   border-radius: 999px;
 }

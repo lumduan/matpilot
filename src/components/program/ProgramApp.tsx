@@ -26,6 +26,7 @@ export function ProgramApp() {
       <HubCard
         connection={connection}
         onConnect={runner.connect}
+        onConnectUsb={runner.usbAvailable ? runner.connectUsb : undefined}
         onDisconnect={runner.disconnect}
       />
 

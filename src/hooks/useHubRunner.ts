@@ -12,6 +12,7 @@ import { EMPTY_MONITOR_SNAPSHOT, MonitorStore, type MonitorSnapshot } from '@/li
 import { DEFAULT_SOURCE_NAME, compilePython, type CompileError } from '@/lib/pybricks/compiler';
 import { MAIN_MODULE_NAME, packMultiMpy, type ProgramModule } from '@/lib/pybricks/mpy';
 import { useLiveDevices, type LiveDevices } from './useLiveDevices';
+import { useMounted } from './useMounted';
 
 /**
  * The firmware stops a program only on the stop command, the hub's stop button (the centre button
@@ -56,6 +57,10 @@ export interface HubRunner {
   readonly compileError: RunnerCompileError | null;
   /** Call from a click handler: the browser only opens its device picker on a user gesture. */
   readonly connect: () => void;
+  /** Connects with a USB cable (Pybricks v4.1.1 or newer). Call from a click handler. */
+  readonly connectUsb: () => void;
+  /** This browser can connect with a USB cable (Web Serial); `false` until the page has loaded. */
+  readonly usbAvailable: boolean;
   readonly disconnect: () => void;
   /** Compiles the program, sends it to the hub, and starts it. */
   readonly runSource: (source: string) => void;
@@ -85,6 +90,9 @@ export function useHubRunner(options: { liveDevices?: boolean } = {}): HubRunner
   const monitor = useSyncExternalStore(store.subscribe, store.getSnapshot, getServerMonitor);
   const [compiling, setCompiling] = useState(false);
   const [compileError, setCompileError] = useState<RunnerCompileError | null>(null);
+  // Known only in the browser, after the first render (the static page cannot know it).
+  const mounted = useMounted();
+  const usbAvailable = mounted && hub.canUseUsb();
 
   useEffect(() => {
     const offOutput = hub.onOutput((bytes) => store.pushOutput(bytes));
@@ -164,6 +172,9 @@ export function useHubRunner(options: { liveDevices?: boolean } = {}): HubRunner
   const connect = useCallback(() => {
     void hub.connect();
   }, [hub]);
+  const connectUsb = useCallback(() => {
+    void hub.connectUsb();
+  }, [hub]);
   const disconnect = useCallback(() => {
     void hub.disconnect();
   }, [hub]);
@@ -192,6 +203,8 @@ export function useHubRunner(options: { liveDevices?: boolean } = {}): HubRunner
     compiling,
     compileError,
     connect,
+    connectUsb,
+    usbAvailable,
     disconnect,
     runSource,
     runFiles,

@@ -7,10 +7,13 @@ import { linkSummary } from './status';
 export function HubCard({
   connection,
   onConnect,
+  onConnectUsb,
   onDisconnect,
 }: {
   connection: ConnectionSnapshot;
   onConnect: () => void;
+  /** Shown only when given: the browser can connect with a USB cable. */
+  onConnectUsb?: (() => void) | undefined;
   onDisconnect: () => void;
 }) {
   const ready = connection.link.status === 'ready';
@@ -25,14 +28,28 @@ export function HubCard({
             Disconnect
           </button>
         ) : (
-          <button
-            type="button"
-            className="button button-primary"
-            onClick={onConnect}
-            disabled={busyLink}
-          >
-            Connect to hub
-          </button>
+          <div className="button-row">
+            <button
+              type="button"
+              className="button button-primary"
+              onClick={onConnect}
+              disabled={busyLink}
+            >
+              Connect to hub
+            </button>
+            {onConnectUsb && (
+              <button
+                type="button"
+                className="button"
+                onClick={onConnectUsb}
+                disabled={busyLink}
+                title="Connect with a USB cable (the hub needs Pybricks v4.1.1 or newer)"
+                data-testid="connect-usb"
+              >
+                Connect with USB
+              </button>
+            )}
+          </div>
         )}
       </div>
       <p

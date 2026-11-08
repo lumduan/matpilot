@@ -429,6 +429,7 @@ export function BlocksApp() {
           <ConnectButton
             connection={connection}
             onConnect={runner.connect}
+            onConnectUsb={runner.usbAvailable ? runner.connectUsb : undefined}
             onDisconnect={runner.disconnect}
           />
         </div>

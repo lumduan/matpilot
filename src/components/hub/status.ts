@@ -6,13 +6,13 @@ export function linkSummary(snapshot: ConnectionSnapshot): string {
     case 'idle':
       return 'Not connected.';
     case 'requesting':
-      return 'Choose your hub in the browser’s device picker.';
+      return 'Choose your hub in the browser’s list.';
     case 'no-device-selected':
       return 'No hub selected.';
     case 'connecting':
       return `Connecting to ${link.deviceName ?? 'the hub'}…`;
     case 'ready':
-      return `Connected to ${link.hub.name ?? 'the hub'} · Pybricks ${link.hub.firmwareRevision}`;
+      return `Connected to ${link.hub.name ?? 'the hub'}${link.hub.via === 'usb' ? ' by USB' : ''} · Pybricks ${link.hub.firmwareRevision}`;
     case 'disconnected':
       return link.reason === 'lost' ? 'Connection lost.' : 'Disconnected.';
     case 'error':

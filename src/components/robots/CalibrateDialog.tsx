@@ -98,6 +98,7 @@ export function CalibrateDialog({
           <ConnectButton
             connection={connection}
             onConnect={runner.connect}
+            onConnectUsb={runner.usbAvailable ? runner.connectUsb : undefined}
             onDisconnect={runner.disconnect}
           />
           <span className="field-hint" data-testid="calibrate-status" aria-live="polite">

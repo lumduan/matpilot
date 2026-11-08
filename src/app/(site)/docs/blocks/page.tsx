@@ -32,7 +32,7 @@ export default function BlocksDocs() {
               label: '“when the program starts”: put your blocks under it, in order.',
             },
             { at: 'run', label: 'Run sends the program to the hub and starts it.' },
-            { at: 'connect', label: 'Connect hub.' },
+            { at: 'connect', label: 'Connect hub, over Bluetooth; USB beside it, for a cable.' },
             { at: 'devices', label: 'What is plugged into each port, live.' },
             { at: 'view', label: 'Blocks, or Python on the whole page.' },
             { at: 'python', label: 'The Python your blocks make.' },

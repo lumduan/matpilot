@@ -20,6 +20,7 @@ flowchart TD
     M10["10 · A robot from its LEGO model<br/>ADR 0017 accepted 2026-11-08<br/>ACTIVE — robot profile from a Studio model<br/>and its 3D view built"]
     M8["8 · Edit the Python on the Blocks page<br/>back to blocks, errors marked<br/>ACTIVE — built and tried 2026-11-07,<br/>suggestions and comments added"]
     M9["9 · AI helper, any provider<br/>explain, review, write, learn to prompt<br/>ACTIVE — explain and review built 2026-11-07,<br/>passed with Claude, write mode later"]
+    M11["11 · Connect with a USB cable<br/>ADR 0018 accepted 2026-11-08<br/>ACTIVE — built, waits for the hub<br/>on Pybricks v4.1.1 or newer"]
     GOAL["First usable release<br/>for classrooms and competitions<br/>GOAL"]
 
     M0 --> M1
@@ -40,6 +41,7 @@ flowchart TD
     M4 --> M8
     M4 --> M9
     M8 --> M9
+    M3 --> M11
 
     classDef done     fill:#d4f4dd,stroke:#2d8a4e,color:#1a5c33
     classDef active   fill:#fff3cd,stroke:#cc9a06,color:#7a5c04
@@ -56,6 +58,7 @@ flowchart TD
     class GOAL goal
     class M8 active
     class M9 active
+    class M11 active
 ```
 
 | Milestone                        | Status     | What it is                                                                                                                                                                                                                                                                      | Blocker                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
@@ -71,6 +74,7 @@ flowchart TD
 | **8 · Python editing**           | 🟡 ACTIVE  | Edit a tab's Python on `/blocks`; it goes back to blocks only when correct, with errors marked where they are; suggestions with help, and comments kept ([ADR 0014](adr/0014-python-editing-on-blocks-page.md))                                                                 | Tried 2026-11-07; suggestions, help and comments added the same day ([checks](compatibility.md#python-editing-checks-milestone-8) 10 to 12)                                                                                                                                                                                                                                                                                                                                                                                 |
 | **9 · AI helper**                | 🟡 ACTIVE  | Explain, review and write code with any AI provider, and learn to prompt ([ADR 0015](adr/0015-ai-helper.md))                                                                                                                                                                    | Explain and review are built; the [checks](compatibility.md#ai-helper-checks-milestone-9) with a real key passed with Claude on 2026-11-07, DeepSeek not tried yet. Left: the write mode, which uses 8                                                                                                                                                                                                                                                                                                                      |
 | **10 · LEGO part builder**       | 🟡 ACTIVE  | A robot profile from a LEGO model built in BrickLink Studio and exported as LDraw: its size, wheels, motors and sensors, the ports picked by the child ([ADR 0017](adr/0017-lego-part-builder.md), accepted 2026-11-08: route A, import)                                        | Steps 10a-1 (read the model, make the profile) and 10a-2 (the 3D view) built 2026-11-08; [Robots check 10](compatibility.md#robots-checks-milestone-7), with a Studio export of the real robot, is the maintainer's; the note to LDraw.org (D5) is agreed, to be sent by the maintainer once matpilot.org is registered                                                                                                                                                                                                     |
+| **11 · USB cable**               | 🟡 ACTIVE  | Connect with a USB cable as well as Bluetooth: the same commands and events over Web Serial ([ADR 0018](adr/0018-usb-connection.md), [protocol](protocol/pybricks-usb.md))                                                                                                      | Built 2026-11-08; needs the hub on Pybricks v4.1.1 or newer (v4.0.1 only charges over USB), then the [USB checks](compatibility.md#usb-connection-checks-milestone-11). Moving the tested baseline to v4.1.x is the maintainer's decision                                                                                                                                                                                                                                                                                   |
 | **Goal: first usable release**   | 🟪 GOAL    | Students program a robot with blocks, run it on a hub, drive it with a controller, and use the app offline                                                                                                                                                                      | Needs 4, 5, 6 and 7                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 
 **The real bottleneck is hardware access.** Hardware verification (a real SPIKE Prime hub on each
@@ -89,6 +93,11 @@ controller.
 built and was tried; 9's explain and review are built and passed with Claude (DeepSeek not tried
 yet), and its write mode comes later. Milestones 8 and 9 are not part of the first usable
 release unless the maintainer says so.
+
+**Milestone 11, the USB cable, was asked for and built on 2026-11-08** ([ADR 0018](adr/0018-usb-connection.md)):
+it waits on the hub being updated to Pybricks v4.1.1 or newer, which also raises the question of
+moving the tested baseline from v4.0.1 (a maintainer's decision; new hubs get v4.1.x from Pybricks'
+installer anyway).
 
 **Milestone 7 is built in full (ADR 0016) and waits on real-world checks:** the robot measured or
 calibrated on the floor, and runs on the real mat compared with the page. **Milestone 10 is being
@@ -355,6 +364,18 @@ AI sees", answers marked as from an AI with **Line N** links into the Python, to
 and the prompt journal. Tested with a fake provider in the browser; the
 [checks](compatibility.md#ai-helper-checks-milestone-9) with a real key are next. The write mode
 is not built.
+
+### 11 · Connect with a USB cable (ADR 0018 accepted and built 2026-11-08)
+
+Asked for on 2026-11-08: "besides Bluetooth, support connecting over USB too". Pybricks has a USB
+link on SPIKE Prime from v4.1.0 (v4.1.1 fixed lost replies); MatPilot's tested v4.0.1 only charges
+over USB. The hub is a USB serial port, so the page uses Web Serial; the commands and events are
+the Bluetooth ones in COBS frames ([protocol](protocol/pybricks-usb.md)). A **USB** button beside
+**Connect hub** (when the browser has Web Serial) connects over the cable; uploading, running,
+stopping, input, live values and the calibration helper work the same way. Next: the maintainer
+updates the hub with Pybricks' installer and runs the
+[USB checks](compatibility.md#usb-connection-checks-milestone-11); then decides whether to move
+the tested baseline to v4.1.x, which means running the Bluetooth checks again on it.
 
 ## Keeping this roadmap current
 
