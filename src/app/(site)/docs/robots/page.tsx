@@ -8,7 +8,7 @@ import { PROJECT_NAME } from '@/lib/project';
 export const metadata: Metadata = {
   title: `Robots – ${PROJECT_NAME}`,
   description:
-    'Describe your robot to MatPilot: its size, wheels, motors and sensors, measured with a ruler, on the floor, or from a LEGO model built in BrickLink Studio.',
+    'Describe your robot to MatPilot: its size, wheels, motors and sensors, measured with a ruler, on the floor, or from a LEGO® model built in BrickLink Studio.',
 };
 
 export default function RobotsDocs() {
@@ -78,7 +78,7 @@ export default function RobotsDocs() {
             ). Studio’s own .io file does not work: export it first.
           </li>
           <li>
-            On the Robots page, press <strong>Make from a LEGO model…</strong> and choose the file.
+            On the Robots page, press <strong>Make from a LEGO® model…</strong> and choose the file.
           </li>
           <li>
             MatPilot finds the hub, the wheels, the motors and the sensors, and shows the model in
@@ -93,7 +93,7 @@ export default function RobotsDocs() {
         </ol>
         <Shot
           name="robots-model"
-          alt="The LEGO model window: the model in 3D, drawings from above and the side, and the ports."
+          alt="The LEGO® model window: the model in 3D, drawings from above and the side, and the ports."
           marks={[
             { at: 'file', label: 'Choose the LDraw file you exported from Studio.' },
             { at: 'view3d', label: 'The model in 3D: drag to turn it, scroll to zoom.' },

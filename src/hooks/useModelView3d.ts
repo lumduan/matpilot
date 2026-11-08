@@ -29,7 +29,7 @@ function loadShapes(): Promise<ShapeLibrary> {
     })
     .then((data) => {
       const shapes = readShapeLibrary(data);
-      if (!shapes) throw new Error('not a list of LEGO shapes');
+      if (!shapes) throw new Error('not a list of LEGO® shapes');
       return shapes;
     })
     .catch((error: unknown) => {

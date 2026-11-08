@@ -7,7 +7,7 @@ import './globals.css';
 export const metadata: Metadata = {
   title: PROJECT_NAME,
   description:
-    'Browser-only block-based programming and control for LEGO SPIKE Prime hubs running Pybricks firmware.',
+    'Browser-only block-based programming and control for LEGO® SPIKE Prime hubs running Pybricks firmware.',
   applicationName: PROJECT_NAME,
 };
 

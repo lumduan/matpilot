@@ -268,7 +268,7 @@ export function readLdraw(text: string, fileName: string): ReadModelResult {
       ok: false,
       message: tooDeep
         ? 'This model’s submodels place each other in a loop, so it cannot be read.'
-        : 'MatPilot found no LEGO parts in this file. Is it an LDraw model (.ldr or .mpd)?',
+        : 'MatPilot found no LEGO® parts in this file. Is it an LDraw model (.ldr or .mpd)?',
     };
   }
   return { ok: true, model: { name: main.name, parts, submodels: usedSubmodels.size } };

@@ -95,7 +95,7 @@ export function PybricksInstall({ headingLevel = 2 }: { headingLevel?: 2 | 3 }) 
           ); on Windows the installer may ask you to install a USB driver.
         </li>
         <li>
-          Want the LEGO app back? The same tools menu has{' '}
+          Want the LEGO® app back? The same tools menu has{' '}
           <strong>Restore official LEGO firmware</strong>, and it works the same way.
         </li>
         <li>

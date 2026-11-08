@@ -389,7 +389,7 @@ function RobotForm({
           step={0.1}
           onChange={(value) => set({ wheels: { ...robot.wheels, diameterMm: req(value) } })}
           problem={problem('wheels.diameterMm')}
-          hint="The number on a LEGO tyre is often its diameter."
+          hint="The number on a LEGO® tyre is often its diameter."
           testId="robot-wheel"
         />
         <NumberField
@@ -804,11 +804,11 @@ function RobotFacts({
       </dl>
 
       <section className="robot-calibrate" aria-labelledby="robot-model-title">
-        <h2 id="robot-model-title">From a LEGO model</h2>
+        <h2 id="robot-model-title">From a LEGO® model</h2>
         <p className="muted" data-testid="robot-model-status">
           {robot.model
             ? `Made from ${robot.model.fileName}. Open it to see it again, or to choose a newer one.`
-            : 'Built it in BrickLink Studio, the free LEGO building program? Export it as an LDraw file, and MatPilot measures it: its size, its wheels, its motors and its sensors.'}
+            : 'Built it in BrickLink Studio, the free LEGO® building program? Export it as an LDraw file, and MatPilot measures it: its size, its wheels, its motors and its sensors.'}
         </p>
         <button
           type="button"
@@ -816,7 +816,7 @@ function RobotFacts({
           onClick={() => setModelOpen(true)}
           data-testid="robot-model"
         >
-          {robot.model ? 'Open the LEGO model…' : 'Make from a LEGO model…'}
+          {robot.model ? 'Open the LEGO® model…' : 'Make from a LEGO® model…'}
         </button>
       </section>
       {modelOpen && (

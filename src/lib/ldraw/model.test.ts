@@ -87,7 +87,7 @@ describe('reading an LDraw model', () => {
   it('refuses what is not a model', () => {
     expect(readLdraw('hello', 'notes.ldr')).toEqual({
       ok: false,
-      message: 'MatPilot found no LEGO parts in this file. Is it an LDraw model (.ldr or .mpd)?',
+      message: 'MatPilot found no LEGO® parts in this file. Is it an LDraw model (.ldr or .mpd)?',
     });
     expect(readLdraw('x'.repeat(MAX_MODEL_BYTES + 1), 'big.ldr').ok).toBe(false);
     const loop = [

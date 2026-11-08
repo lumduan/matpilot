@@ -6,7 +6,7 @@ import { PROJECT_NAME } from '@/lib/project';
 export const metadata: Metadata = {
   title: `Program & Monitor – ${PROJECT_NAME}`,
   description:
-    'Write a MicroPython program, run it on a LEGO SPIKE Prime hub with Pybricks firmware, and watch its output as text and as a live plot.',
+    'Write a MicroPython program, run it on a LEGO® SPIKE Prime hub with Pybricks firmware, and watch its output as text and as a live plot.',
 };
 
 export default function ProgramPage() {
