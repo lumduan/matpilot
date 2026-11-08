@@ -203,6 +203,13 @@ controller_error)` with Pybricks' own reason, then what to do. `controller_error
     the hub light blinks blue while it looks, and that the Monitor says why when nothing
     connected.
 
+17. **Added the same day, after the maintainer's second try** (the program connected and ended at
+    once, because its "repeat forever" group was not attached, so it was drawn faded and striped
+    and did not run): the Monitor says "Looking for the controller..." and "The controller is connected." in
+    words, and when a program ends right after connecting without reading the controller, the
+    Controller pane asks whether the Controller blocks are attached under "use the controller".
+    The Blocks page also lists every block that is not attached ("Not running"), for any program.
+
 Not decided here: reconnecting during a program after the controller is lost (the maintainer's
 car project plans it as its "Case 4"); it stays as before (red light, the program ends).
 

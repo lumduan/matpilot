@@ -933,3 +933,39 @@ score = 0
     ]);
   });
 });
+
+describe('blocks that are not attached', () => {
+  it('are named, and the program still runs without them', () => {
+    // The maintainer's program on 2026-11-08: "repeat forever" left beside "use the controller".
+    const program = generate([
+      {
+        name: 'main',
+        program: [{ type: 'mp_ctrl_use', fields: { CONTROLLER: 'XBOX' } }],
+        blocks: [
+          {
+            ...repeat(2, [move({ type: 'math_number', fields: { NUM: 1 } })]),
+            id: 'loose-repeat',
+            x: 300,
+            y: 200,
+          },
+          { type: 'math_number', id: 'loose-number', x: 300, y: 400, fields: { NUM: 7 } },
+          define('def-square', 'square', [], [move({ type: 'math_number', fields: { NUM: 5 } })]),
+        ],
+      },
+      { name: 'moves', blocks: [{ ...repeat(3, []), id: 'tab-loose', x: 0, y: 0 }] },
+    ]);
+    expect(program.problems).toEqual([]);
+    expect(program.loose.map((note) => [note.tabId, note.blockId])).toEqual([
+      [MAIN_TAB_ID, 'loose-repeat'],
+      [MAIN_TAB_ID, 'loose-number'],
+      ['tab-moves', 'tab-loose'],
+    ]);
+    expect(program.loose[0]?.message).toMatch(
+      /^“repeat 2 times.*” is not attached to “when the program starts”, so it does not run\./,
+    );
+    expect(program.loose[2]?.message).toMatch(/is not inside a “define” block, so it does not run/);
+    // The program, "define" and nothing else attached: no notes.
+    const tidy = [move({ type: 'math_number', fields: { NUM: 1 } })];
+    expect(generate([{ name: 'main', program: tidy }]).loose).toEqual([]);
+  });
+});

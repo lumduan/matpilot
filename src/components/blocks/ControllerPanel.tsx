@@ -44,6 +44,11 @@ export function ControllerPanel({
       'Connected, but the program is not reading the controller. Put the Controller blocks inside “repeat forever”.';
   } else if (status === 'searching') {
     statusText = `${statusText} ${profile.pairing}`;
+  } else if (status === 'ended' && controller.endedFrom === 'connected' && values === null) {
+    statusText =
+      'The controller connected, then the program ended without reading it. Are the Controller blocks inside “repeat forever”, attached under “use the controller”? Faded blocks are not attached and do not run.';
+  } else if (status === 'ended' && controller.endedFrom === 'searching') {
+    statusText = 'The program ended while it was looking for the controller.';
   }
 
   return (

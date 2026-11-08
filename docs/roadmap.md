@@ -249,7 +249,10 @@ blocks instead, for children: sticks drive, buttons run motors, and it can be wa
   for a controller paired before to connect by itself. Built: the blinking, two rising beeps (as
   in the maintainer's car program), 30 s per attempt (about a minute), the hub's own reason in
   the Monitor, and words saying that after the first pairing the Xbox button is enough (Pybricks
-  already reconnects such a controller and keeps it connected between runs). Checks 12 to 15.
+  already reconnects such a controller and keeps it connected between runs). Checks 12 to 15. The
+  second try the same evening connected, but the program's "repeat forever" group was not
+  attached, so nothing ran; the page now lists blocks that are not attached ("Not running"), and
+  the Monitor says when the controller is connected (decision 17).
 - **Next:** the hardware checks; then "when button pressed" hat blocks with Tasks (milestone 4's
   `await`-aware generator); reconnecting after the controller is lost.
 

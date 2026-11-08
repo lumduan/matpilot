@@ -90,6 +90,12 @@ export interface GeneratedProgram {
   readonly files: readonly PythonFile[];
   /** Anything that must be fixed before the program can run. */
   readonly problems: readonly Problem[];
+  /**
+   * Blocks that do not run because they are not attached: not under "when the program starts" in
+   * main, not inside a "define" block in another tab. Blockly draws them faded (disabled; striped in the dark theme); this
+   * says so in words. The program still runs.
+   */
+  readonly loose: readonly Problem[];
   /** The program reads the Xbox controller, so the page offers its live view (ADR 0012). */
   readonly usesController: boolean;
   /** The controller it uses, when it uses one. */
@@ -739,6 +745,33 @@ function nameClashes(code: TabCode, modules: readonly string[]): DraftProblem[] 
 }
 
 /** Puts each problem in the tab its block is in. */
+/** Blocks that start a stack and run: the program, "set up", and "define". */
+const STACK_STARTS = new Set(['mp_program', 'mp_setup', FUNCTION_BLOCKS.define]);
+
+/** The words a block shows, shortened, to name it in a message. */
+function blockLabel(block: Blockly.Block): string {
+  const text = block.toString().replace(/\s+/g, ' ').trim();
+  return text.length > 40 ? `${text.slice(0, 39).trimEnd()}…` : text;
+}
+
+/** Every stack in the tabs that is not attached, so it does not run. */
+export function looseBlocks(tabs: readonly ProgramTab[]): Problem[] {
+  const mainId = tabs[0]?.id;
+  return tabs.flatMap((tab) =>
+    tab.workspace
+      .getTopBlocks(true)
+      .filter((block) => !STACK_STARTS.has(block.type) && !block.isShadow())
+      .map((block) => ({
+        tabId: tab.id,
+        blockId: block.id,
+        message:
+          tab.id === mainId
+            ? `“${blockLabel(block)}” is not attached to “when the program starts”, so it does not run. Drag it under, until it snaps in.`
+            : `“${blockLabel(block)}” is not inside a “define” block, so it does not run.`,
+      })),
+  );
+}
+
 function placeProblems(drafts: readonly DraftProblem[], tabs: readonly ProgramTab[]): Problem[] {
   const mainId = tabs[0]?.id ?? 'main';
   return drafts.map((draft) => ({
@@ -1065,6 +1098,7 @@ export function generateTabs(
       code: files[0]!.code,
       files,
       problems: placeProblems(problems, tabs),
+      loose: looseBlocks(tabs),
       usesController,
       controller: usesController ? controllerProfile(chosen).id : null,
       controls,
