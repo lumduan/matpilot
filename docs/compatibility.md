@@ -232,6 +232,10 @@ the earlier checks 4 to 7 are the advanced checks.
     a red brick, a blue brick, then nothing, in front of the colour sensor (port D): the centre
     button turns red, blue, then white. Press ⊕: a third case appears with yellow; ⊖ removes it
     again, and **Undo** brings it back.
+12. **Search** (added 2026-11-08, needs no hub): type "sleep" in the box at the top of the
+    categories: "wait 1 seconds" (Control) and "wait 1000 ms" (Flow) appear; drag one into the
+    program. Try "turn", "colour", "straight" (a Python name) and a word that matches nothing.
+    Escape closes it.
 
 Optional, with a built two-wheel robot whose left wheel is on A and right wheel on B: "move ↑ for 1
 rotations" drives forward about one wheel turn, and "turn right 90°" turns it about a quarter to

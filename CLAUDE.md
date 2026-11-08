@@ -101,7 +101,8 @@ entry in [NOTICE](NOTICE).
     Blockly block definitions (the detailed blocks in `definitions.ts`, the simple blocks in
     `simple-definitions.ts`, the Controller blocks in `controller-definitions.ts`, the function
     blocks in `functions.ts`, the shared-variable blocks in `shared.ts`, "switch on" in
-    `switch.ts`), their picture fields
+    `switch.ts`, the search box in `search.ts`: give a new block other words there if a child
+    would look for it by another name), their picture fields
     (`fields/`), toolbox, themes, tabs (`tabs.ts`: tab names, and the registry that lets a block
     see the other tabs), copy and paste between tabs (`clipboard.ts`), and the Python generator,
     which makes one file per tab with functions plus `setup.py`. Every Pybricks name a block generates

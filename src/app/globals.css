@@ -4169,3 +4169,28 @@ code {
     width: 100%;
   }
 }
+
+/* The search box at the top of the block categories (src/lib/blocks/search.ts). */
+.mp-toolbox-search-row {
+  height: auto !important;
+  padding: 0 !important;
+  background: transparent !important;
+}
+
+.mp-toolbox-search {
+  box-sizing: border-box;
+  width: 6.75rem;
+  margin: 0.3rem 0.25rem 0.4rem;
+  padding: 0.3rem 0.45rem;
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+}
+
+.mp-toolbox-search:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}

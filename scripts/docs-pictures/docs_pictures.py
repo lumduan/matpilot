@@ -266,6 +266,7 @@ def blocks_pictures(page, pictures, base):
     start = by_text("svg.blocklySvg .blocklyBlockCanvas text", "when the program starts")
     # Each mark sits just beside what it points at, so it does not hide its words.
     pictures.save("blocks-page", page, marks={
+        "search": beside(page, by_testid("block-search"), "right"),
         "categories": beside(page, "document.querySelector('.blocklyToolboxCategoryLabel')", "right"),
         "start": beside(page, start, "right"),
         "run": beside(page, by_testid("run"), "below"),

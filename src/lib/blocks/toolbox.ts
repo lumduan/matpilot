@@ -1,5 +1,6 @@
 /**
- * The toolbox. First the simple blocks (ADR 0010, ./simple-toolbox.ts): Movement, Motors, Light,
+ * The toolbox. A search box first (./search.ts), then the simple blocks (ADR 0010,
+ * ./simple-toolbox.ts): Movement, Motors, Light,
  * Sound, Control, Conditions, Sensors, Controller, Operators, Variables and Functions. Then "Advanced", which folds open like
  * MakeCode's, with the detailed blocks (ADR 0008): Setup, Output, Input, Flow, Data, Other.
  *
@@ -167,6 +168,8 @@ export function inputFlyout(state: ToolboxState): FlyoutItem[] {
 export const TOOLBOX = {
   kind: 'categoryToolbox',
   contents: [
+    // The search box (./search.ts): a category whose row is a text box.
+    { kind: 'search', name: 'Search', categorystyle: 'mp_setup_category' },
     {
       kind: 'category',
       name: 'Movement',

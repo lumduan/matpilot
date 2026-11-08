@@ -37,7 +37,8 @@ export function BlocksBasics() {
       </Item>
       <Item icon={<BlocksIcon />}>
         <strong>Find blocks by colour</strong> on the left: Movement, Motors, Light, Sound, Control,
-        Conditions (if, else and switch), Sensors and more.
+        Conditions (if, else and switch), Sensors and more. Or <strong>type in Search</strong>, at
+        the top: “wait” (or “sleep”), “turn”, “colour”.
       </Item>
       <Item icon={<CodeIcon />}>
         <strong>Python</strong> shows the code your blocks make. You can edit it too.

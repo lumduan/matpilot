@@ -197,6 +197,10 @@ program cannot omit them.
   of ADR 0011). After the first try, the same day: copy and paste between tabs, a cut and pasted
   function that keeps its calls, and shared variables (🌐) for a value every tab needs (ADR 0013
   decisions 10 and 11).
+- **Searching the blocks (built 2026-11-08, asked for: a child could not find "wait"):** a search
+  box at the top of the categories finds blocks by their words, other words ("sleep" for wait)
+  and the Python they make ([ADR 0010 amendment](adr/0010-simple-blocks.md#amendment-2026-11-08-searching-the-blocks),
+  [check 12](compatibility.md#simple-blocks-checks-milestone-4)).
 - **Conditions and "switch on" (built 2026-11-08, asked for: the "if" blocks were hard to find):**
   a Conditions category with "if", "else if", "else", the questions they ask, and a "switch on"
   block that checks a colour or a number once and does the matching case

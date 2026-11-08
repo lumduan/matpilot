@@ -114,3 +114,22 @@ LEGO SPIKE app), and the comparisons in Operators. Asked for "if, else, switch":
    on".
 
 Check: simple blocks check 11 in [compatibility.md](../compatibility.md#simple-blocks-checks-milestone-4).
+
+## Amendment (2026-11-08): searching the blocks
+
+The maintainer's child could not find the "wait" block (the maintainer found it through the
+Python), and asked to search. A **search box** now sits at the top of the block categories
+(`src/lib/blocks/search.ts`), as in MakeCode; the LEGO SPIKE app has none, but keeps "wait 1
+seconds" in Control, and so does MatPilot. Typing shows every matching block from every category,
+under its category's name, as the category would offer it (the hub's ports, the robot's wheels):
+
+- by the block's own words ("wait", "turn", "motor A");
+- by other words for what it does: "sleep", "pause" and "delay" find wait, "loop" finds the
+  repeats, "switch" and "if" the conditions;
+- by the Python it makes ("straight", "run_angle", "print"), from the Python editor's vocabulary,
+  loaded only when the search is first used;
+- in either spelling (colour or color, grey or gray, centre or center).
+
+Movement also offers "stop moving" then "wait 1 seconds" as a pair, for a robot that should stop
+for a moment. Check: simple blocks check 12 in
+[compatibility.md](../compatibility.md#simple-blocks-checks-milestone-4).
