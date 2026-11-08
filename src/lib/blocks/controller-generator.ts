@@ -38,8 +38,11 @@ import {
   robotName,
 } from './generator-context';
 
-/** How long one attempt to find the controller lasts, in ms (SPIKE Prime tries twice: ./pybricks.ts). */
-export const CONTROLLER_SEARCH_MS = 20000;
+/**
+ * How long one attempt to find the controller lasts, in ms. SPIKE Prime tries twice (./pybricks.ts),
+ * so a child has about a minute to turn the controller on after pressing Run.
+ */
+export const CONTROLLER_SEARCH_MS = 30000;
 /** How often the program reports the controller to the page, in ms. */
 export const CONTROLLER_REPORT_MS = 100;
 
@@ -146,9 +149,18 @@ export function controllerConfig(): string[] {
   return [`${C.searchMs} = ${CONTROLLER_SEARCH_MS}`, `${C.reportMs} = ${CONTROLLER_REPORT_MS}`];
 }
 
+/** What the Monitor says when no controller connected. */
+export const NOT_FOUND_HELP =
+  'Turn the controller on with its Xbox button and press Run again. The first time with this hub, or after it was used with something else: press Run, then hold its pair button until the Xbox button flashes fast.';
+
 /**
- * The Setup lines: look for the controller (blue light), give up with a message if it is not
- * found (red light), say so when it is (green light).
+ * The Setup lines (ADR 0012, amendment of 2026-11-08):
+ * - while the hub looks for the controller its light blinks blue;
+ * - connected: a steady green light and two rising beeps;
+ * - not connected in time: a red light, and the Monitor gets the hub's own reason (Pybricks says,
+ *   for example, when the controller must be put in pairing mode) and what to do.
+ * A controller that is still connected from the last run is used at once, and one whose most
+ * recent connection was this hub connects when it is just turned on (./pybricks.ts).
  */
 export function controllerSetup(): string[] {
   need('pybricks.iodevices', 'XboxController');
@@ -156,17 +168,20 @@ export function controllerSetup(): string[] {
   return [
     `${C.memory} = {}`,
     `${C.report} = StopWatch()`,
-    'hub.light.on(Color.BLUE)',
+    'hub.light.blink(Color.BLUE, [300, 300])',
     `print("${CONTROLLER_LINE_PREFIX} searching")`,
     'try:',
     `${INDENT}${C.controller} = XboxController(timeout=${C.searchMs})`,
-    'except OSError:',
+    `except OSError as ${C.error}:`,
     `${INDENT}hub.light.on(Color.RED)`,
     `${INDENT}print("${CONTROLLER_LINE_PREFIX} notfound")`,
-    `${INDENT}print("No Xbox controller found. Turn it on, hold its pair button until the Xbox button flashes fast, then press Run again.")`,
+    `${INDENT}print("No Xbox controller connected. The hub said:", ${C.error})`,
+    `${INDENT}print("${NOT_FOUND_HELP}")`,
     `${INDENT}raise SystemExit`,
     'hub.light.on(Color.GREEN)',
     `print("${CONTROLLER_LINE_PREFIX} connected")`,
+    'hub.speaker.beep(660, 100)',
+    'hub.speaker.beep(990, 100)',
   ];
 }
 

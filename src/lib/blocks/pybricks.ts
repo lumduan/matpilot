@@ -95,6 +95,20 @@
  *   FW lib/pbio/drv/bluetooth/bluetooth_btstack.c#L918, FW pybricks/util_pb/pb_error.c#L131.
  *   It may not be made once tasks run (multitask): XB#L423, FW pybricks/tools/pb_module_tools.c
  *   #L47-L51
+ * - Connecting (the Setup lines, ADR 0012 amendment of 2026-11-08):
+ *   - a controller still connected from the last run is used at once: XB#L451-L466; it stays
+ *     connected when a program ends: FW CHANGELOG.md#L341-L342 (v4.0.0b6);
+ *   - a controller that is just turned on, not in pairing mode, is found too, and Pybricks' own
+ *     comment says it connects only if this hub was its most recent connection: XB#L140-L153;
+ *   - the hub pairs afresh on every connection (it deletes the old bond first):
+ *     FW lib/pbio/drv/bluetooth/bluetooth_btstack.c#L963-L971;
+ *   - connected but not allowed to read the buttons: OSError "Connected, but not allowed to read
+ *     buttons. Try putting the controller in pairing mode.": XB#L366-L380
+ * - hub.light.blink(color, durations), durations in ms, repeated: FW pybricks/common/
+ *   pb_type_colorlight_internal.c#L57-L92. It keeps blinking while the program waits for the
+ *   controller: the animation is a process of the hub's own (FW lib/pbio/src/light/animation.c
+ *   #L33-L42 #L53-L68), and a waiting call keeps running the processes
+ *   (FW pybricks/tools/pb_type_async.c#L144-L148, FW bricks/_common/mpconfigport.h#L172-L185)
  * - joystick_left(), joystick_right() return (x, y), each -100 to 100, y counted up from the
  *   bottom (the raw axis is turned over): XB#L515-L545. triggers() returns (left, right), 0 to
  *   100: XB#L547-L555. The method table: XB#L635-L647

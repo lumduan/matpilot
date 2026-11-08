@@ -56,6 +56,7 @@ export const CONTROLLER = {
   reportMs: 'CONTROLLER_REPORT_MS',
   read: 'read_controller',
   lost: 'controller_lost',
+  error: 'controller_error',
 } as const;
 
 /** Every Python name the simple blocks may define, so user variables never take one. */

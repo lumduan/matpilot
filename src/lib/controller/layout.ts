@@ -63,7 +63,8 @@ export const XBOX_PROFILE: ControllerProfile = {
   id: 'XBOX',
   name: 'Xbox Wireless Controller',
   short: 'Xbox',
-  pairing: 'Turn it on, then hold its pair button until the Xbox button flashes fast.',
+  pairing:
+    'The first time: press Run, then hold its pair button until the Xbox button flashes fast. After that the hub remembers it: press Run and turn the controller on with its Xbox button. Used with something else since (a console, a phone, a computer)? Pair it again.',
   body: 'M92 40h136c34 0 58 20 64 54l10 54c3 22-20 32-35 17l-27-27H80l-27 27c-15 15-38 5-35-17l10-54c6-34 30-54 64-54z',
   keys: [
     {
