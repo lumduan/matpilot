@@ -8,18 +8,18 @@
  * mat (its real wheels and axle track, from the Robots page) turn motor degrees into movement. When
  * they differ, the robot goes too far or not far enough, as it would on the mat.
  *
- * Pybricks behaviour this follows, at pybricks-micropython v4.0.1 (FW = https://github.com/pybricks/
- * pybricks-micropython/blob/4104553405decb0384bcfb030fbfcb4b5a9854cc), cited in
+ * Pybricks behaviour this follows, at pybricks-micropython v4.1.3 (FW = https://github.com/pybricks/
+ * pybricks-micropython/blob/c860b6a00301fb7c6ecd429da11dcb5a6c557c7a), cited in
  * ../blocks/pybricks.ts and ../robots/motion.ts unless given here:
  * - DriveBase.straight(distance) in mm and turn(angle) in degrees, waiting by default; a positive
  *   turn is clockwise seen from above: the heading is (left − right) / 2 of the wheel angles, scaled
  *   by wheel diameter / axle track: FW lib/pbio/src/drivebase.c#L146-L151 #L349-L355.
  * - Default speeds: 40 % of the top speed straight, a third turning; accelerations 3/4 of the
- *   motors' 2000 °/s²: FW lib/pbio/src/drivebase.c#L65-L108, FW lib/pbio/src/servo.c#L271-L272.
- * - A motor's top speed is its rated speed: FW lib/pbio/src/servo.c#L265.
- * - A motor command also stops the drive base that uses the motor: FW lib/pbio/src/servo.c#L542-L546.
+ *   motors' 2000 °/s²: FW lib/pbio/src/drivebase.c#L65-L108, FW lib/pbio/src/servo.c#L277-L278.
+ * - A motor's top speed is its rated speed: FW lib/pbio/src/servo.c#L271.
+ * - A motor command also stops the drive base that uses the motor: FW lib/pbio/src/servo.c#L548-L552.
  * - Motor.run_angle with a negative speed turns the other way: FW lib/pbio/src/control.c#L622
- *   #L630; with speed 0 it ends at once: FW lib/pbio/src/servo.c#L763-L768.
+ *   #L630; with speed 0 it ends at once: FW lib/pbio/src/servo.c#L769-L774.
  *
  * What it leaves out, and says so on the page: slipping, bumping into things, the battery, and
  * the small overshoot of real motors. Stop, brake and hold all stop at once.
@@ -45,7 +45,7 @@ export interface Pose {
   readonly headingDeg: number;
 }
 
-/** A motor's acceleration, °/s² (FW lib/pbio/src/servo.c#L271-L272). */
+/** A motor's acceleration, °/s² (FW lib/pbio/src/servo.c#L277-L278). */
 const MOTOR_ACCELERATION = 2000;
 /** The drive base uses 3/4 of it (FW lib/pbio/src/drivebase.c#L83-L85). */
 const DRIVE_SHARE = 3 / 4;

@@ -2,18 +2,21 @@
  * The robot's sensors on the mat (ADR 0016, step 7d).
  *
  * The colour sensor reads the mat's picture under it. From what it "sees" on, it follows the
- * firmware step by step, in the same whole-number steps, at pybricks-micropython v4.0.1
- * (FW = https://github.com/pybricks/pybricks-micropython/blob/4104553405decb0384bcfb030fbfcb4b5a9854cc):
- * - reflection() is the average of the sensor's raw red, green and blue (0 to 1024 each), in %:
- *   FW pybricks/pupdevices/pb_type_pupdevices_colorsensor.c#L50-L54;
+ * firmware step by step, in the same whole-number steps, at pybricks-micropython v4.1.3
+ * (FW = https://github.com/pybricks/pybricks-micropython/blob/c860b6a00301fb7c6ecd429da11dcb5a6c557c7a):
+ * - reflection() is the average of the sensor's raw red, green and blue (0 to 1024 each), worked
+ *   out in tenths of a percent and given with one decimal (45.6): FW
+ *   lib/pbio/src/port_lump/sensors.c#L440-L445, pybricks/pupdevices/pb_type_pupdevices_colorsensor.c
+ *   #L43-L49, pybricks/util_mp/pb_obj_helper.c#L112-L118 (whole numbers up to v4.0.1);
  * - color() turns the raw values into hue, saturation and value (FW lib/pbio/src/color/
- *   conversion.c#L49-L83), shifts low hues a little (FW pybricks/util_pb/pb_color_map.c#L30-L43),
- *   doubles low saturation and lifts low values (colorsensor.c#L66-L82), then picks the nearest of
- *   the colours it may detect, by default red, yellow, green, blue, white and none
- *   (pb_color_map.c#L45-L56 #L64-L107): a measurement with saturation 40 or less, or value 1 or
+ *   conversion.c#L49-L83), shifts low hues a little (FW lib/pbio/src/color/conversion.c#L95-L109),
+ *   doubles low saturation and lifts low values (FW lib/pbio/src/port_lump/sensors.c#L339-L353),
+ *   then picks the nearest of the colours it may detect, by default red, yellow, green, blue, white
+ *   and none (FW lib/pbio/src/color/color_map.c#L50-L57, #L104-L122): a measurement with
+ *   saturation 40 or less, or value 1 or
  *   less, matches the nearest grey by value, any other the nearest colour by hue
  *   (FW lib/pbio/src/color/util.c#L49-L83). The colours' own hue, saturation and value:
- *   FW pybricks/parameters/pb_type_color.c#L18-L80, FW lib/pbio/include/pbio/color.h#L57-L73.
+ *   FW pybricks/parameters/pb_type_color.c#L18-L80, FW lib/pbio/include/pbio/color.h#L72-L88.
  *
  * What the sensor would measure from a printed colour is an ESTIMATE, not the firmware: the
  * picture's red, green and blue (0 to 255) are taken as the raw values in proportion (255 → 1024),
@@ -23,14 +26,14 @@
  * The distance sensor measures along where it looks to the nearest wall or solid object, with
  * walls at the mat's edges (a competition mat lies against the table's walls); beyond 2000 mm it
  * gives 2000, as the firmware does (FW pybricks/pupdevices/pb_type_pupdevices_ultrasonicsensor.c
- * #L39-L42). The touch sensor is pressed when the point just ahead of it is in a wall or a solid
+ * #L36-L39). The touch sensor is pressed when the point just ahead of it is in a wall or a solid
  * object (an estimate: the robot does not stop at walls).
  */
 import type { Point } from '../geometry/rect';
 
 /** The sensor's spot on the mat, mm (an estimate). */
 export const SPOT_RADIUS_MM = 4;
-/** Beyond this the distance sensor gives 2000 (FW ultrasonicsensor.c#L39-L42). */
+/** Beyond this the distance sensor gives 2000 (FW ultrasonicsensor.c#L36-L39). */
 export const DISTANCE_MAX_MM = 2000;
 /** How far ahead of a touch sensor a wall or object presses it, mm. */
 export const TOUCH_REACH_MM = 5;
@@ -72,7 +75,7 @@ export const COLOR_HSV: Readonly<Record<string, Hsv>> = {
   WHITE: { h: 0, s: 0, v: 100 },
 };
 
-/** The colours color() may give unless a program says otherwise (pb_color_map.c#L45-L56). */
+/** The colours color() may give unless a program says otherwise (lib/pbio/src/color/color_map.c#L50-L57). */
 export const DEFAULT_COLORS = ['RED', 'YELLOW', 'GREEN', 'BLUE', 'WHITE', 'NONE'] as const;
 
 const trunc = Math.trunc;
@@ -107,9 +110,9 @@ export const rawFromColor = (c: { r: number; g: number; b: number }) => ({
   b: Math.round((c.b / 255) * 1024),
 });
 
-/** reflection(): colorsensor.c#L50-L54. */
+/** reflection(): tenths of a percent, cut, then divided by 10 (FW sensors.c#L440-L445). */
 export const reflection = (raw: { r: number; g: number; b: number }) =>
-  trunc(((raw.r + raw.g + raw.b) * 100) / 3072);
+  trunc(((raw.r + raw.g + raw.b) * 1000) / 3072) / 10;
 
 /** The standard conversion, in whole numbers: conversion.c#L49-L83. */
 function rgbToHsv(r: number, g: number, b: number): { h: number; s: number; v: number } {
@@ -132,11 +135,11 @@ function rgbToHsv(r: number, g: number, b: number): { h: number; s: number; v: n
   return { h, s, v: trunc((101 * max) / 256) };
 }
 
-/** The reflected hue, saturation and value the firmware works out: colorsensor.c#L66-L82. */
+/** The reflected hue, saturation and value the firmware works out: FW sensors.c#L339-L353. */
 export function hsvReflected(raw: { r: number; g: number; b: number }): Hsv {
   const eight = (value: number) => (value === 1024 ? 255 : value >> 2);
   const hsv = rgbToHsv(eight(raw.r), eight(raw.g), eight(raw.b));
-  // A slight shift for lower hues: pb_color_map.c#L30-L43.
+  // A slight shift for lower hues: FW lib/pbio/src/color/conversion.c#L95-L109.
   let { h } = hsv;
   if (h >= 350) h = (350 + 2 * (h - 350)) % 360;
   else if (h < 40) h += 10;
@@ -157,7 +160,7 @@ function distance(measurement: Hsv, candidate: Hsv): number {
   return grey ? penalty + value : hue;
 }
 
-/** color(): the nearest of `colors` (pb_color_map.c#L64-L107; the first of equals wins). */
+/** color(): the nearest of `colors` (lib/pbio/src/color/color_map.c#L104-L122; the first of equals wins). */
 export function matchColor(hsv: Hsv, colors: readonly string[] = DEFAULT_COLORS): string {
   let best = 'NONE';
   let min = Number.POSITIVE_INFINITY;

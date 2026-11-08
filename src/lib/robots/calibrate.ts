@@ -12,8 +12,8 @@
  *    real track = told track × (real diameter / told diameter) × asked / turned. Ten turns make a
  *    small error ten times easier to see.
  *
- * Pybricks behaviour this relies on, at pybricks-micropython v4.0.1
- * (FW = https://github.com/pybricks/pybricks-micropython/blob/4104553405decb0384bcfb030fbfcb4b5a9854cc/):
+ * Pybricks behaviour this relies on, at pybricks-micropython v4.1.3
+ * (FW = https://github.com/pybricks/pybricks-micropython/blob/c860b6a00301fb7c6ecd429da11dcb5a6c557c7a/):
  * - DriveBase(left_motor, right_motor, wheel_diameter, axle_track), sizes in mm:
  *   FW pybricks/robotics/pb_type_drivebase.c#L61-L80; it steers by the motors' encoders, not
  *   the gyro, unless told otherwise (FW pybricks/robotics/pb_type_drivebase.c#L75), so a wrong

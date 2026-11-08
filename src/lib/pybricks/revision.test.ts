@@ -119,20 +119,20 @@ describe('compareFirmwareVersions', () => {
 });
 
 describe('tested baseline', () => {
-  it('is Pybricks v4.0.1 with protocol 1.5.0', () => {
-    expect(TESTED_FIRMWARE_VERSION).toBe('4.0.1');
-    expect(TESTED_PROTOCOL_VERSION).toBe('1.5.0');
+  it('is Pybricks v4.1.3 with protocol 1.7.0', () => {
+    expect(TESTED_FIRMWARE_VERSION).toBe('4.1.3');
+    expect(TESTED_PROTOCOL_VERSION).toBe('1.7.0');
   });
 
   it('classifies firmware relative to the baseline', () => {
-    expect(assessFirmwareBaseline(firmware('4.0.1')).comparison).toBe('baseline');
-    expect(assessFirmwareBaseline(firmware('4.1.2')).comparison).toBe('newer');
-    expect(assessFirmwareBaseline(firmware('4.0.1b1')).comparison).toBe('older');
-    expect(assessFirmwareBaseline(firmware('3.6.1')).comparison).toBe('older');
+    expect(assessFirmwareBaseline(firmware('4.1.3')).comparison).toBe('baseline');
+    expect(assessFirmwareBaseline(firmware('4.2.0')).comparison).toBe('newer');
+    expect(assessFirmwareBaseline(firmware('4.1.3b1')).comparison).toBe('older');
+    expect(assessFirmwareBaseline(firmware('4.0.1')).comparison).toBe('older');
     expect(assessFirmwareBaseline(null).comparison).toBe('unknown');
   });
 
   it('flags non-baseline firmware as not yet verified', () => {
-    expect(assessFirmwareBaseline(firmware('4.1.2')).message).toMatch(/not yet verified/i);
+    expect(assessFirmwareBaseline(firmware('4.0.1')).message).toMatch(/not yet verified/i);
   });
 });

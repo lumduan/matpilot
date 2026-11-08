@@ -51,7 +51,7 @@ describe('hardware test session', () => {
       allPassed: true,
     });
     expect(step(session, 'hub-info').detail).toBe(
-      'Name “Pybricks Hub”, firmware 4.0.1, protocol 1.5.0.',
+      'Name “Pybricks Hub”, firmware 4.1.3, protocol 1.7.0.',
     );
   });
 

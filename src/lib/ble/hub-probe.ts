@@ -69,19 +69,19 @@ export interface HubInfo {
   /**
    * `BluetoothDevice.name`: the name the hub advertises, or `null` if none was reported.
    *
-   * Pybricks v4.0.1 keeps the name in a 16-byte buffer that is read as a C string, so the hub
+   * Pybricks v4.1.3 keeps the name in a 16-byte buffer that is read as a C string, so the hub
    * reports at most 15 bytes (a longer name chosen when flashing does not fit). SPIKE Prime uses
    * the BTstack driver
-   * (https://github.com/pybricks/pybricks-micropython/blob/4104553405decb0384bcfb030fbfcb4b5a9854cc/lib/pbio/platform/prime_hub/pbdrvconfig.h#L32),
+   * (https://github.com/pybricks/pybricks-micropython/blob/c860b6a00301fb7c6ecd429da11dcb5a6c557c7a/lib/pbio/platform/prime_hub_f4/pbdrvconfig.h#L40),
    * which declares the buffer
-   * (https://github.com/pybricks/pybricks-micropython/blob/4104553405decb0384bcfb030fbfcb4b5a9854cc/lib/pbio/drv/bluetooth/bluetooth_btstack.c#L99-L103)
+   * (https://github.com/pybricks/pybricks-micropython/blob/c860b6a00301fb7c6ecd429da11dcb5a6c557c7a/lib/pbio/sys/host.c#L31-L36)
    * and advertises it with `strlen()` in the scan response
-   * (https://github.com/pybricks/pybricks-micropython/blob/4104553405decb0384bcfb030fbfcb4b5a9854cc/lib/pbio/drv/bluetooth/bluetooth_btstack.c#L569-L574).
+   * (https://github.com/pybricks/pybricks-micropython/blob/c860b6a00301fb7c6ecd429da11dcb5a6c557c7a/lib/pbio/drv/bluetooth/bluetooth_btstack.c#L701-L707).
    * Verified on hardware 2026-11-04 (SPIKE Prime, Pybricks 4.0.1, Chrome 156, macOS 27.0.1): a
    * hub reported the 15-character name "Fast Pybrick Hu".
    */
   readonly name: string | null;
-  /** Firmware Revision String (0x2A26) exactly as read, e.g. "4.0.1". */
+  /** Firmware Revision String (0x2A26) exactly as read, e.g. "4.1.3". */
   readonly firmwareRevision: string;
   readonly firmwareVersion: FirmwareVersion | null;
   /** Software Revision String (0x2A28): the Pybricks protocol version, e.g. "1.5.0". */

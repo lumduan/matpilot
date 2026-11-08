@@ -30,9 +30,9 @@ export const UNSUPPORTED_ENV: TestEnvironment = {
 
 export const HUB = {
   name: 'Pybricks Hub',
-  firmwareRevision: '4.0.1',
+  firmwareRevision: '4.1.3',
   firmwareVersion: null,
-  protocolRevision: '1.5.0',
+  protocolRevision: '1.7.0',
   protocolVersion: null,
 } as const;
 

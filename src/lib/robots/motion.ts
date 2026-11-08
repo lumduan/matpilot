@@ -2,13 +2,13 @@
  * How fast a robot drives and turns (ADR 0016, D3): worked out from its motors and wheels by the
  * firmware's own rules ("auto"), or as typed in or measured.
  *
- * The firmware facts, at pybricks-micropython v4.0.1 (commit
- * 4104553405decb0384bcfb030fbfcb4b5a9854cc; FW = https://github.com/pybricks/pybricks-micropython/blob/4104553405decb0384bcfb030fbfcb4b5a9854cc):
- * - A motor's top speed is its type's rated maximum speed: FW lib/pbio/src/servo.c#L265. SPIKE's
+ * The firmware facts, at pybricks-micropython v4.1.3 (commit
+ * c860b6a00301fb7c6ecd429da11dcb5a6c557c7a; FW = https://github.com/pybricks/pybricks-micropython/blob/c860b6a00301fb7c6ecd429da11dcb5a6c557c7a):
+ * - A motor's top speed is its type's rated maximum speed: FW lib/pbio/src/servo.c#L271. SPIKE's
  *   medium and large motors are treated as the Technic M and L angular motors:
  *   FW lib/pbio/src/motor/servo_settings.c#L340-L346, rated 1000 °/s: #L300-L315. SPIKE's small
  *   motor is rated 620 °/s: #L292-L299.
- * - A motor accelerates and slows down at 2000 °/s²: FW lib/pbio/src/servo.c#L271-L272.
+ * - A motor accelerates and slows down at 2000 °/s²: FW lib/pbio/src/servo.c#L277-L278.
  * - The drive base takes the slower motor's limits, makes its acceleration 3/4 of the motors',
  *   and its default speed 40 % of its top speed: FW lib/pbio/src/drivebase.c#L65-L85. Turning
  *   uses the same limits, with a default of a third of the top speed: #L102-L108.

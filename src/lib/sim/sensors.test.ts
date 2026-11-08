@@ -41,8 +41,8 @@ describe('the colour sensor, as the firmware works it out', () => {
     expect(sense(255, 0, 0).hsv).toEqual({ h: 10, s: 100, v: 100 });
     // 1024 → 255 and 512 → 128: saturation 100 × 127 / 255 = 49, then 49 × 151 / 100 = 73.
     expect(hsvReflected({ r: 1024, g: 512, b: 512 }).s).toBe(73);
-    // reflection: (r + g + b) × 100 / 3072, cut to a whole number.
-    expect(reflection({ r: 1000, g: 0, b: 0 })).toBe(32);
+    // reflection: (r + g + b) × 1000 / 3072 tenths of a percent, cut: 325 → 32.5 %.
+    expect(reflection({ r: 1000, g: 0, b: 0 })).toBe(32.5);
   });
 });
 

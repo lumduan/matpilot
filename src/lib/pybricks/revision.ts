@@ -2,17 +2,17 @@
  * Decoding and parsing of the revision strings a Pybricks hub exposes in the standard
  * Device Information Service.
  *
- * Upstream behaviour this module relies on (pybricks-micropython, tag v4.0.1,
- * commit 4104553405decb0384bcfb030fbfcb4b5a9854cc):
+ * Upstream behaviour this module relies on (pybricks-micropython, tag v4.1.3,
+ * commit c860b6a00301fb7c6ecd429da11dcb5a6c557c7a):
  *
  * - The BTstack driver used by SPIKE Prime sets Firmware Revision String to `PBIO_VERSION_STR`
  *   and Software Revision String to `PBIO_PROTOCOL_VERSION_STR`:
- *   https://github.com/pybricks/pybricks-micropython/blob/4104553405decb0384bcfb030fbfcb4b5a9854cc/lib/pbio/drv/bluetooth/bluetooth_btstack.c#L1484-L1485
+ *   https://github.com/pybricks/pybricks-micropython/blob/c860b6a00301fb7c6ecd429da11dcb5a6c557c7a/lib/pbio/drv/bluetooth/bluetooth_btstack.c#L3269-L3270
  * - `PBIO_VERSION_STR` is "X.Y.Z" with an optional pre-release suffix "aN", "bN" or "cN"
  *   (alpha, beta, release candidate); a final release has no suffix:
- *   https://github.com/pybricks/pybricks-micropython/blob/4104553405decb0384bcfb030fbfcb4b5a9854cc/lib/pbio/include/pbio/version.h#L62-L82
+ *   https://github.com/pybricks/pybricks-micropython/blob/c860b6a00301fb7c6ecd429da11dcb5a6c557c7a/lib/pbio/include/pbio/version.h#L62-L82
  * - `PBIO_PROTOCOL_VERSION_STR` is "X.Y.Z":
- *   https://github.com/pybricks/pybricks-micropython/blob/4104553405decb0384bcfb030fbfcb4b5a9854cc/lib/pbio/include/pbio/protocol.h#L23-L40
+ *   https://github.com/pybricks/pybricks-micropython/blob/c860b6a00301fb7c6ecd429da11dcb5a6c557c7a/lib/pbio/include/pbio/protocol.h#L23-L40
  */
 
 export type PrereleaseLevel = 'alpha' | 'beta' | 'candidate';

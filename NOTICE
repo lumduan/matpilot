@@ -10,7 +10,8 @@ pybricks-micropython
 https://github.com/pybricks/pybricks-micropython
 Copyright (c) 2018-2026 The Pybricks Authors
 License: MIT (full text below)
-Source revision used: tag v4.0.1, commit 4104553405decb0384bcfb030fbfcb4b5a9854cc
+Source revision used: tag v4.1.3, commit c860b6a00301fb7c6ecd429da11dcb5a6c557c7a
+(until 2026-11-08: tag v4.0.1, commit 4104553405decb0384bcfb030fbfcb4b5a9854cc)
 ==============================================================================
 
 What MatPilot ports, and from where:
@@ -27,7 +28,7 @@ What MatPilot ports, and from where:
 
   src/lib/pybricks/revision.ts, src/lib/pybricks/baseline.ts
     The formats of the firmware version string and the protocol version
-    string, and the protocol version reported by firmware v4.0.1, from:
+    string, and the protocol version reported by firmware v4.1.3, from:
       lib/pbio/include/pbio/version.h
         (SPDX-License-Identifier: MIT; Copyright (c) 2019-2024 The Pybricks Authors)
       lib/pbio/include/pbio/protocol.h
@@ -53,8 +54,8 @@ What MatPilot ports, and from where:
     that ColorSensor.color() reports by default, from:
       lib/lego/lego/lump.h
         (SPDX-License-Identifier: MIT; Copyright (c) 2019-2020 The Pybricks Authors)
-      pybricks/util_pb/pb_color_map.c
-        (SPDX-License-Identifier: MIT; Copyright (c) 2018-2020 The Pybricks Authors)
+      lib/pbio/src/color/color_map.c
+        (SPDX-License-Identifier: MIT; Copyright (c) 2018-2026 The Pybricks Authors)
 
   src/lib/robots/motion.ts, src/lib/sim/engine.ts
     The motors' rated top speeds and acceleration, the drive base's default
@@ -75,17 +76,18 @@ What MatPilot ports, and from where:
       pybricks/pupdevices/pb_type_pupdevices_ultrasonicsensor.c
       pybricks/parameters/pb_type_color.c
         (SPDX-License-Identifier: MIT; Copyright (c) 2018-2023 The Pybricks Authors)
-      pybricks/util_pb/pb_color_map.c
-        (SPDX-License-Identifier: MIT; Copyright (c) 2018-2020 The Pybricks Authors)
+      lib/pbio/src/port_lump/sensors.c
+        (SPDX-License-Identifier: MIT; Copyright (c) 2018-2025 The Pybricks Authors)
+      lib/pbio/src/color/color_map.c
+        (SPDX-License-Identifier: MIT; Copyright (c) 2018-2026 The Pybricks Authors)
       lib/pbio/src/color/util.c
         (SPDX-License-Identifier: MIT; Copyright (c) 2018-2022 The Pybricks Authors)
-      lib/pbio/src/color/conversion.c (pbio_color_rgb_to_hsv only)
+      lib/pbio/src/color/conversion.c (pbio_color_from_rgb and its hue shift)
         (SPDX-License-Identifier: MIT; Copyright (c) 2020 The Pybricks Authors)
       lib/pbio/include/pbio/color.h
         (SPDX-License-Identifier: MIT; Copyright (c) 2020,2022 The Pybricks Authors)
 
-  From release v4.1.3, commit c860b6a00301fb7c6ecd429da11dcb5a6c557c7a (the USB
-  link, docs/adr/0018-usb-connection.md, docs/protocol/pybricks-usb.md):
+  The USB link (docs/adr/0018-usb-connection.md, docs/protocol/pybricks-usb.md):
 
   src/lib/usb/cobs.ts, src/lib/usb/cobs.test.ts
     The SPIKE Prime variant of COBS framing (constants, encoder and decoder,
@@ -158,7 +160,9 @@ MicroPython (as fork pybricks/micropython)
 https://github.com/pybricks/micropython
 Copyright (c) 2013-2020 Damien P. George
 License: MIT
-Source revision used: commit 13580b6ad057173f62e8b2363e01d6851bcc6699
+Source revision used: commit 740cbf265cda4d404fef11848e3bdf32fcd24420 (the submodule of
+pybricks-micropython v4.1.3; until 2026-11-08: commit
+13580b6ad057173f62e8b2363e01d6851bcc6699)
 ==============================================================================
 
 What MatPilot ports, and from where:

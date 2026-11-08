@@ -74,7 +74,8 @@ What works today:
 
 More blocks (tasks that run at the same time) and offline use are planned. See the [roadmap](docs/roadmap.md).
 
-Tested firmware baseline: **Pybricks v4.0.1** on LEGO® SPIKE Prime. This is the version MatPilot is
+Tested firmware baseline: **Pybricks v4.1.3** on LEGO® SPIKE Prime (moved from v4.0.1 on
+2026-11-08; the hardware checks so far ran on v4.0.1). This is the version MatPilot is
 tested against, not a hard requirement.
 
 ## Browser and OS support

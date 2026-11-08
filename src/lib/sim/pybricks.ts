@@ -9,12 +9,13 @@
  * only reads still moves the clock on, as on the hub. Sensors read the mat (./sensors.ts): the
  * colour sensor its picture, the distance sensor its edges and solid objects, the touch sensor
  * what it is pressed against.
- * Values come back as whole numbers, rounded, as Pybricks gives them.
+ * Values come back as Pybricks v4.1 gives them: reflection and ambient light with one decimal,
+ * the others as whole numbers (./sensors.ts).
  *
  * The package reaches the simulation through `_sim.py` (made by `simModule`), which calls the
  * JavaScript module `_simjs` and, once the simulation has halted (the time limit, or something the
  * mat cannot run), raises SystemExit: what the hub's stop button raises, so the program's
- * `finally` runs and stops its motors (FW bricks/_common/micropython.c#L45-L57, cited in
+ * `finally` runs and stops its motors (FW bricks/_common/micropython.c#L44-L56, cited in
  * ../blocks/pybricks.ts). A JavaScript exception cannot do this: MicroPython's WebAssembly port
  * ends the whole run on one, without running `finally`.
  */
@@ -235,11 +236,11 @@ class ColorSensor:
 
     def reflection(self):
         _sim.tick()
-        return round(_sim.sensor_value(self._port, 'reflection'))
+        return round(_sim.sensor_value(self._port, 'reflection'), 1)
 
     def ambient(self):
         _sim.tick()
-        return round(_sim.sensor_value(self._port, 'ambient'))
+        return round(_sim.sensor_value(self._port, 'ambient'), 1)
 
     def hsv(self, surface=True):
         _sim.tick()
@@ -283,7 +284,7 @@ class ForceSensor:
 
     def pressed(self, force=3):
         _sim.tick()
-        return _sim.sensor_value(self._port, 'force') >= force
+        return _sim.sensor_value(self._port, 'force') > force
 
     def touched(self):
         _sim.tick()

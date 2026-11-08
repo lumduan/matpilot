@@ -11,8 +11,8 @@ import {
 } from './uuids';
 
 /**
- * Byte arrays copied verbatim from upstream pybricks-micropython at tag v4.0.1
- * (commit 4104553405decb0384bcfb030fbfcb4b5a9854cc), lib/pbio/src/protocol/pybricks.c.
+ * Byte arrays copied verbatim from upstream pybricks-micropython at tag v4.1.3
+ * (commit c860b6a00301fb7c6ecd429da11dcb5a6c557c7a), lib/pbio/src/protocol/pybricks.c.
  * Checking the strings against them catches transcription mistakes.
  */
 const UPSTREAM_BYTES = {

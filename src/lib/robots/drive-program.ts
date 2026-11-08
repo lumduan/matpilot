@@ -4,8 +4,8 @@
  * the hub code rules (CLAUDE.md): a config block, ports named once, every motor stopped in
  * `finally`.
  *
- * Pybricks names it uses, at pybricks-micropython v4.0.1
- * (FW = https://github.com/pybricks/pybricks-micropython/blob/4104553405decb0384bcfb030fbfcb4b5a9854cc/):
+ * Pybricks names it uses, at pybricks-micropython v4.1.3
+ * (FW = https://github.com/pybricks/pybricks-micropython/blob/c860b6a00301fb7c6ecd429da11dcb5a6c557c7a/):
  * - DriveBase(left_motor, right_motor, wheel_diameter, axle_track), sizes in mm:
  *   FW pybricks/robotics/pb_type_drivebase.c#L61-L80; DriveBase.straight(distance) and
  *   turn(angle), waiting until done: pb_type_drivebase.c#L133-L152 #L155-L175; stop():
@@ -13,7 +13,7 @@
  *   #L146-L151;
  * - Motor(port, positive_direction): FW pybricks/common/pb_type_motor.c#L79-L85; Motor.stop():
  *   pb_type_motor.c#L483; Port and Direction: FW pybricks/parameters/pb_module_parameters.c
- *   #L11-L32; wait(time) in ms: FW pybricks/tools/pb_module_tools.c#L67-L103.
+ *   #L11-L32; wait(time) in ms: FW pybricks/tools/pb_module_tools.c#L69-L105.
  */
 import type { RobotProfile } from './profile';
 
