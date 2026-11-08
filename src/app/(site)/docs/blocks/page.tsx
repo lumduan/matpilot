@@ -46,6 +46,11 @@ export default function BlocksDocs() {
           ]}
         />
         <BlocksBasics />
+        <p className="doc-tip">
+          What does each block do, and which one should you use? <strong>print</strong> or{' '}
+          <strong>write</strong>? See <Link href="/docs/every-block">Every block</Link>: every
+          block, when to use it, the Python it makes, and the blocks that look alike.
+        </p>
       </section>
 
       <section className="doc-section" aria-labelledby="pictures-title">

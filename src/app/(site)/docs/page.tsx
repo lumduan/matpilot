@@ -1,14 +1,15 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import type { ReactNode } from 'react';
 import { DocsNext } from '@/components/docs/DocsNav';
 import { DOC_PAGES } from '@/components/docs/pages';
 import { Shot } from '@/components/docs/Shot';
 import {
   BlocksIcon,
-  BookIcon,
   GrownUpIcon,
   HeartIcon,
   HubIcon,
+  ListIcon,
   MatIcon,
   RobotIcon,
 } from '@/components/docs/icons';
@@ -19,15 +20,16 @@ export const metadata: Metadata = {
   description: 'How to use MatPilot, with pictures: blocks, robots, mats, and setting up a hub.',
 };
 
-const ICONS = [
-  <BookIcon key="start" />,
-  <HubIcon key="get-started" />,
-  <BlocksIcon key="blocks" />,
-  <RobotIcon key="robots" />,
-  <MatIcon key="mats" />,
-  <GrownUpIcon key="grown-ups" />,
-  <HeartIcon key="credits" />,
-];
+/** Each page's picture on the cards, by its address. */
+const ICONS: Readonly<Record<string, ReactNode>> = {
+  '/docs/get-started': <HubIcon />,
+  '/docs/blocks': <BlocksIcon />,
+  '/docs/every-block': <ListIcon />,
+  '/docs/robots': <RobotIcon />,
+  '/docs/mats': <MatIcon />,
+  '/docs/grown-ups': <GrownUpIcon />,
+  '/docs/credits': <HeartIcon />,
+};
 
 export default function DocsHome() {
   return (
@@ -44,9 +46,9 @@ export default function DocsHome() {
         caption="The Blocks page, where you build programs."
       />
       <ul className="home-cards home-cards-links">
-        {DOC_PAGES.slice(1).map((page, index) => (
+        {DOC_PAGES.slice(1).map((page) => (
           <li key={page.href}>
-            {ICONS[index + 1]}
+            {ICONS[page.href]}
             <h2>
               <Link href={page.href}>{page.title}</Link>
             </h2>

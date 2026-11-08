@@ -2,13 +2,15 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { DocsSearch } from './DocsSearch';
 import { DOC_PAGES } from './pages';
 
-/** The Docs' own menu: beside the page on a wide screen, above it on a phone. */
+/** The Docs' own menu, with their search: beside the page on a wide screen, above it on a phone. */
 export function DocsNav() {
   const path = (usePathname() ?? '/docs').replace(/\/$/, '') || '/docs';
   return (
     <nav className="docs-nav" aria-label="Docs">
+      <DocsSearch />
       <ol>
         {DOC_PAGES.map((page) => (
           <li key={page.href}>
