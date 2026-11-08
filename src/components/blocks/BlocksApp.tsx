@@ -128,6 +128,8 @@ export function BlocksApp() {
   const files = editor.program?.files ?? [];
   const problems = editor.program?.problems ?? [];
   const loose = editor.program?.loose ?? [];
+  // A path from the Mats page goes into the tab the child has open (asked for on 2026-11-08).
+  const activeTabName = editor.tabs.find((tab) => tab.id === editor.activeTab)?.name ?? 'main';
   const portWarnings = useMemo(
     () => hardwareWarnings(editor.program?.hardware ?? [], portHints),
     [editor.program, portHints],
@@ -487,12 +489,12 @@ export function BlocksApp() {
                 className="button button-small"
                 onClick={() => {
                   const state = incoming.incoming && stepsToBlocks(incoming.incoming.steps);
-                  if (state) editor.addToMain(state);
+                  if (state) editor.addToTab(editor.activeTab, state);
                   incoming.clear();
                 }}
                 data-testid="incoming-add"
               >
-                Add at the end of main
+                Add at the end of {activeTabName}
               </button>
               <button
                 type="button"

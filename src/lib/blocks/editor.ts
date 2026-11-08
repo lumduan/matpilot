@@ -17,6 +17,7 @@ import * as Blockly from 'blockly/core';
 import { registerClipboard } from './clipboard';
 import { getPortHints, setPortHints, type PortHints } from './fields/hints';
 import { splitPair } from './fields/port';
+import { addToTab, type AddedBlocks } from './add-to-tab';
 import {
   FUNCTION_BLOCKS,
   collectFunctions,
@@ -157,10 +158,10 @@ export interface EditorHandle {
   /** Opens the block's tab and shows the block. */
   showBlock(tabId: string, blockId: string): void;
   /**
-   * Adds a stack of blocks at the end of main's program (below the other blocks when main has
-   * no program block, or its last block takes nothing after it), as one change Undo takes back.
+   * Adds a stack of blocks to a tab where it runs (./add-to-tab.ts): main's program, or the
+   * tab's last "define" block (a new one when it has none), as one change Undo takes back.
    */
-  addToMain(state: Blockly.serialization.blocks.State): { blocks: number; attached: boolean };
+  addToTab(tabId: string, state: Blockly.serialization.blocks.State): AddedBlocks;
   /** The tab's Python to edit, and the parts of it that can change (ADR 0014). */
   pythonEdit(tabId: string): Promise<PythonEdit>;
   /** What in this Python cannot become the tab's blocks; empty when it all can. */
@@ -706,46 +707,28 @@ export function createEditor(options: EditorOptions): EditorHandle {
         );
       }
     },
-    addToMain(state) {
-      const main = tabs.find((tab) => tab.id === MAIN_TAB_ID) ?? tabs[0];
-      if (!main) return { blocks: 0, attached: false };
+    addToTab(tabId, state) {
+      const tab = tabs.find((each) => each.id === tabId) ?? tabs[0];
+      if (!tab) return { blocks: 0, attached: false, shownId: '', message: '' };
       // The notice's Undo puts the program back as it was (undoProgramChange).
       previous = { program: save(), meta };
-      selectTab(main.id);
-      const { workspace } = main;
-      const hat = workspace.getTopBlocks(true).find((block) => block.type === 'mp_program');
+      selectTab(tab.id);
+      const { workspace } = tab;
       const bottom = Math.max(
         0,
         ...workspace.getTopBlocks(false).map((top) => top.getBoundingRectangle().bottom),
       );
-      let attached = false;
-      let added: Blockly.Block | null = null;
-      // One group: Undo takes the whole stack back at once.
-      Blockly.Events.setGroup(true);
-      try {
-        added = Blockly.serialization.blocks.append(
-          { ...state, x: 24, y: bottom + 48 } as Blockly.serialization.blocks.State,
-          workspace,
-        );
-        let last: Blockly.Block | null = hat ?? null;
-        while (last?.getNextBlock()) last = last.getNextBlock();
-        if (last?.nextConnection && added.previousConnection) {
-          last.nextConnection.connect(added.previousConnection);
-          attached = true;
-        }
-      } finally {
-        Blockly.Events.setGroup(false);
-      }
-      workspace.centerOnBlock(added.id);
+      const added = addToTab(
+        workspace,
+        { name: tab.name, isMain: tab.id === MAIN_TAB_ID },
+        state,
+        bottom,
+      );
+      workspace.centerOnBlock(added.shownId);
       reportHistory();
       schedule();
-      const blocks = added.getDescendants(false).filter((block) => !block.isShadow()).length;
-      options.onProgramChange(
-        attached
-          ? `Added ${blocks} block${blocks === 1 ? '' : 's'} at the end of main.`
-          : `Added ${blocks} block${blocks === 1 ? '' : 's'} to main, below the other blocks: drag them where they should run.`,
-      );
-      return { blocks, attached };
+      options.onProgramChange(added.message);
+      return added;
     },
     showBlock(tabId, blockId) {
       selectTab(tabId);

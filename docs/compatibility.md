@@ -832,6 +832,10 @@ built in BrickLink Studio, and a ruler.
     sensor its real port, **Use these numbers**, then run check 7 or 9: it should drive and turn
     as the program says. Note the numbers MatPilot gave and what the ruler said, and anything in
     the yellow notes. Also try the Studio `.io` file itself: it should say how to export it.
+11. How to measure (added 2026-11-08, needs no hub): press the **i** beside **Body**: pictures
+    from above and from the side, and the steps. Press the **i** beside **Wheels**: the caliper
+    on the wheel, the axle track as (A + B) ÷ 2, and how to read a vernier (56 + 0.4 = 56.4 mm).
+    Ask a child to measure the robot with only that help, and note what was unclear.
 
 ## Mats checks (milestone 7)
 
@@ -907,6 +911,11 @@ page, looking down, at the port the program uses.
     point. **Send to Blocks**, open **Blocks**: **Add at the end of main** puts the moves at the
     end of the program (Undo in the notice takes them back). Run the program on the real robot
     from the same start and compare where it ends.
+12. A path into a tab (added 2026-11-08): on **Blocks**, open a tab other than main (or make
+    one with +), then send a path from **Mats** again. The button says **Add at the end of** and
+    the tab's name. In an empty tab the moves become a new block of your own, “path”, and the
+    notice says to use it from main (Functions › path); in a tab with a “define” block they go
+    at the end of its last one. Call it from main and Run: the robot drives the path.
 
 ### Mats results
 

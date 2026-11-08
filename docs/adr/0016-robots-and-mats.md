@@ -578,6 +578,20 @@ token there", and usable on every page. This changes D5, which kept mats off Git
   loaded beside mine; a mat saved (private: no tick) and loaded back through the raw read; a
   public repository needing the tick; the setup offered when GitHub is not set up.
 
+## Amendment: a path into any tab, and how to measure (2026-11-08)
+
+Asked for by the maintainer after using the path and the Robots page:
+
+- **A path goes into the tab the child has open**, not only main: "the user should choose the
+  tab first, then press Add at the end of …". In main, the moves go at the end of the program,
+  as before. Another tab's blocks run only inside a "define" block (ADR 0013), so the moves go
+  at the end of that tab's last "define" block, or, in a tab without one, into a new block of
+  your own named "path" that main can call (`src/lib/blocks/add-to-tab.ts`).
+- **An "i" beside Body and Wheels** on the Robots page opens how to measure, with pictures:
+  the body from above and from the side, the wheel's diameter and width with a caliper, the
+  axle track as (A + B) ÷ 2, and how to read a vernier. The Docs' Robots page shows the same
+  help (`src/components/robots/MeasureHelp.tsx`).
+
 ## Consequences (as accepted)
 
 - Two new libraries, each loaded only on the page that needs it: pdf.js on Mats, MicroPython on a
