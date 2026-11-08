@@ -248,7 +248,9 @@ The model dialog draws the model in 3D above the drawings from above and from th
 - **Drawing** (`src/lib/ldraw/view3d.ts`, the only code that imports three.js, so it is loaded only
   when a model is shown: about 730 kB, 185 kB compressed): three.js 0.186.1 (MIT) with its
   LDrawLoader, the conditional-line material it needs, and OrbitControls (drag to turn, scroll to
-  zoom). The model stands on a floor grid in the ROBOT frame, with an arrow to the front; the
+  zoom), without smoothing curved surfaces (it took 2.5 s of the 3 s the loader needed for the
+  driving base, on the page's main thread). The model stands on a floor grid in the ROBOT frame,
+  with an arrow to the front; the
   motors and sensors are outlined and tagged as in the list. Turning the front round moves the
   model; it is not loaded again.
 - If the browser cannot draw in 3D, the dialog says so and the drawings from above and from the
