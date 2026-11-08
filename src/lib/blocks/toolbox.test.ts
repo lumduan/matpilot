@@ -139,6 +139,7 @@ describe('the toolbox', () => {
   it('lists the simple categories first and folds the detailed ones under Advanced', () => {
     const names = TOOLBOX.contents.map((item) => ('name' in item ? item.name : item.kind));
     expect(names).toEqual([
+      'Search',
       'Movement',
       'Motors',
       'Light',

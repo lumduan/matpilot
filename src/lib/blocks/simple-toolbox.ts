@@ -75,6 +75,10 @@ export function movementFlyout(state: SimpleToolboxState): FlyoutItem[] {
     block('mp_move_start', { fields: { DIRECTION: 'FORWARD' } }),
     block('mp_move_start_steering', { inputs: { STEERING: steering(30) } }),
     block('mp_move_stop'),
+    label('Stop for a moment, then go on (wait is in Control)'),
+    block('mp_move_stop', {
+      next: { block: { type: 'mp_wait_seconds', inputs: { SECONDS: num(1) } } },
+    }),
     block('mp_move_speed', { inputs: { SPEED: percent(50) } }),
     label('For exact turns and millimetres, measure your robot:'),
     block('mp_move_wheels', { fields: { WHEEL: 56, TRACK: 112 } }),

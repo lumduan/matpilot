@@ -34,6 +34,7 @@ import { NEW_PROGRAM_META, sameMeta, type ProgramMeta } from './program-meta';
 import { sameRobot } from '../robots/profile';
 import { DEVICE_TYPES, type DeviceType, type PortName } from './pybricks';
 import { ensureRequiredBlocks, registerBlocks } from './register';
+import { registerSearchCategory } from './search';
 import {
   deleteSharedVariable as deleteShared,
   syncSharedVariables,
@@ -308,6 +309,7 @@ function cleanTabNames(tabs: readonly ProgramTabState[]): ProgramTabState[] {
 
 export function createEditor(options: EditorOptions): EditorHandle {
   registerBlocks();
+  registerSearchCategory();
   registerClipboard();
   const themes = getThemes();
   let dark = options.dark;

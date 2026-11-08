@@ -14,7 +14,8 @@ export const PICTURES = {
     width: 1280,
     height: 800,
     marks: {
-      categories: [10.4, 25.3],
+      search: [10.5, 26.5],
+      categories: [10.4, 31.2],
       start: [26.4, 29.4],
       run: [29.5, 13.5],
       connect: [40.6, 13.5],

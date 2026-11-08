@@ -26,6 +26,7 @@ export default function BlocksDocs() {
           name="blocks-page"
           alt="The Blocks page, with numbers on its parts."
           marks={[
+            { at: 'search', label: 'Search: type a word, such as “wait” or “turn”.' },
             { at: 'categories', label: 'The block categories. Tap one to see its blocks.' },
             {
               at: 'start',
