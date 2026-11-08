@@ -3754,3 +3754,69 @@ code {
 .model-credit {
   font-size: 0.8rem;
 }
+
+/* The model in 3D (ADR 0017, step 10a-2). */
+.model-3d {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin: 0;
+}
+
+.model-3d-stage {
+  position: relative;
+  height: min(24rem, 60vh);
+  overflow: hidden;
+  background: linear-gradient(var(--surface), var(--bg));
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+}
+
+.model-3d-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  cursor: grab;
+}
+
+.model-3d-canvas:active {
+  cursor: grabbing;
+}
+
+.model-3d-labels {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.model-3d-tag {
+  position: absolute;
+  padding: 0 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.4rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1.5px solid var(--series-2);
+  border-radius: 999px;
+  transform: translate(-50%, -50%);
+}
+
+.model-3d-tag-motor {
+  border-color: var(--series-1);
+}
+
+.model-3d-wait {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  color: var(--muted);
+}
+
+.model-3d figcaption {
+  font-size: 0.8rem;
+  color: var(--muted);
+}

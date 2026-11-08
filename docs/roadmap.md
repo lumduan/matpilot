@@ -17,7 +17,7 @@ flowchart TD
     M5["5 · Xbox controller blocks<br/>with a live controller view<br/>ACTIVE — built, Xbox check passed 2026-11-07,<br/>controller blocks tried on the hub"]
     M6["6 · Offline PWA<br/>BLOCKED — needs 2"]
     M7["7 · Robots and Mats<br/>robot profiles, real-size mats, run a program on a mat<br/>ACTIVE — Robots, Mats, runs on a mat and sensors built 2026-11-07,<br/>calibration, how sure, path → blocks built"]
-    M10["10 · A robot from its LEGO model<br/>ADR 0017 accepted 2026-11-08<br/>ACTIVE — robot profile from a Studio model built,<br/>3D view next"]
+    M10["10 · A robot from its LEGO model<br/>ADR 0017 accepted 2026-11-08<br/>ACTIVE — robot profile from a Studio model<br/>and its 3D view built"]
     M8["8 · Edit the Python on the Blocks page<br/>back to blocks, errors marked<br/>ACTIVE — built and tried 2026-11-07,<br/>suggestions and comments added"]
     M9["9 · AI helper, any provider<br/>explain, review, write, learn to prompt<br/>ACTIVE — explain and review built 2026-11-07,<br/>passed with Claude, write mode later"]
     GOAL["First usable release<br/>for classrooms and competitions<br/>GOAL"]
@@ -93,9 +93,9 @@ release unless the maintainer says so.
 **Milestone 7 is built in full (ADR 0016) and waits on real-world checks:** the robot measured or
 calibrated on the floor, and runs on the real mat compared with the page. **Milestone 10 is being
 built** ([ADR 0017](adr/0017-lego-part-builder.md), accepted 2026-11-08): its first step, a robot
-profile from a Studio model, waits on one real-world check (a model of the real robot against a
-ruler); the 3D view comes next. Asking LDraw.org (D5) is a courtesy, not a blocker: the library's
-licence allows serving its files with attribution.
+profile from a Studio model, and its second, the model in 3D, wait on one real-world check (a
+model of the real robot against a ruler). Asking LDraw.org (D5) is a courtesy, not a blocker: the
+library's licence allows serving its files with attribution.
 
 **Milestone 7, which the first release needs, was planned and accepted on 2026-11-07** as Robots
 and Mats ([ADR 0016](adr/0016-robots-and-mats.md)); its steps 7a to 7d (the Robots and Mats
@@ -297,7 +297,7 @@ on the mat (click point by point) becomes "turn" and "move" blocks the Blocks pa
 of main.
 Building a robot from LEGO parts is milestone 10 ([ADR 0017](adr/0017-lego-part-builder.md)).
 
-### 10 · Build a robot from LEGO parts (ADR 0017 accepted; step 10a-1 built 2026-11-08)
+### 10 · Build a robot from LEGO parts (ADR 0017 accepted; steps 10a-1 and 10a-2 built 2026-11-08)
 
 Asked for on 2026-11-07 as a future step: build the robot from parts, like BrickLink's tools, and
 get its size, wheels and sensors from the model. It writes a robot profile (milestone 7), so
@@ -310,7 +310,8 @@ very good feature"), and its first step built: on the Robots page, **Make from a
 reads a `.ldr` or `.mpd`, sizes every part from a table made from the whole LDraw library, finds
 the drive wheels, the front, the drive motors (and which one is turned round), the other motors
 and the sensors, and fills in the robot profile once the child has picked the ports. The robot
-keeps its model. Next: the model in 3D (step 10a-2). Its
+keeps its model. The second step followed the same day: the model drawn in 3D with three.js and
+the SPIKE Prime and Technic parts' LDraw shapes, served from this site. Its
 [check](compatibility.md#robots-checks-milestone-7) (10) needs a Studio export of the real robot.
 
 ### 8 · Edit the Python on the Blocks page (built 2026-11-07)

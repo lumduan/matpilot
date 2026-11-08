@@ -710,8 +710,9 @@ built in BrickLink Studio, and a ruler.
 10. A robot from a LEGO model, with the real robot built as in Studio and a ruler. In BrickLink
     Studio, open the robot and choose **File → Export As → LDraw** (`.ldr`, or `.mpd` when it
     has submodels). On the Robots page, choose (or make) a robot, then **Make from a LEGO
-    model…** and choose that file. Check, against the real robot: the picture from above and from
-    the side looks like it; **The front is up** (else **Turn the front round**); the wheels'
+    model…** and choose that file. Check, against the real robot: the model in 3D (drag to turn
+    it) and the pictures from above and from the side look like it, the arrow pointing to its
+    front; **The front is up** (else **Turn the front round**); the wheels'
     diameter and the axle track; the width, length and height against a ruler; each sensor's
     place (mm ahead or behind, left or right of the middle) and the way it looks; which drive
     motor is "turned round" (the one whose shaft points to the robot's left). Give each motor and

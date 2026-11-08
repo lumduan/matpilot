@@ -12,6 +12,11 @@
 // - boxes.json: every part's and primitive's size, as the smallest box around its shape in its own
 //   frame, in LDraw units, so a model's size can be worked out from any part it uses; parts whose
 //   description starts with "Wheel" or "Tyre" are marked, so a model's wheels can be found;
+// - library/: the shapes the 3D view draws (ADR 0017, D2 as amended): the parts with the keyword
+//   "Spike Prime", the Technic families SPIKE robots are built from (FAMILIES below, without
+//   patterns, stickers, aliases and obsolete parts), the old names of those parts ("~Moved to"),
+//   and every sub-part and primitive they use, each file unchanged; shapes.json maps each name a
+//   model may place to its file; LDConfig.ldr holds the colours;
 // - the library's licence files, which every copy must carry.
 //
 // The LDraw file format (https://www.ldraw.org/article/218.html): line type 1 places a sub-file
@@ -26,6 +31,7 @@ import {
   mkdirSync,
   readFileSync,
   readdirSync,
+  rmSync,
   writeFileSync,
 } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -61,6 +67,25 @@ for (const [folder, prefix] of [
 
 const refKey = (name) => name.toLowerCase().replaceAll('\\', '/');
 
+/** The Technic families the 3D view draws as shapes; any other part is drawn as a box. */
+const FAMILIES = [
+  'Technic Beam',
+  'Technic Axle',
+  'Technic Pin',
+  'Technic Connector',
+  'Technic Bush',
+  'Technic Gear',
+  'Technic Cross',
+  'Technic Angle',
+  'Technic Plate',
+  'Technic Brick',
+  'Technic Ball',
+  'Technic Panel',
+  'Technic Frame',
+  'Technic Worm',
+  'Technic Turntable',
+];
+
 /** A file's own points and the sub-files it places. */
 const parsed = new Map();
 function parse(path) {
@@ -69,11 +94,15 @@ function parse(path) {
   const points = [];
   const refs = [];
   let description = null;
+  let org = '';
+  let keywords = '';
   for (const raw of readFileSync(path, 'latin1').split(/\r?\n/)) {
     const t = raw.trim().split(/\s+/);
     if (t[0] === '' || t[0] === undefined) continue;
     if (t[0] === '0') {
       if (description === null) description = t.slice(1).join(' ');
+      else if (t[1] === '!LDRAW_ORG') org = t.slice(2).join(' ');
+      else if (t[1] === '!KEYWORDS') keywords += ` ${t.slice(2).join(' ')}`;
       continue;
     }
     const count = { 2: 2, 3: 3, 4: 4, 5: 2 }[t[0]];
@@ -83,7 +112,7 @@ function parse(path) {
       refs.push({ m: t.slice(2, 14).map(Number), name: t.slice(14).join(' ') });
     }
   }
-  file = { points, refs, description: description ?? '' };
+  file = { points, refs, description: description ?? '', org, keywords };
   parsed.set(path, file);
   return file;
 }
@@ -178,6 +207,65 @@ for (const [folder, prefix] of [
   }
 }
 
+// --- The shapes the 3D view draws. ---------------------------------------------------------------
+const chosen = new Set();
+const allParts = readdirSync(join(library, 'parts')).filter((name) =>
+  name.toLowerCase().endsWith('.dat'),
+);
+for (const name of allParts) {
+  const file = parse(join(library, 'parts', name));
+  if (/spike prime/i.test(file.keywords)) {
+    chosen.add(name.toLowerCase());
+    continue;
+  }
+  if (/^[~=_]/.test(file.description) || /Alias|Physical_Colour/.test(file.org)) continue;
+  if (/Pattern|Sticker|Obsolete/.test(file.description)) continue;
+  if (FAMILIES.some((family) => file.description.startsWith(family)))
+    chosen.add(name.toLowerCase());
+}
+// Old names that only place a chosen part ("~Moved to …").
+for (const name of allParts) {
+  const file = parse(join(library, 'parts', name));
+  if (!file.description.startsWith('~Moved to') || file.refs.length !== 1) continue;
+  if (chosen.has(refKey(file.refs[0].name))) chosen.add(name.toLowerCase());
+}
+/** Every file the chosen parts need, by the name a model or a part places it with. */
+const shapes = new Map();
+const keyOf = (path) => {
+  const rel = path.slice(library.length + 1).replaceAll('\\', '/');
+  const lower = rel.toLowerCase();
+  if (lower.startsWith('parts/s/')) return `s/${lower.slice(8)}`;
+  if (lower.startsWith('p/48/')) return `48/${lower.slice(5)}`;
+  if (lower.startsWith('p/8/')) return `8/${lower.slice(4)}`;
+  return lower.replace(/^(parts|p)\//, '');
+};
+const need = (path) => {
+  const key = keyOf(path).replace(/\.dat$/, '');
+  if (shapes.has(key)) return;
+  shapes.set(key, path);
+  for (const ref of parse(path).refs) {
+    const child = index.get(refKey(ref.name));
+    if (child) need(child);
+  }
+};
+for (const name of [...chosen].sort()) need(index.get(name));
+
+const shapesDir = join(outDir, 'library');
+rmSync(shapesDir, { recursive: true, force: true });
+const files = {};
+let shapeBytes = 0;
+for (const [key, path] of [...shapes].sort(([a], [b]) => a.localeCompare(b))) {
+  const rel = path
+    .slice(library.length + 1)
+    .replaceAll('\\', '/')
+    .toLowerCase();
+  mkdirSync(dirname(join(shapesDir, rel)), { recursive: true });
+  const text = readFileSync(path);
+  writeFileSync(join(shapesDir, rel), text);
+  shapeBytes += text.length;
+  files[key] = rel;
+}
+
 const note = readdirSync(join(library, 'models'))
   .filter((name) => /^note\d{4}ca\.txt$/i.test(name))
   .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()))
@@ -196,9 +284,16 @@ writeFileSync(
   join(outDir, 'boxes.json'),
   `{"format":"matpilot-ldraw-boxes","version":1,"release":${JSON.stringify(release)},"unit":"LDU","parts":{\n${lines.join(',\n')}\n}}\n`,
 );
-for (const name of ['CAreadme.txt', 'CAlicense.txt', 'CAlicense4.txt']) {
+writeFileSync(
+  join(outDir, 'shapes.json'),
+  `${JSON.stringify({ format: 'matpilot-ldraw-shapes', version: 1, release, parts: [...chosen].sort().map((name) => name.replace(/\.dat$/, '')), files }, null, 0)}\n`,
+);
+for (const name of ['CAreadme.txt', 'CAlicense.txt', 'CAlicense4.txt', 'LDConfig.ldr']) {
   copyFileSync(join(library, name), join(outDir, name));
 }
+console.log(
+  `${release}: ${chosen.size} parts drawn as shapes, ${shapes.size} files (${Math.round(shapeBytes / 1000)} kB) with what they use.`,
+);
 console.log(
   `${release}: ${Object.keys(parts).length} part and primitive sizes (${empty} without a shape left out) in ${Math.round((Date.now() - started) / 1000)} s, written to third_party/ldraw/.`,
 );

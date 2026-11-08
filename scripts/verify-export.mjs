@@ -8,7 +8,7 @@
 //   3. the self-hosted compiler binary (out/vendor/mpy-cross-v6.wasm, ADR 0006), Blockly's
 //      self-hosted media (out/vendor/blockly-media/, ADR 0008), pdf.js's worker
 //      (out/vendor/pdfjs/, ADR 0016), MicroPython (out/vendor/micropython/, ADR 0016) or the LDraw
-//      parts' sizes with their licence (out/vendor/ldraw/, ADR 0017) is missing,
+//      parts' sizes and shapes with their licence (out/vendor/ldraw/, ADR 0017) is missing,
 //      or
 //   4. an exported page lacks the Content-Security-Policy meta tag, or its policy allows any
 //      origin but the page's own. The exceptions are in connect-src: https://api.github.com, for
@@ -30,6 +30,9 @@ const PDFJS_WORKER = join(OUT_DIR, 'vendor', 'pdfjs', 'pdf.worker.min.js');
 const MICROPYTHON = join(OUT_DIR, 'vendor', 'micropython', 'micropython.wasm');
 const LDRAW_BOXES = join(OUT_DIR, 'vendor', 'ldraw', 'boxes.json');
 const LDRAW_LICENCE = join(OUT_DIR, 'vendor', 'ldraw', 'CAreadme.txt');
+const LDRAW_SHAPES = join(OUT_DIR, 'vendor', 'ldraw', 'shapes.json');
+const LDRAW_COLOURS = join(OUT_DIR, 'vendor', 'ldraw', 'LDConfig.ldr');
+const LDRAW_HUB = join(OUT_DIR, 'vendor', 'ldraw', 'library', 'parts', '45601.dat');
 
 /** Matches an absolute URL with a scheme, or a protocol-relative URL (`//host/...`). */
 const EXTERNAL_URL = /^(?:[a-z][a-z0-9+.-]*:)?\/\//i;
@@ -154,9 +157,13 @@ if (!existsSync(MICROPYTHON)) {
   );
 }
 
-if (!existsSync(LDRAW_BOXES) || !existsSync(LDRAW_LICENCE)) {
+if (
+  ![LDRAW_BOXES, LDRAW_LICENCE, LDRAW_SHAPES, LDRAW_COLOURS, LDRAW_HUB].every((file) =>
+    existsSync(file),
+  )
+) {
   problems.push(
-    `${LDRAW_BOXES} or the LDraw licence files are missing. The LEGO parts' sizes must be self-hosted with their licence (ADR 0017); did scripts/vendor-assets.mjs run?`,
+    `out/vendor/ldraw/ is incomplete. The LEGO parts' sizes and shapes must be self-hosted with their colours and licence (ADR 0017); did scripts/vendor-assets.mjs run?`,
   );
 }
 

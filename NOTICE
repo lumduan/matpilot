@@ -372,8 +372,16 @@ License: Creative Commons Attribution 4.0 International (CC BY 4.0),
 ==============================================================================
 
 MatPilot's Robots page (docs/adr/0017-lego-part-builder.md) makes a robot
-profile from a LEGO model saved in the LDraw format. Data adapted from the
-library ("The LDraw Parts Library", https://www.ldraw.org/legal-info):
+profile from a LEGO model saved in the LDraw format and draws the model in 3D.
+From the library ("The LDraw Parts Library", https://www.ldraw.org/legal-info):
+
+  third_party/ldraw/library/ (served at /vendor/ldraw/library/) and
+  third_party/ldraw/LDConfig.ldr
+    1,622 files of the release, unchanged: the parts with the keyword "Spike
+    Prime", the Technic parts listed in scripts/ldraw-library.mjs, and the
+    sub-parts and primitives they use, and the colour definitions. Each part
+    file's header names its authors and its licence.
+
 
   third_party/ldraw/boxes.json (served at /vendor/ldraw/boxes.json)
     Changed: for every part and primitive of the release, only the smallest
@@ -387,4 +395,37 @@ library ("The LDraw Parts Library", https://www.ldraw.org/legal-info):
     come out, where the colour, distance and force sensors' fronts are and
     which way they look, and the sizes of wheels 39367p01 and 49295p01.
 
-MatPilot does not copy any part file in this release of the site.
+==============================================================================
+three.js (npm package three, its LDrawLoader, LDrawConditionalLineMaterial and
+OrbitControls)
+https://github.com/mrdoob/three.js
+Copyright © 2010-2026 three.js authors
+Version used: 0.186.1
+License: MIT (full text below)
+==============================================================================
+
+MatPilot's Robots page draws a LEGO model in 3D with three.js. Its JavaScript is
+bundled into the site and loaded only when a model is shown. No source is
+modified.
+
+The MIT License
+
+Copyright © 2010-2026 three.js authors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.

@@ -99,6 +99,18 @@ export interface ModelRobot {
     readonly reason: string;
   };
   readonly parts: readonly DrawnPart[];
+  /**
+   * The ROBOT frame in the model's own (LDraw) frame, LDU: a point p of the model is
+   * x = (p − origin) · forward, y = (p − origin) · left, z = (p − origin) · up + floor, times 0.4 mm.
+   */
+  readonly frame: {
+    readonly origin: Vec3;
+    readonly forward: Vec3;
+    readonly left: Vec3;
+    readonly up: Vec3;
+    /** From the wheels' middle down to the floor. */
+    readonly floor: number;
+  };
   readonly partCount: number;
   /** Parts MatPilot has no size for, by name. */
   readonly unknown: readonly { readonly name: string; readonly count: number }[];
@@ -360,7 +372,8 @@ export function robotFromModel(
     }
   }
   if (options.turned) sign = -sign;
-  const frame = frameOf(scale(ahead, sign));
+  const forward = scale(ahead, sign);
+  const frame = frameOf(forward);
 
   // --- Where everything is. ------------------------------------------------------------------
   const cornersOf = (index: number): Vec3[] => {
@@ -555,9 +568,20 @@ export function robotFromModel(
         reason: options.turned ? 'You turned it round.' : reason,
       },
       parts,
+      frame: { origin, forward, left: cross(UP, forward), up: UP, floor: radius },
       partCount: model.parts.length,
       unknown,
       notes,
     },
   };
+}
+
+/** The tag a motor or sensor has in the drawings and in the dialog's list: L, R, M1…, S1…. */
+export function partTag(robot: ModelRobot, list: 'motors' | 'sensors', index: number): string {
+  if (list === 'sensors') return `S${index + 1}`;
+  const motor = robot.motors[index];
+  if (motor?.drives === 'left') return 'L';
+  if (motor?.drives === 'right') return 'R';
+  const others = robot.motors.filter((each) => each.drives === null);
+  return `M${others.indexOf(motor!) + 1}`;
 }

@@ -11,14 +11,20 @@ import {
   type ModelChoices,
 } from '@/lib/ldraw/apply-model';
 import { MAX_MODEL_BYTES, modelFileKind, readLdraw } from '@/lib/ldraw/model';
-import { robotFromModel, type FoundSensor, type ModelRobot } from '@/lib/ldraw/robot-from-model';
+import {
+  partTag,
+  robotFromModel,
+  type FoundSensor,
+  type ModelRobot,
+} from '@/lib/ldraw/robot-from-model';
 import {
   ROBOT_NAME_MAX_LENGTH,
   robotProblems,
   type RobotModel,
   type RobotProfile,
 } from '@/lib/robots/profile';
-import { ModelDrawing, partTag } from './ModelDrawing';
+import { ModelDrawing } from './ModelDrawing';
+import { ModelView3d } from './ModelView3d';
 
 const FACING_WORDS: Record<FoundSensor['facing'], string> = {
   down: 'looking down',
@@ -186,6 +192,9 @@ export function ModelDialog({
               {result?.ok && result.submodels > 0 ? `, in ${result.submodels + 1} models` : ''}
               {found.hub ? `, with a ${found.hub}` : ''}.
             </p>
+            {boxes.status === 'ready' && (
+              <ModelView3d file={file} found={found} boxes={boxes.table} />
+            )}
             <ModelDrawing robot={found} />
             <div className="model-front">
               <span data-testid="model-front">
