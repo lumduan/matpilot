@@ -32,6 +32,20 @@ describe('the simulated robot', () => {
     expect(sim.time).toBeLessThan(1400);
   });
 
+  it('gives the drive base’s own limits in mm/s and °/s, of which the default speeds are 40 % and a third', () => {
+    const sim = withDrive();
+    const [speed, acceleration, torque] = sim.driveLimits('distance');
+    // 1000 °/s on 56 mm wheels: 488.7 mm/s.
+    expect(speed).toBeCloseTo((1000 * Math.PI * 56) / 360, 6);
+    expect(acceleration).toBeCloseTo((1500 * Math.PI * 56) / 360, 6);
+    expect(torque).toBe(0);
+    expect(sim.settings().straightSpeed).toBeCloseTo(speed * 0.4, 6);
+    // Turning: 1000 °/s of the wheels is 500 °/s of the robot with the wheels 112 mm apart.
+    const [turn] = sim.driveLimits('heading');
+    expect(turn).toBeCloseTo(500, 6);
+    expect(sim.settings().turnRate).toBeCloseTo(turn / 3, 6);
+  });
+
   it('turns clockwise for a positive angle, on the spot', () => {
     const sim = withDrive();
     sim.turn(90, true);

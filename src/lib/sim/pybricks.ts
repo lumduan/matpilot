@@ -293,15 +293,22 @@ class ForceSensor:
 
 const ROBOTICS = `import _sim
 from pybricks.parameters import Stop
-from pybricks.pupdevices import _Control
+
+
+class _DriveControl:
+    def __init__(self, control):
+        self._control = control
+
+    def limits(self, *args):
+        return (round(_sim.drive_limit(self._control, 0)), round(_sim.drive_limit(self._control, 1)), 0)
 
 
 class DriveBase:
     def __init__(self, left_motor, right_motor, wheel_diameter, axle_track):
         self._left = left_motor._port
         _sim.drive_new(left_motor._port, right_motor._port, wheel_diameter, axle_track)
-        self.distance_control = _Control(self._left)
-        self.heading_control = _Control(self._left)
+        self.distance_control = _DriveControl('distance')
+        self.heading_control = _DriveControl('heading')
 
     def straight(self, distance, then=Stop.HOLD, wait=True):
         _sim.drive_straight(distance, wait)

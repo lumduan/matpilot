@@ -14,7 +14,7 @@ import { useBlocksEditor } from '@/hooks/useBlocksEditor';
 import { useGitHub } from '@/hooks/useGitHub';
 import { useHubRunner } from '@/hooks/useHubRunner';
 import { useIncomingBlocks } from '@/hooks/useIncomingBlocks';
-import { stepsToBlocks } from '@/lib/blocks/incoming';
+import { describeSteps, stepsToBlocks } from '@/lib/blocks/incoming';
 import { useMounted } from '@/hooks/useMounted';
 import { usePythonEditing } from '@/hooks/usePythonEditing';
 import { saveProgramForEditor } from '@/hooks/useProgramRunner';
@@ -482,7 +482,8 @@ export function BlocksApp() {
               <span>
                 From the Mats page: the path “{incoming.incoming.name}”,{' '}
                 {incoming.incoming.steps.length} block
-                {incoming.incoming.steps.length === 1 ? '' : 's'} (turns and moves).
+                {incoming.incoming.steps.length === 1 ? '' : 's'} (
+                {describeSteps(incoming.incoming.steps)}).
               </span>
               <button
                 type="button"

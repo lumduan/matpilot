@@ -22,18 +22,10 @@ import {
   scaled,
 } from './generator-context';
 import { SHADOW } from './simple-definitions';
+import { MOVEMENT_SPEED_FUNCTION, movementSpeedHelper } from '../robots/drive-program';
 
-/**
- * Sets straight speed and turn rate as a share of the drive base's top speeds. The hub refuses a
- * speed below a small minimum (./pybricks.ts), so the share is at least 5 %.
- */
-const SET_MOVEMENT_SPEED = `def set_movement_speed(percent):
-    # A share of the top speed, at least 5 %: the hub refuses a speed of 0.
-    percent = max(5, min(100, percent))
-    ${ROBOT.robot}.settings(
-        straight_speed=${ROBOT.robot}.distance_control.limits()[0] * percent // 100,
-        turn_rate=${ROBOT.robot}.heading_control.limits()[0] * percent // 100,
-    )`;
+/** "set movement speed": shared with a path drawn on the mat (../robots/drive-program.ts). */
+const SET_MOVEMENT_SPEED = movementSpeedHelper(ROBOT.robot);
 
 /**
  * Drives in a curve, like a steering wheel. With steering s, the outer wheel keeps the speed and
@@ -109,7 +101,7 @@ export function registerSimpleGenerators(): void {
   forBlock['mp_move_stop'] = (block) => `${robotName(block)}.brake()\n`;
   forBlock['mp_move_speed'] = (block) => {
     robotName(block);
-    return `${helper('set_movement_speed', SET_MOVEMENT_SPEED)}(${arg(block, 'SPEED', '50')})\n`;
+    return `${helper(MOVEMENT_SPEED_FUNCTION, SET_MOVEMENT_SPEED)}(${arg(block, 'SPEED', '50')})\n`;
   };
 
   // --- Motors ----------------------------------------------------------------

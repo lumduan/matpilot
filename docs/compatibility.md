@@ -906,8 +906,8 @@ page, looking down, at the port the program uses.
     how close 9 in 10 runs end, and how often the robot ends in each target. Run the real robot
     from the same start five times and mark where it ends each time: most marks should fall
     inside the circle drawn on the mat.
-11. A path: on **Mats**, place the robot, choose **Path**, and click three or four points towards
-    a mission. The panel lists the moves. **Run it on the mat**: the robot ends on the last
+11. A path: on **Mats**, place the robot, open the **Path** tab, and click three or four points
+    towards a mission. The panel lists the moves. **Run it on the mat**: the robot ends on the last
     point. **Send to Blocks**, open **Blocks**: **Add at the end of main** puts the moves at the
     end of the program (Undo in the notice takes them back). Run the program on the real robot
     from the same start and compare where it ends.
@@ -916,6 +916,16 @@ page, looking down, at the port the program uses.
     the tab's name. In an empty tab the moves become a new block of your own, “path”, and the
     notice says to use it from main (Functions › path); in a tab with a “define” block they go
     at the end of its last one. Call it from main and Run: the robot drives the path.
+13. More moves and pictures (added 2026-11-10): on the **Path** tab, tap two points, then choose
+    **Back up to** in the bar over the mat and tap a third: the robot turns its back to it and the
+    mat shows that part in orange. Add a **Turn**: drag the round handle around the robot (a
+    faint robot turns, and the angle shows on the mat), or tap a ready-made turn. Add a
+    **Forward** and pull its handle past the robot's nose; add a **Wait** (− / +) and a **Speed**
+    (the lever). Change a number in the list to an exact value. **Run it on the mat**: it ends
+    where the faint robot shows, slower after a lower speed. **Send to Blocks** and add it: the
+    blocks are "move backward … mm", "turn", "wait … seconds" and "set movement speed". Run them
+    on the real robot from the same start and compare where it ends; reload the Mats page: the
+    path is still there.
 
 ### Mats results
 

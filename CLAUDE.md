@@ -146,8 +146,12 @@ entry in [NOTICE](NOTICE).
     the robot's pose (`mat.ts`, MAT frame), a PDF's real size from its TrimBox (`pdf-box.ts`),
     drawing it with pdf.js (`picture.ts`, loaded only on demand; its worker and decoders are
     served from `/vendor/pdfjs/`, copied by `scripts/vendor-assets.mjs`), IndexedDB storage
-    (`store.ts`), the robot on a mat (`pose.ts`), and a path drawn on the mat made into moves
-    (`path.ts`; the Blocks page adds them as blocks through `src/lib/blocks/incoming.ts`).
+    (`store.ts`), the robot on a mat (`pose.ts`), and a path made on the mat's Path tab made into
+    moves (`path.ts`: points tapped forward or backward, and drives, turns, waits and speeds of
+    its own, each the simple block it becomes; `path-edit.ts`: the list being edited and how it is
+    kept per mat in this browser; `path-handles.ts`: the turn dial's and drive handle's
+    arithmetic; the Blocks page adds them as blocks through `src/lib/blocks/incoming.ts`, and a
+    new kind of move needs its block there too).
   - `src/lib/ldraw/`: a robot from its LEGO model ([ADR 0017](docs/adr/0017-lego-part-builder.md)):
     reading an LDraw `.ldr`/`.mpd` with its submodels (`model.ts`), every part's size from the size
     table and the SPIKE parts' facts (`parts.ts`: the motors' shafts, the sensors' fronts, the
@@ -194,7 +198,8 @@ entry in [NOTICE](NOTICE).
   values in `useLiveDevices`, the block editor in `useBlocksEditor`, blocks handed over from the
   Mats page in `useIncomingBlocks`, the LDraw parts' sizes in `useLdrawBoxes`, editing a tab's Python in
   `usePythonEditing`, GitHub in `useGitHub`, the AI helper in `useAiHelper`, the robots in
-  `useRobots`, the mats in `useMats`, a run on a mat in `useMatRun`).
+  `useRobots`, the mats in `useMats`, a run on a mat in `useMatRun`, the Path tab's moves in
+  `useMatPath`).
   Components may import types and pure helpers.
 - `src/components/docs/`, `src/app/(site)/docs/`: the Docs, with screenshots in `public/docs/`.
   **Every block** (`/docs/every-block`) comes from `src/lib/blocks/reference.ts`: when you add a

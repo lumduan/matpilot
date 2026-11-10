@@ -18,6 +18,11 @@
  *   motors' 2000 °/s²: FW lib/pbio/src/drivebase.c#L65-L108, FW lib/pbio/src/servo.c#L277-L278.
  * - A motor's top speed is its rated speed: FW lib/pbio/src/servo.c#L271.
  * - A motor command also stops the drive base that uses the motor: FW lib/pbio/src/servo.c#L548-L552.
+ * - DriveBase.distance_control and heading_control are the drive base's own controls
+ *   (FW pybricks/robotics/pb_type_drivebase.c#L84-L85): their top speed is the slower motor's and
+ *   their acceleration 3/4 of the motors' (FW lib/pbio/src/drivebase.c#L67 #L76 #L84), scaled to
+ *   millimetres and to degrees of turning (drivebase.c#L349-L355); Control.limits() gives them in
+ *   those units (FW lib/pbio/src/control_settings.c#L46-L48 #L176-L180), so mm/s and °/s.
  * - Motor.run_angle with a negative speed turns the other way: FW lib/pbio/src/control.c#L622
  *   #L630; with speed 0 it ends at once: FW lib/pbio/src/servo.c#L769-L774.
  *
@@ -412,6 +417,18 @@ export class Simulation {
 
   settings(): DriveSettings {
     return { ...this.driveBase().settings };
+  }
+
+  /**
+   * The drive base's distance_control or heading_control limits(): (speed, acceleration,
+   * torque) in mm/s and mm/s², or °/s and °/s² of turning; torque is not modelled.
+   */
+  driveLimits(control: 'distance' | 'heading'): [number, number, number] {
+    const drive = this.driveBase();
+    const perMm = 360 / (Math.PI * drive.wheelDiameterMm);
+    const perTurn = drive.trackMm / drive.wheelDiameterMm;
+    const per = control === 'distance' ? perMm : perTurn;
+    return [this.robot.motorTopSpeedDegS / per, (MOTOR_ACCELERATION * DRIVE_SHARE) / per, 0];
   }
 
   setSettings(next: Partial<DriveSettings>): void {
