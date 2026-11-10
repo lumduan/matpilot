@@ -357,6 +357,16 @@ def robots_pictures(page, pictures, base):
     page.send("Emulation.setDeviceMetricsOverride", {"width": WIDTH, "height": HEIGHT, "deviceScaleFactor": 1, "mobile": False})
 
 
+def mat_click(page, x, y, height):
+    """A click on the mat at (x, y) mm in the MAT frame (y up)."""
+    sx, sy = page.eval(f"""(() => {{ const svg = document.querySelector('[data-testid=mat-overlay]');
+      const vb = svg.viewBox.baseVal; const r = svg.getBoundingClientRect(); const scale = r.width / vb.width;
+      return [r.left + ({x} - vb.x) * scale, r.top + (({height} - {y}) - vb.y) * scale]; }})()""")
+    for kind in ("mouseMoved", "mousePressed", "mouseReleased"):
+        page.send("Input.dispatchMouseEvent", {"type": kind, "x": sx, "y": sy, "button": "left", "buttons": 1 if kind == "mousePressed" else 0, "clickCount": 1})
+    page.wait(0.4)
+
+
 def mats_pictures(page, pictures, base):
     page.send("Emulation.setDeviceMetricsOverride", {"width": WIDTH, "height": 900, "deviceScaleFactor": 1, "mobile": False})
     # The program the Blocks page hands over, and the robot.
@@ -380,9 +390,32 @@ def mats_pictures(page, pictures, base):
         "robot": centre(page, "document.querySelector('.mat-robot-body')", 0.5, 0.5),
         "pose": centre(page, by_testid("mat-pose-x"), 0.75, -0.55),
         "tools": beside(page, "document.querySelector('[role=group][aria-label=Tool]')", "right"),
+        "tabs": centre(page, by_testid("mats-tab-path"), 0.5, 1.0),
     })
 
-    # Run it from the panel (a click from script: the button may be below the panel's fold).
+    # A path on the Path tab: two points forward, one backed up to, then a turn with its dial.
+    page.click(by_testid("mats-tab-path"))
+    width, height = page.eval("[+document.querySelector('.mat-edge').getAttribute('width'), +document.querySelector('.mat-edge').getAttribute('height')]")
+    for x, y in [(0.55, 0.3), (0.55, 0.72)]:
+        mat_click(page, width * x, height * y, height)
+    page.click(by_testid("path-bar-back-to-point"))
+    mat_click(page, width * 0.3, height * 0.72, height)
+    page.click(by_testid("path-bar-to-point"))
+    page.click(by_testid("path-bar-add-turn"))
+    page.click(by_testid("path-turn--45"))
+    page.wait(0.6)
+    pictures.save("mats-path", page, clip=[0, 0, WIDTH, 900], marks={
+        "tap": centre(page, by_testid("path-bar-back-to-point"), 0.5, 1.0),
+        "add": centre(page, by_testid("path-bar-add-turn"), 0.5, 1.0),
+        "turns": centre(page, "document.querySelector('.path-presets')", 0.5, 1.0),
+        "dial": centre(page, by_testid("mat-dial-handle"), 0.5, 0.5),
+        "back": centre(page, by_testid("mat-plan-back"), 0.5, 0.5),
+        "list": centre(page, "document.querySelector('[data-testid=path-item] .path-item-number')", 0.5, 0.5),
+    })
+
+    # Run a block program from the Run tab (a click from script: the button may be below the
+    # panel's fold).
+    page.click(by_testid("mats-tab-run"))
     page.eval(f"{by_testid('run-start')}.click()")
     page.until(f"!!{by_testid('run-result')}", timeout=90)
     page.until(f"!!{by_testid('playback')}", timeout=10)

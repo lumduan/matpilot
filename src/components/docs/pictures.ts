@@ -70,8 +70,22 @@ export const PICTURES = {
     marks: {
       add: [83.9, 5.8],
       robot: [14.4, 64.2],
-      pose: [81.4, 61.8],
-      tools: [98.7, 88.6],
+      pose: [81.4, 66.3],
+      tools: [93.5, 93.2],
+      tabs: [87.0, 18.9],
+    },
+  },
+  'mats-path': {
+    file: 'mats-path.webp',
+    width: 1280,
+    height: 900,
+    marks: {
+      tap: [9.8, 12.0],
+      add: [29.0, 12.0],
+      turns: [34.3, 16.7],
+      dial: [27.5, 50.5],
+      back: [31.7, 57.2],
+      list: [76.7, 44.4],
     },
   },
   'mats-run': {

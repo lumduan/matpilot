@@ -245,6 +245,8 @@ export async function runProgram(
       )[Number(index)];
       if (key) sim.setSettings({ [key]: Number(value) });
     },
+    drive_limit: (control: unknown, index: unknown) =>
+      sim.driveLimits(String(control) === 'heading' ? 'heading' : 'distance')[Number(index)] ?? 0,
     drive_distance: () => sim.driveDistance(),
     drive_angle: () => sim.driveAngle(),
     drive_reset: () => sim.resetDrive(),

@@ -517,6 +517,8 @@ words: build the fields as recommended first; using them will show what to add o
   each point and drives straight to it. Numbered points and a dotted line show it on the mat;
   the panel lists the moves as the blocks say them ("move forward 600 mm", "turn left 90°") with
   **Undo point** and **Clear**. Points stay while the page is open (not saved with the mat).
+  ➡️ Since 2026-11-10 the path is on its own Path tab and kept per mat in this browser (see
+  "Amendment: the Path tab" below).
 - **The moves** (`src/lib/mats/path.ts`): whole degrees and millimetres, as a child would type
   them; each one is worked out from where the robot really is after the moves before it, so the
   rounding does not add up (twenty awkward segments end within 2 mm of the last point). Turns
@@ -533,7 +535,9 @@ words: build the fields as recommended first; using them will show what to add o
   - **Nothing changes on the Blocks page without a click there**: the Mats page only leaves the
     moves for it, like a paste.
   - **Forward only:** the robot turns, then drives forward; no reversing. Simple to read, and
-    the same as the blocks a child would place by hand.
+    the same as the blocks a child would place by hand. ➡️ **Superseded on 2026-11-10:** a point
+    can be backed up to, and a path takes drives, turns, waits and speeds of its own (see
+    "Amendment: the Path tab" below).
   - **Only the simple blocks:** the moves become "move … mm" and "turn" with their pictures, so
     the robot's drive base (chosen with **Robot** on Blocks) turns them into motor degrees.
 - **Tests:** the planner (a square path, the short way round, points on top of each other, no
@@ -591,6 +595,63 @@ Asked for by the maintainer after using the path and the Robots page:
   the body from above and from the side, the wheel's diameter and width with a caliper, the
   axle track as (A + B) ÷ 2, and how to read a vernier. The Docs' Robots page shows the same
   help (`src/components/robots/MeasureHelp.tsx`).
+
+## Amendment: the Path tab, with more moves and pictures (2026-11-10)
+
+Asked for by the maintainer after their child learned a lot from the path: "move it out of the
+Move / Ruler / Area / Path tool tabs, so it can hold more of the robot's movements: backing up
+(now it only drives forward and turns), turns, stop and wait, faster and slower, and others; but
+keep the simple mode: if nothing is changed, clicking along the mat still drives as now". After
+the first version, which edited the moves as a form: "too hard to use; some children do not yet
+know what a 45° turn is. Make an icon bar over the mat; a turn puts a handle beside the robot that
+really turns it, with its degrees; make everything pictures; the speed a bar to speed up or slow
+down", and then "but keep what was made too, to change the details quickly".
+
+- **Its own tab.** The Mats page's side panel has three tabs: **Mat** (the mat, the robot and the
+  tools Move, Ruler and Area), **Path**, and **Run** (a block program on the mat). The tab chosen
+  is remembered in this browser (`matpilot.mats.side.v1`).
+- **The simple mode stays.** On the Path tab a tap on the mat adds a point; the robot turns to
+  face it and drives straight to it, as before.
+- **More moves** (`src/lib/mats/path.ts`): a point can be **backed up to** (the robot turns its
+  back to it and drives a negative distance; drawn in orange on the mat), and a path takes moves
+  of its own: **forward** or **backward** so many mm, a **turn**, a **wait** and a **speed**.
+  Each is the simple block a child would place: "move forward/backward … mm", "turn", "wait …
+  seconds" and "set movement speed" (`src/lib/blocks/incoming.ts`). A point's moves are worked out
+  from where the moves before it leave the robot, so a turn put in before a point changes how the
+  robot gets there, not where the point is.
+- **Pictures over the mat** (`src/components/mats/PathBar.tsx`): a bar with **Drive to** and
+  **Back up to** (what a tap does), **Forward**, **Backward**, **Turn**, **Wait** and **Speed**
+  (each adds a move after the highlighted one), **Undo** and **Clear**. Under it, the highlighted
+  move with pictures that change it: a turn's pie and ready-made turns (a quarter or an eighth
+  either way, and turning around); a drive's length (−/+ 10 mm); a wait's half seconds (−/+); a
+  speed lever from slow to fast. On the mat: a **round handle around the robot** for the
+  highlighted turn (a faint robot turns with it, and the angle and its way show on the mat, in
+  steps of 5°, past 180° up to a full turn either way), a **handle past the robot's nose** for the
+  highlighted drive (steps of 10 mm; a drive forward stays forward), numbered points that can be
+  dragged, and badges for each turn, wait and speed. The arithmetic is in
+  `src/lib/mats/path-handles.ts`.
+- **Exact numbers too:** the Path tab's list shows every move in order, with menus and boxes to
+  type exact numbers; tapping a move's number highlights it (new moves go after it, and the faint
+  robot shows where the robot is then), with ↑ ↓ ✕ to move or remove it.
+- **Kept per mat in this browser** (`src/lib/mats/path-edit.ts`, key `matpilot.mats.paths.v1`),
+  read back strictly; not in the mat's file; a deleted mat's path goes too. Undo takes back the
+  last change; a drag is one step.
+- **Run it on the mat** runs the path's own program (`src/lib/robots/drive-program.ts`, with the
+  blocks' `set_movement_speed`, shared from there) and shows the result on the Path tab.
+- **Found while testing it:** the simulated drive base's `distance_control.limits()` and
+  `heading_control.limits()` gave the motor's top speed in °/s, not the drive base's in mm/s and
+  °/s of turning, so "set movement speed" on the mat drove at about the default speed. They now
+  give the drive base's own limits, cited in `src/lib/sim/engine.ts`.
+- **Tests:** the planner (backward points, moves of its own, points worked out after them, the
+  limits a child may type), its program run in MicroPython (backward, a 2 s wait adding 2 s, 20 %
+  slower than the default), the list's editing and storage, the handles' arithmetic, the
+  hand-over read back strictly and made into blocks whose Python compiles
+  (`set_movement_speed(60)`, `robot.straight(-300)`, `wait(1500)`, `robot.turn(180)`), and the
+  simulated drive base's limits. Headless Chromium on the production build: the tabs, taps forward
+  and backward, the bar's moves, the turn dial dragged from 90° right to 45° left and undone in
+  one step, ready-made turns, a drive's handle pulled to 250 mm, a wait and the speed lever,
+  badges, Run on the mat, Send to Blocks (the offer says "moves, turns, a wait and a speed"), the
+  path kept after a reload, at 1440 and 390 px, light and dark, with no console errors.
 
 ## Consequences (as accepted)
 

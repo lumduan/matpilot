@@ -154,6 +154,43 @@ export function MatRunPanel({ run }: { run: MatRun }) {
   );
 }
 
+/**
+ * How a run went, where it was started from outside this panel (the Path tab runs the drawn
+ * path): the error, or the result and the way back to the start.
+ */
+export function RunSummary({ run }: { run: MatRun }) {
+  const state = run.state;
+  if (state.kind === 'error') {
+    return (
+      <p className="notice notice-error" role="alert" data-testid="run-error">
+        {state.message}
+      </p>
+    );
+  }
+  if (state.kind !== 'done') return null;
+  return (
+    <>
+      <div className="button-row">
+        <button
+          type="button"
+          className="button button-small"
+          onClick={run.reset}
+          data-testid="run-reset"
+        >
+          Back to the start
+        </button>
+      </div>
+      <RunResult
+        state={state}
+        limitS={run.seconds}
+        spread={run.spread}
+        showSpread={run.showSpread}
+        onShowSpread={run.setShowSpread}
+      />
+    </>
+  );
+}
+
 /** Play, pause, the time, and the speed, over the mat while a run is shown. */
 export function PlaybackBar({ run }: { run: MatRun }) {
   if (run.state.kind !== 'done') return null;

@@ -10,13 +10,69 @@ import {
 } from 'react';
 import { contains, type Point, type Polygon } from '@/lib/geometry/rect';
 import type { Mat, MatArea, MatPlacement } from '@/lib/mats/mat';
+import { driveFromHandle, turnOnDial } from '@/lib/mats/path-handles';
 import { normalHeading, robotOnMat, sensorOnMat } from '@/lib/mats/pose';
 import type { RobotProfile } from '@/lib/robots/profile';
 import type { Frame } from '@/lib/sim/engine';
-import type { PathPlan } from '@/lib/mats/path';
+import type { PathSegment } from '@/lib/mats/path';
 import type { Spread } from '@/lib/sim/spread';
 
 export type MatTool = 'move' | 'ruler' | 'area' | 'path';
+
+/** A path being made on the Path tab, as the mat shows it. */
+export interface PlanView {
+  /** The straight drives; backward ones are drawn differently. */
+  readonly segments: readonly PathSegment[];
+  /**
+   * Numbered marks: a point clicked on the mat (it can be dragged), or where a drive ends; and
+   * badges for a turn, a wait or a speed where the robot is then.
+   */
+  readonly marks: readonly {
+    readonly id: string;
+    readonly label: string;
+    readonly kind: 'point' | 'end' | 'badge';
+    readonly xMm: number;
+    readonly yMm: number;
+    readonly selected: boolean;
+  }[];
+  /** The robot where the highlighted move leaves it, drawn faint. */
+  readonly ghost: MatPlacement | null;
+  /**
+   * The highlighted move's handle: a turn's dial round the robot (degrees in Pybricks' sign), or
+   * a drive's end (mm, negative backward). `from` is where the move starts.
+   */
+  readonly editor:
+    | { readonly kind: 'turn'; readonly from: MatPlacement; readonly degrees: number }
+    | { readonly kind: 'straight'; readonly from: MatPlacement; readonly mm: number }
+    | null;
+}
+
+/** A badge's place: beside where the robot is, the next one at the same place above it. */
+function badgeSpots(
+  marks: PlanView['marks'],
+  px: (pixels: number) => number,
+): Map<string, { x: number; y: number; width: number }> {
+  const spots = new Map<string, { x: number; y: number; width: number }>();
+  const stacked = new Map<string, number>();
+  for (const mark of marks) {
+    if (mark.kind !== 'badge') continue;
+    const key = `${Math.round(mark.xMm)},${Math.round(mark.yMm)}`;
+    const k = stacked.get(key) ?? 0;
+    stacked.set(key, k + 1);
+    spots.set(mark.id, {
+      x: mark.xMm + px(14),
+      y: mark.yMm + px(14) + k * px(24),
+      width: px(14 + mark.label.length * 7.4),
+    });
+  }
+  return spots;
+}
+
+/** Degrees, counter-clockwise from +x (the MAT frame), to a point at `r` from `c`. */
+const around = (c: Point, degrees: number, r: number): Point => ({
+  x: c.x + r * Math.cos((degrees * Math.PI) / 180),
+  y: c.y + r * Math.sin((degrees * Math.PI) / 180),
+});
 
 interface View {
   /** Screen pixels per millimetre. */
@@ -36,6 +92,12 @@ type Drag =
     }
   | { readonly kind: 'robot'; readonly offset: Point }
   | { readonly kind: 'turn' }
+  /** A mark of the path: a click highlights its move; a point can be dragged. */
+  | { readonly kind: 'mark'; readonly id: string; readonly start: Point; moved: boolean }
+  /** The highlighted turn's dial (`turn`: the MAT frame's turn so far, to follow it round). */
+  | { readonly kind: 'dial'; turn: number }
+  /** The highlighted drive's handle (`offset`: from where it ends to the handle, mm). */
+  | { readonly kind: 'stretch'; readonly offset: number; readonly backward: boolean }
   | { readonly kind: 'ruler' | 'area'; readonly from: Point };
 
 const MIN_SCALE = 0.02;
@@ -65,6 +127,9 @@ export function MatView({
   spread = null,
   plan = null,
   onPathPoint,
+  onPlanMark,
+  onPlanDrag,
+  onPlanEdit,
 }: {
   mat: Mat;
   picture: ImageBitmap | null;
@@ -84,10 +149,16 @@ export function MatView({
   locked?: boolean;
   /** Where the real robot may end: pretend runs' paths and ends, and the 9-in-10 circle. */
   spread?: Spread | null;
-  /** A path being drawn (Path tool): where the robot is after each point. */
-  plan?: PathPlan | null;
+  /** A path being made (the Path tab). */
+  plan?: PlanView | null;
   /** A click on the mat with the Path tool. */
   onPathPoint?: (point: Point) => void;
+  /** A click on one of the path's marks. */
+  onPlanMark?: (id: string) => void;
+  /** A point of the path dragged to `point`; `done` when the drag ends. */
+  onPlanDrag?: (id: string, point: Point, done: boolean) => void;
+  /** The highlighted move's handle moved: a turn's degrees or a drive's mm. */
+  onPlanEdit?: (value: number, done: boolean) => void;
 }) {
   const host = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -193,6 +264,56 @@ export function MatView({
         })()
       : null;
 
+  // The Path tab: its badges, and the highlighted move's handle.
+  const spots = plan ? badgeSpots(plan.marks, px) : new Map<string, never>();
+  const editor = tool === 'path' && robot ? (plan?.editor ?? null) : null;
+  const dial =
+    editor?.kind === 'turn' && robot
+      ? (() => {
+          const c = { x: editor.from.xMm, y: editor.from.yMm };
+          const reach = Math.max(
+            ...robotOnMat(robot, editor.from).outline.map((p) => Math.hypot(p.x - c.x, p.y - c.y)),
+          );
+          const r = reach + px(26);
+          const was = editor.from.headingDeg;
+          const turn = -editor.degrees;
+          return { c, r, was, turn, handle: around(c, was + turn, r) };
+        })()
+      : null;
+  const stretch =
+    editor?.kind === 'straight' && robot
+      ? (() => {
+          const c = { x: editor.from.xMm, y: editor.from.yMm };
+          const heading = editor.from.headingDeg;
+          const end = around(c, heading, editor.mm);
+          // The handle is past the robot's front (its back when backing up): pull it by its nose.
+          const h = (heading * Math.PI) / 180;
+          const along = robotOnMat(robot, { ...editor.from, xMm: end.x, yMm: end.y }).outline.map(
+            (p) => (p.x - end.x) * Math.cos(h) + (p.y - end.y) * Math.sin(h),
+          );
+          const offset = editor.mm < 0 ? Math.min(...along) - px(22) : Math.max(...along) + px(22);
+          return { c, heading, mm: editor.mm, end, offset, handle: around(end, heading, offset) };
+        })()
+      : null;
+  /** The mark under `m`: a numbered one near it, else a badge it is on. */
+  const markAt = (m: Point) =>
+    plan?.marks
+      .filter(
+        (each) => each.kind !== 'badge' && Math.hypot(each.xMm - m.x, each.yMm - m.y) < px(14),
+      )
+      .sort(
+        (a, b) => Math.hypot(a.xMm - m.x, a.yMm - m.y) - Math.hypot(b.xMm - m.x, b.yMm - m.y),
+      )[0] ??
+    plan?.marks.find((each) => {
+      const spot = spots.get(each.id);
+      return (
+        spot &&
+        m.x >= spot.x - px(2) &&
+        m.x <= spot.x + spot.width &&
+        Math.abs(m.y - spot.y) <= px(11)
+      );
+    });
+
   const zoomAt = (factor: number, at: Point) => {
     setView((current) => {
       if (!current) return current;
@@ -200,6 +321,29 @@ export function MatView({
       const k = scale / current.scale;
       return { scale, x: at.x - (at.x - current.x) * k, y: at.y - (at.y - current.y) * k };
     });
+  };
+
+  /**
+   * The highlighted move's value for a handle dragged to `m` (../../lib/mats/path-handles.ts):
+   * a turn's degrees in steps of 5° (1° with Shift), or a drive's mm in steps of 10 mm (1 mm
+   * with Shift). Null: no change.
+   */
+  const handleValue = (
+    current: Extract<Drag, { kind: 'dial' | 'stretch' }>,
+    m: Point,
+    fine: boolean,
+  ): number | null => {
+    if (current.kind === 'dial') {
+      if (!dial) return null;
+      const pointer = (Math.atan2(m.y - dial.c.y, m.x - dial.c.x) * 180) / Math.PI;
+      const { turn, degrees } = turnOnDial(pointer, dial.was, current.turn, fine ? 1 : 5);
+      current.turn = turn;
+      return degrees;
+    }
+    if (!stretch) return null;
+    const h = (stretch.heading * Math.PI) / 180;
+    const along = (m.x - stretch.c.x) * Math.cos(h) + (m.y - stretch.c.y) * Math.sin(h);
+    return driveFromHandle(along, current.offset, current.backward, fine ? 1 : 10);
   };
 
   const down = (event: ReactPointerEvent<SVGSVGElement>) => {
@@ -218,7 +362,18 @@ export function MatView({
     }
     const m = toMat(p.x, p.y);
     if (tool === 'path') {
-      drag.current = { kind: 'pan', start: p, view, click: m };
+      if (dial && Math.hypot(m.x - dial.handle.x, m.y - dial.handle.y) < px(18)) {
+        drag.current = { kind: 'dial', turn: dial.turn };
+        return;
+      }
+      if (stretch && Math.hypot(m.x - stretch.handle.x, m.y - stretch.handle.y) < px(18)) {
+        drag.current = { kind: 'stretch', offset: stretch.offset, backward: stretch.mm < 0 };
+        return;
+      }
+      const mark = markAt(m);
+      drag.current = mark
+        ? { kind: 'mark', id: mark.id, start: p, moved: false }
+        : { kind: 'pan', start: p, view, click: m };
       return;
     }
     if (tool === 'ruler' || tool === 'area') {
@@ -270,7 +425,18 @@ export function MatView({
     const current = drag.current;
     if (!current) return;
     const m = toMat(p.x, p.y);
-    if (current.kind === 'pan') {
+    if (current.kind === 'dial' || current.kind === 'stretch') {
+      const value = handleValue(current, m, event.shiftKey);
+      if (value !== null) onPlanEdit?.(value, false);
+      return;
+    }
+    if (current.kind === 'mark') {
+      if (!current.moved && Math.hypot(p.x - current.start.x, p.y - current.start.y) < 5) return;
+      const point = plan?.marks.find((each) => each.id === current.id);
+      if (point?.kind !== 'point') return;
+      current.moved = true;
+      onPlanDrag?.(current.id, { x: round(m.x), y: round(m.y) }, false);
+    } else if (current.kind === 'pan') {
       setView({
         ...current.view,
         x: current.view.x + p.x - current.start.x,
@@ -302,7 +468,27 @@ export function MatView({
     const current = drag.current;
     drag.current = null;
     if (!current) return;
-    if (current.kind === 'pan' && current.click && onPathPoint) {
+    // A cancelled pointer (the browser took it over) has no position: keep what the drag did.
+    const cancelled = event.type === 'pointercancel';
+    if (current.kind === 'dial' || current.kind === 'stretch') {
+      // Where it was let go: the browser may merge the last moves into this. This ends the drag
+      // (Undo takes all of it back at once).
+      const p = local(event);
+      const value = cancelled ? null : handleValue(current, toMat(p.x, p.y), event.shiftKey);
+      const last = plan?.editor?.kind === 'turn' ? plan.editor.degrees : plan?.editor?.mm;
+      if (value !== null || last !== undefined) onPlanEdit?.(value ?? last!, true);
+    }
+    if (current.kind === 'mark') {
+      if (current.moved) {
+        const p = local(event);
+        const m = toMat(p.x, p.y);
+        const kept = plan?.marks.find((each) => each.id === current.id);
+        const at =
+          cancelled && kept ? { x: kept.xMm, y: kept.yMm } : { x: round(m.x), y: round(m.y) };
+        onPlanDrag?.(current.id, at, true);
+      } else if (!cancelled) onPlanMark?.(current.id);
+    }
+    if (current.kind === 'pan' && current.click && onPathPoint && !cancelled) {
       const p = local(event);
       // A click, not a drag to look around.
       if (Math.hypot(p.x - current.start.x, p.y - current.start.y) < 5) onPathPoint(current.click);
@@ -430,28 +616,193 @@ export function MatView({
             ))}
           </g>
         )}
-        {plan && placement && plan.poses.length > 0 && (
+        {plan && robot && plan.ghost && (
+          <g className="mat-ghost" data-testid="mat-ghost">
+            {(() => {
+              const ghost = robotOnMat(robot, plan.ghost);
+              return (
+                <>
+                  <polygon className="mat-ghost-outline" points={points(ghost.outline)} />
+                  <line
+                    className="mat-ghost-heading"
+                    x1={plan.ghost.xMm}
+                    y1={H - plan.ghost.yMm}
+                    x2={s(ghost.front).x}
+                    y2={s(ghost.front).y}
+                  />
+                </>
+              );
+            })()}
+          </g>
+        )}
+        {plan && (plan.segments.length > 0 || plan.marks.length > 0) && (
           <g className="mat-plan" data-testid="mat-plan">
-            <polyline
-              className="mat-plan-line"
-              points={[placement, ...plan.poses]
-                .map((pose) => `${round(pose.xMm)},${round(H - pose.yMm)}`)
-                .join(' ')}
-            />
-            {plan.poses.map((pose, index) => (
-              <g key={index} className="mat-plan-point">
-                <circle cx={pose.xMm} cy={H - pose.yMm} r={px(10)} />
-                <text
-                  x={pose.xMm}
-                  y={H - pose.yMm}
-                  fontSize={px(12)}
-                  textAnchor="middle"
-                  dominantBaseline="central"
-                >
-                  {index + 1}
-                </text>
-              </g>
+            {plan.segments.map((segment, index) => (
+              <line
+                key={index}
+                className={segment.backward ? 'mat-plan-line mat-plan-back' : 'mat-plan-line'}
+                x1={round(segment.from.xMm)}
+                y1={round(H - segment.from.yMm)}
+                x2={round(segment.to.xMm)}
+                y2={round(H - segment.to.yMm)}
+                data-testid={segment.backward ? 'mat-plan-back' : undefined}
+              />
             ))}
+            {plan.marks
+              .filter((mark) => mark.kind !== 'badge')
+              .map((mark) => (
+                <g
+                  key={mark.id}
+                  className="mat-plan-point"
+                  data-kind={mark.kind}
+                  data-selected={mark.selected}
+                >
+                  <circle cx={mark.xMm} cy={H - mark.yMm} r={px(mark.kind === 'point' ? 10 : 8)} />
+                  <text
+                    x={mark.xMm}
+                    y={H - mark.yMm}
+                    fontSize={px(mark.label.length > 1 ? 10 : 12)}
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                  >
+                    {mark.label}
+                  </text>
+                </g>
+              ))}
+            {plan.marks.map((mark) => {
+              const spot = spots.get(mark.id);
+              // The turn being changed shows its angle on its dial instead.
+              if (!spot || (dial && mark.selected)) return null;
+              return (
+                <g
+                  key={mark.id}
+                  className="mat-plan-badge"
+                  data-selected={mark.selected}
+                  data-testid="mat-plan-badge"
+                >
+                  <rect
+                    x={spot.x}
+                    y={H - spot.y - px(10)}
+                    width={spot.width}
+                    height={px(20)}
+                    rx={px(10)}
+                  />
+                  <text
+                    x={spot.x + px(7)}
+                    y={H - spot.y}
+                    fontSize={px(12)}
+                    dominantBaseline="central"
+                  >
+                    {mark.label}
+                  </text>
+                </g>
+              );
+            })}
+          </g>
+        )}
+        {dial && (
+          <g className="mat-dial" data-testid="mat-dial">
+            <circle className="mat-dial-ring" cx={dial.c.x} cy={H - dial.c.y} r={dial.r} />
+            {Math.abs(dial.turn) >= 359.5 ? (
+              <circle className="mat-dial-slice" cx={dial.c.x} cy={H - dial.c.y} r={dial.r} />
+            ) : (
+              (() => {
+                const from = around(dial.c, dial.was, dial.r);
+                return (
+                  <path
+                    className="mat-dial-slice"
+                    d={`M${round(dial.c.x)} ${round(H - dial.c.y)} L${round(from.x)} ${round(H - from.y)} A${round(dial.r)} ${round(dial.r)} 0 ${Math.abs(dial.turn) > 180 ? 1 : 0} ${dial.turn > 0 ? 0 : 1} ${round(dial.handle.x)} ${round(H - dial.handle.y)} Z`}
+                  />
+                );
+              })()
+            )}
+            {(() => {
+              const from = around(dial.c, dial.was, dial.r);
+              const label = around(dial.c, dial.was + dial.turn / 2, dial.r + px(28));
+              const degrees = Math.round(-dial.turn);
+              return (
+                <>
+                  <line
+                    className="mat-dial-was"
+                    x1={dial.c.x}
+                    y1={H - dial.c.y}
+                    x2={from.x}
+                    y2={H - from.y}
+                  />
+                  <line
+                    className="mat-dial-now"
+                    x1={dial.c.x}
+                    y1={H - dial.c.y}
+                    x2={dial.handle.x}
+                    y2={H - dial.handle.y}
+                  />
+                  <circle
+                    className="mat-dial-handle"
+                    cx={dial.handle.x}
+                    cy={H - dial.handle.y}
+                    r={px(11)}
+                    data-testid="mat-dial-handle"
+                  />
+                  <text
+                    className="mat-handle-label"
+                    x={label.x}
+                    y={H - label.y}
+                    fontSize={px(16)}
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    data-testid="mat-dial-label"
+                  >
+                    {degrees < 0 ? '↺' : '↻'} {Math.abs(degrees)}° {degrees < 0 ? 'left' : 'right'}
+                  </text>
+                </>
+              );
+            })()}
+          </g>
+        )}
+        {stretch && (
+          <g className="mat-stretch" data-testid="mat-stretch">
+            {(() => {
+              const a = around(stretch.handle, stretch.heading, -px(9));
+              const b = around(stretch.handle, stretch.heading, px(9));
+              const middle = around(stretch.c, stretch.heading, stretch.mm / 2);
+              const label = around(middle, stretch.heading + 90, px(20));
+              return (
+                <>
+                  <line
+                    className="mat-stretch-reach"
+                    x1={stretch.end.x}
+                    y1={H - stretch.end.y}
+                    x2={stretch.handle.x}
+                    y2={H - stretch.handle.y}
+                  />
+                  <circle
+                    className="mat-stretch-handle"
+                    cx={stretch.handle.x}
+                    cy={H - stretch.handle.y}
+                    r={px(11)}
+                    data-testid="mat-stretch-handle"
+                  />
+                  <line
+                    className="mat-stretch-arrows"
+                    x1={a.x}
+                    y1={H - a.y}
+                    x2={b.x}
+                    y2={H - b.y}
+                  />
+                  <text
+                    className="mat-handle-label"
+                    x={label.x}
+                    y={H - label.y}
+                    fontSize={px(15)}
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    data-testid="mat-stretch-label"
+                  >
+                    {Math.abs(stretch.mm)} mm{stretch.mm < 0 ? ' back' : ''}
+                  </text>
+                </>
+              );
+            })()}
           </g>
         )}
         {pathShape && (
